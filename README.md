@@ -288,3 +288,84 @@ README.md                # atualizar
 - **Playlist:** aparece **de fato** no Spotify do host; faixas inexistentes ignoradas; Sequencer não repete artista seguido.
 - **IA/contexto:** "festa muito alegre" vs "estudo relaxante" muda tags/candidatas; LLM inválido → fallback sem quebrar; Last.fm vazio → cascata registra `confidence` menor.
 - **Testes:** `pytest` verde para engine (fairness/rejection/coverage), fallbacks e guardas de API.
+
+---
+
+## Execução local — Fundação técnica (PB-01)
+
+Esta seção cobre **apenas** a fundação técnica (PB-01): frontend Vite, backend
+FastAPI, PostgreSQL e migrações. Auth Spotify, salas, motor, LLM e Last.fm são
+histórias posteriores.
+
+### Pré-requisitos
+
+| Ferramenta | Versão de referência (validada) |
+|---|---|
+| Python | 3.11.9 (use `python3`) |
+| Docker + Compose | 29.6.1 / Compose v5.2.0 |
+| Node.js + npm | ≥ 18 (necessário para o frontend) |
+
+### 1. Variáveis de ambiente
+
+```bash
+cp .env.example .env
+```
+
+O `.env` é ignorado pelo Git. Para o PB-01 os **defaults já funcionam** (o
+`DATABASE_URL` aponta para o Postgres do compose). As chaves de Spotify /
+Anthropic / Last.fm ficam **vazias** — são de histórias futuras. Nunca comite
+segredos.
+
+### 2. Banco de dados (PostgreSQL)
+
+```bash
+docker compose up -d db          # sobe o Postgres 16 em localhost:5432
+docker compose ps                # confere o status "healthy"
+```
+
+### 3. Backend (FastAPI)
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head             # aplica a migração inicial (tabela users)
+uvicorn app.main:app --reload --port 8000
+```
+
+- API: <http://localhost:8000> · Docs (Swagger): <http://localhost:8000/docs>
+
+### 4. Frontend (React + Vite)
+
+```bash
+cd frontend
+npm install
+npm run dev                      # sobe em http://localhost:5173
+```
+
+A tela inicial mostra o status de conectividade Frontend → Backend → Banco.
+
+### Verificação
+
+```bash
+# Saúde do backend (liveness) e conexão com o Postgres (readiness)
+curl http://localhost:8000/health      # {"status":"ok",...}
+curl http://localhost:8000/health/db   # {"status":"ok","database":"ok"}
+
+# Ciclo de migração do Alembic (a partir de backend/, com a venv ativa)
+alembic upgrade head     # cria a tabela users
+alembic downgrade base   # reverte (remove a tabela users)
+alembic upgrade head     # reaplica
+
+# Testes automatizados do backend (não dependem do Postgres)
+pytest
+```
+
+### Encerramento
+
+```bash
+# backend/frontend: Ctrl+C nos respectivos terminais
+docker compose down       # para o Postgres (mantém o volume/dados)
+docker compose down -v    # para e APAGA os dados do Postgres
+```
