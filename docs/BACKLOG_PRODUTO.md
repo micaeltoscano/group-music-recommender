@@ -605,6 +605,27 @@ Uma história é considerada concluída quando:
 - a documentação afetada foi atualizada;
 - o Product Owner ou representante acadêmico aceitou o resultado demonstrado.
 
+### 15.1 Definition of Done da Sprint
+
+Além da DoD por história, uma Sprint só é considerada concluída quando:
+
+- todos os PBs obrigatórios da Sprint atendem à DoD acima;
+- os testes individuais de cada PB da Sprint estão passando;
+- os testes integrados da Sprint estão passando;
+- os testes de regressão das Sprints anteriores continuam passando;
+- o incremento da Sprint pode ser demonstrado de ponta a ponta;
+- os bloqueios remanescentes estão documentados.
+
+### 15.2 Documentos operacionais de apoio
+
+O detalhamento operacional deste backlog é mantido em dois documentos, que **não** substituem nem
+alteram os critérios de aceitação definidos aqui:
+
+- **`PLANO_EXECUCAO.md`** — execução por Sprint, ordem de implementação, status, decisões, riscos e
+  ponto exato de retomada (inclui o Protocolo obrigatório do agente de implementação).
+- **`PLANO_TESTES.md`** — testes individuais de cada PB e testes integrados de cada Sprint, com os
+  critérios de aprovação usados para validar os critérios de aceitação deste backlog.
+
 ## 16. Dependências entre funcionalidades
 
 | Funcionalidade | Depende de | Justificativa |
