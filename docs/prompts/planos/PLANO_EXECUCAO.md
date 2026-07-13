@@ -148,7 +148,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Futuro | Evolução do produto (fora do MVP) | PB-21, PB-22 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, com apoio contínuo de PB-20.
-- **Sprint ativa:** Sprint 1. **PB ativo:** PB-01 (em teste — ver seção 6).
+- **Sprint ativa:** Sprint 1. **PB ativo:** PB-02 (correções implementadas; aguardando revalidação QA).
 
 ---
 
@@ -196,13 +196,13 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-01 — Fundação técnica do produto
 
-- **Status:** Em teste *(implementação concluída no backend/banco/migração; falta uma evidência do frontend)*
+- **Status:** Implementação concluída; revalidação formal do QA pendente.
 - **Objetivo:** base local integrada e reproduzível de frontend (React/Vite), backend (FastAPI) e
   banco (PostgreSQL) com SQLAlchemy/Alembic.
 - **Dependências:** Nenhuma.
 - **Critérios de aceitação:**
-  1. [~] Frontend e backend iniciam conforme instruções documentadas. — **Backend: verificado.**
-     **Frontend: build verificado** em container Node 20; **falta o `npm run dev` nativo** (Node ausente no host).
+  1. [x] Frontend e backend iniciam conforme instruções documentadas. — Backend verificado; frontend
+     nativo verificado com Node 24 (`vite` pronto em 59 ms e HTTP 200 em `127.0.0.1:5173`).
   2. [x] Backend conecta ao PostgreSQL.
   3. [x] Migração inicial do Alembic executa e reverte sem erro.
   4. [x] Configurações sensíveis vêm de variáveis de ambiente não versionadas.
@@ -219,8 +219,8 @@ A ordem respeita as dependências declaradas no backlog.
 - **Evidências necessárias:** saída de `pytest`, saída do ciclo Alembic upgrade/downgrade/upgrade,
   respostas 200 de `/health` e `/health/db`, e (pendente) captura da tela de status do frontend em
   `http://localhost:5173`.
-- **Riscos:** ambiente sem Node local impede a última verificação nativa do frontend.
-- **Bloqueios:** Node.js/npm ausentes no host (o build em container supre parcialmente).
+- **Riscos:** a assinatura final `PB-01 VALIDADO` ainda precisa ser reemitida pelo QA.
+- **Bloqueios:** nenhum bloqueio técnico de implementação; Node.js/npm já estão instalados.
 - **Resultado da implementação:** backend + banco + migração + frontend (scaffold que compila) prontos.
 - **Resultado dos testes (2026-07-13):** `pytest` **4 passed**; Alembic `upgrade head` → `downgrade base`
   → `upgrade head` sem erros; `/health` e `/health/db` → 200; `.env` não rastreado e vazio;
@@ -233,13 +233,42 @@ A ordem respeita as dependências declaradas no backlog.
   variáveis do `.env` divergem do `.env.example`). Relatório completo: `RELATORIOS_TESTES/PB-01.md`.
   **Veredito QA: PB-01 BLOQUEADO NA VALIDAÇÃO — EVIDÊNCIA INSUFICIENTE** (não há defeito de código;
   falta apenas comprovar o critério 1).
-- **Próxima ação exata:** instalar Node.js ≥ 18 no host e rodar `cd frontend && npm install && npm run dev`,
-  confirmando a tela de status em `http://localhost:5173`; então o QA reexecuta CT-PB01-06, marca o
-  critério 1 como concluído e reemite o veredito (`PB-01 VALIDADO`).
+- **Evidência adicional do Dev (2026-07-13):** Node `v24.18.0`, npm `11.16.0`, `npm run build` OK
+  (42 módulos), `npm run dev` OK e frontend nativo respondeu HTTP 200. O bloqueio ambiental foi removido.
+- **Próxima ação exata:** QA reexecuta CT-PB01-06 e emite o veredito formal do PB-01.
 
 #### PB-02 — Autenticação com Spotify
 
-- **Status:** A fazer
+- **Status:** VALIDADO (QA revalidação 2026-07-13) — reprovado na 1ª rodada, **aprovado na 2ª** após correções.
+- **Revalidação QA (2026-07-13, 2ª rodada):** suíte completa **19 passed / 0 failed** (Postgres) e
+  suíte QA **11/11 em SQLite** (tz corrigido). Defeitos Alta/Média **todos corrigidos**: DEF-PB02-01
+  (refresh/reauth — CT-PB02-06a..d validam comportamento), DEF-PB02-02 (Fernet obrigatória no startup),
+  DEF-PB02-03 (naive/aware normalizado), DEF-PB02-04 (`.env` corrigido → `SPOTIFY_CLIENT_SECRET`),
+  DEF-PB02-05 (testes entregues), DEF-PB02-06 (302 + cookies via config + trata `error`). Remanescente:
+  **DEF-PB02-07 (Baixa, aberto)** — scope creep `Home.jsx`, não bloqueia.
+  **Veredito QA: PB-02 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM.**
+  Próxima ação: Dev liberado para o próximo PB da Sprint 1 (PB-04); e2e real (M0) e frontend nativo a
+  demonstrar no fechamento da Sprint.
+- **[Histórico] Validação QA (2026-07-13, 1ª rodada):** suíte `backend/tests/test_pb02_auth_qa.py` (criada pelo QA, mockada)
+  → **11 passed / 1 failed** contra Postgres. Aprovados: CT-PB02-01 (redirect+state; obs.: 307≠302),
+  CT-PB02-02 (CSRF→400), CT-PB02-03 (user idempotente + `/auth/me`), CT-PB02-04 (sem token em resposta),
+  CT-PB02-05 (cifrado em repouso, com ressalva), CT-PB02-07 (regressão PB-01 verde; migração reversível).
+  **Reprovado: CT-PB02-06** (refresh/reauth ausente). Defeitos: **DEF-PB02-01** (Alta — refresh/reauth
+  não implementado), **DEF-PB02-02** (Alta — chave Fernet efêmera sem `FERNET_KEY` → tokens
+  irrecuperáveis após restart), DEF-PB02-03 (Média — naive/aware quebra sessão em SQLite),
+  DEF-PB02-04 (Média — `.env` com `CLIENT_SECRET` errado quebra OAuth real), DEF-PB02-05 (Média —
+  entrega sem testes), DEF-PB02-06/07 (Baixa — 307≠302, valores hardcoded, sem tratar `error`;
+  scope creep `Home.jsx`). Relatório: `docs/RELATORIOS_TESTES/PB-02.md`.
+  **Veredito QA: PB-02 REPROVADO NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS.**
+- **Correções do Dev (2026-07-13):** implementados refresh central e persistência do novo access token;
+  falha de refresh marca `reauth_required_at`; removida chave Fernet temporária; datas SQLite
+  normalizadas para UTC; redirect/cookies parametrizados; consentimento negado tratado; nomes do
+  `.env` local alinhados sem expor valores; testes técnicos adicionados em `test_pb02_auth.py`.
+- **Resultado técnico:** `backend/.venv/bin/pytest backend/tests -q` → **16 passed**; frontend
+  `npm run build` → sucesso (42 módulos); Vite nativo → HTTP 200. Nenhuma chamada real ao Spotify.
+- **Próxima ação exata:** QA reexecuta CT-PB02-01..07, com atenção ao refresh bem-sucedido e falho,
+  persistência Fernet após reinício e ausência de exposição de tokens.
+- **[Status original do plano — mantido para referência]:** A fazer
 - **Objetivo:** fluxo Spotify OAuth com proteção por `state`, sessão por cookie httpOnly e
   persistência criptografada de tokens somente no backend.
 - **Dependências:** PB-01. Externas: app Spotify + `redirect_uri` (M0).
@@ -262,8 +291,8 @@ A ordem respeita as dependências declaradas no backlog.
   teste de callback com `state` inválido.
 - **Riscos:** R-01 (limite de 5 usuários), R-03 (refresh), R-08 (vazamento de tokens).
 - **Bloqueios:** credenciais Spotify e `redirect_uri` (M0) precisam existir.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
+- **Resultado da implementação:** OAuth, sessão, criptografia persistente e refresh/reauth implementados.
+- **Resultado dos testes:** 16 testes backend aprovados; build e servidor Vite nativo aprovados.
 - **Próxima ação exata:** concluir M0 (app Spotify + redirect) e implementar `GET /auth/login`.
 
 #### PB-04 — Criação de sala efêmera
@@ -990,9 +1019,8 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 - O Spotify Development Mode limita o aplicativo a cinco usuários autorizados (R-01).
 - Os endpoints permitidos precisam ser confirmados em um aplicativo novo (spike — R-02).
 - O núcleo estimado do MVP excede uma sprint e pode ultrapassar um mês (R-10).
-- **Bloqueio de ambiente (PB-01):** Node.js/npm não estão instalados no host, então o start nativo do
-  frontend (`npm run dev`) não pôde ser verificado. O código Vite está pronto (build OK em container).
-  Python 3.11.9 e Docker 29.6.1 já confirmados.
+- **PB-01:** bloqueio de Node removido; frontend nativo iniciou e respondeu HTTP 200. Falta apenas o
+  QA reexecutar CT-PB01-06 e registrar seu veredito formal.
 - A capacidade real da equipe (velocidade) ainda precisa ser medida na Sprint 1.
 
 ## 15. Diário de retomada
@@ -1001,18 +1029,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-13.
 - **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-01 (fundação técnica) — **em teste** (implementação praticamente concluída).
-- **Último resultado concluído:** fundação técnica criada e verificada — backend FastAPI + PostgreSQL
-  (Docker) + Alembic (upgrade/downgrade da migração inicial) + `.env.example` sem segredos + `pytest`
-  (**4 passed** em 2026-07-13). Frontend Vite com scaffold que compila (build OK em container Node 20).
-- **Onde parou:** backend, banco e migração validados de ponta a ponta; **falta apenas executar o
-  frontend nativo** — `npm run dev` não rodou porque Node.js/npm não estão instalados no host.
-- **Qual teste encerra o PB-01:** executar o frontend nativo (`npm run dev`) e confirmar a tela de
-  status em `http://localhost:5173` conectando a backend e banco (critério 1 do PB-01).
-- **Próxima ação exata:** (1) instalar Node.js ≥ 18 e rodar `cd frontend && npm install && npm run dev`,
-  confirmando `http://localhost:5173`; (2) marcar o critério "frontend inicia" como concluído e fechar
-  o PB-01 (`PB-01 VALIDADO`); (3) concluir o M0 (app no Spotify Dashboard + redirect URI) e iniciar
-  **PB-02 — Autenticação com Spotify**.
+- **PB em andamento:** PB-02 — correções concluídas, entregue para revalidação independente.
+- **Último resultado concluído:** refresh/reauth, configuração Fernet persistente, timezone e fluxo
+  OAuth corrigidos; **16 testes backend aprovados**; frontend build e Vite nativo aprovados.
+- **Onde parou:** PB-02 pronto para o QA reexecutar CT-PB02-01..07.
+- **Próxima ação exata:** QA valida PB-01/CT-PB01-06 e PB-02; Dev não inicia PB-04 antes dos vereditos.
 - **Comando/teste para retomada:**
   ```bash
   node --version            # confirmar Node ≥18 instalado
@@ -1021,7 +1042,8 @@ Atualizar esta seção ao encerrar cada sessão.
   docker compose up -d db
   cd backend && source .venv/bin/activate && alembic upgrade head && uvicorn app.main:app --reload --port 8000
   ```
-- **Bloqueios:** Node.js/npm ausentes no ambiente. Credenciais Spotify serão necessárias a partir de PB-02.
+- **Bloqueios:** integração Spotify real depende das credenciais/configuração M0; testes automatizados
+  permanecem mockados. O `.env` local ainda precisa receber uma `FERNET_KEY` persistente válida.
 
 ## 16. Checklist de encerramento de sessão
 

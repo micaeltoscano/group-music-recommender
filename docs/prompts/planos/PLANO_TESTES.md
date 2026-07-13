@@ -231,7 +231,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
 - **Resultado esperado:** 302 para `accounts.spotify.com` com `state` presente e escopos do MVP.
 - **Evidência esperada:** header `Location`; `state` guardado no servidor/cookie.
 - **Critério de aprovação:** URL de autorização correta e `state` emitido.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA revalidação 2026-07-13 — /auth/login → 302 com state e escopos)
 
 ##### CT-PB02-02 — Callback rejeita `state` ausente/ inválido (CSRF)
 - **Tipo:** segurança · **Prioridade:** Alta · **Cenário:** callback com `state` divergente do emitido
@@ -240,7 +240,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
 - **Resultado esperado:** erro (400/401), **sem** criar sessão nem trocar tokens.
 - **Evidência esperada:** resposta de erro; ausência de sessão criada.
 - **Critério de aprovação:** nenhum acesso concedido sem `state` válido.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-13 — state divergente/ausente → 400, sem sessão)
 
 ##### CT-PB02-03 — Autorização válida cria/atualiza usuário e sessão
 - **Tipo:** integração · **Prioridade:** Alta · **Cenário:** `state` válido + code → usuário criado (1ª
@@ -250,7 +250,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
   httpOnly definido; `GET /auth/me` retorna o usuário.
 - **Evidência esperada:** registro único; `/auth/me` 200.
 - **Critério de aprovação:** idempotência de usuário + sessão válida.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-13, Postgres — sem duplicar user; /auth/me OK)
 
 ##### CT-PB02-04 — Tokens nunca chegam ao frontend nem a logs
 - **Tipo:** privacidade/segurança · **Prioridade:** Alta · **Cenário:** nenhuma resposta HTTP nem log
@@ -259,7 +259,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
 - **Resultado esperado:** ausência total de tokens no frontend e nos logs.
 - **Evidência esperada:** respostas e logs sanitizados.
 - **Critério de aprovação:** zero exposição de token.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-13, Postgres — sem tokens em resposta)
 
 ##### CT-PB02-05 — Tokens criptografados em repouso
 - **Tipo:** segurança · **Prioridade:** Alta · **Cenário:** `spotify_tokens.access_token/refresh_token`
@@ -268,7 +268,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
 - **Resultado esperado:** valores cifrados (não legíveis); descriptografia só via chave em env.
 - **Evidência esperada:** valor persistido ≠ token em claro.
 - **Critério de aprovação:** conteúdo cifrado em repouso.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA revalidação 2026-07-13 — cifrado em repouso; DEF-PB02-02 corrigido, sem chave efêmera)
 
 ##### CT-PB02-06 — Refresh e reauth necessária
 - **Tipo:** serviço externo mockado / recuperação · **Prioridade:** Alta · **Cenário:** access token
@@ -278,7 +278,10 @@ mockado, respostas mockadas de troca de token e de `/me`.
   redirecionamento a novo login.
 - **Evidência esperada:** estado do token; resposta de reauth.
 - **Critério de aprovação:** ambos os caminhos tratados sem crash.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA revalidação 2026-07-13 — refresh/reauth com comportamento validado, CT-PB02-06a..d)
+
+> **Reentrega Dev 2026-07-13:** refresh bem-sucedido e falho cobertos por testes técnicos; aguarda
+> reexecução e atualização de Status pelo QA.
 
 ##### CT-PB02-07 — Regressão: saúde e migração continuam OK
 - **Tipo:** regressão · **Prioridade:** Média · **Cenário:** após adicionar auth e migrações, PB-01
@@ -286,7 +289,7 @@ mockado, respostas mockadas de troca de token e de `/me`.
 - **Passos:** reexecutar CT-PB01-01..05.
 - **Resultado esperado:** todos aprovados.
 - **Critério de aprovação:** sem regressão.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-13 — 4 testes de saúde verdes; migração reversível)
 
 ---
 
