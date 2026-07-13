@@ -1,8 +1,14 @@
 # Plano de Testes — Vibe Check
 
 Documento de validação do produto. Complementa o `BACKLOG_PRODUTO.md` (escopo e critérios de
-aceitação), o `README.md` (arquitetura) e o `PLANO_EXECUCAO.md` (execução por Sprint). Aqui ficam os
-**testes individuais de cada PB** e os **testes integrados de cada Sprint**.
+aceitação), o `README.md` (arquitetura), o `PLANO_EXECUCAO.md` (execução por Sprint) e o `AGENTS.md`
+(coordenação dos agentes). Aqui ficam os **testes individuais de cada PB** e os **testes integrados de
+cada Sprint**.
+
+> **Autoridade de validação:** este plano é executado pelo **Agente de Teste (QA)** definido no
+> `AGENTS.md`. O **Agente de Implementação (Dev) para e aguarda** o veredito do QA — só avança para o
+> próximo PB após `PB-XX VALIDADO`. O QA nunca declara `VALIDADO` sem executar os casos obrigatórios e
+> registrar evidências, e atualiza o campo *Status* de cada `CT-*` ao final.
 
 > Os testes não apenas confirmam que algo foi implementado: verificam se a implementação **resolve o
 > problema**, cumpre os critérios de aceitação, respeita as regras de negócio e se comporta
@@ -143,7 +149,7 @@ Nenhum dado de domínio; usa endpoints de saúde e a tabela `users` vazia.
 - **Resultado esperado:** 200 `{"status":"ok","database":"ok"}`.
 - **Evidência esperada:** resposta 200.
 - **Critério de aprovação:** conexão confirmada.
-- **Automatizável:** Sim · **Status:** Aprovado (2026-07-13)
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-13 — `curl` contra Postgres 16 real → 200)
 
 ##### CT-PB01-03 — Readiness com banco indisponível (falha controlada)
 - **Tipo:** recuperação após falha / segurança · **Prioridade:** Alta
@@ -188,7 +194,7 @@ Nenhum dado de domínio; usa endpoints de saúde e a tabela `users` vazia.
 - **Resultado esperado:** três status "ok"; API base correta.
 - **Evidência esperada:** captura de tela da página de status.
 - **Critério de aprovação:** os três indicadores em "ok".
-- **Automatizável:** Parcialmente · **Status:** Bloqueado (Node ausente no host)
+- **Automatizável:** Parcialmente · **Status:** Bloqueado (QA 2026-07-13 — Node/npm ausentes no host; ver DEF-PB01-01 em `RELATORIOS_TESTES/PB-01.md`)
 
 > Observação: `vite build` já foi verificado em container Node 20 (compila, `dist/` gerado). Falta a
 > execução **nativa** para encerrar o critério 1 do PB-01.

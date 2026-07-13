@@ -225,9 +225,17 @@ A ordem respeita as dependências declaradas no backlog.
 - **Resultado dos testes (2026-07-13):** `pytest` **4 passed**; Alembic `upgrade head` → `downgrade base`
   → `upgrade head` sem erros; `/health` e `/health/db` → 200; `.env` não rastreado e vazio;
   frontend `npm install` + `vite build` OK em container Node 20 (28 módulos, `dist/` gerado).
+- **Validação QA (2026-07-13):** CT-PB01-01..05 **Aprovados** com evidência reforçada (servidor
+  uvicorn real + Postgres 16 do Docker: `/`, `/health`, `/health/db` → 200; ciclo Alembic inspecionado
+  no catálogo do Postgres — `users`/`ix_users_spotify_id` criados/removidos/recriados; `.env` git-ignored).
+  **CT-PB01-06 Bloqueado** (Node/npm ausentes no host → frontend nativo não executável; critério 1 sem
+  evidência). Defeitos: **DEF-PB01-01** (Média, bloqueio de ambiente) e **DEF-PB01-02** (Baixa, nomes de
+  variáveis do `.env` divergem do `.env.example`). Relatório completo: `RELATORIOS_TESTES/PB-01.md`.
+  **Veredito QA: PB-01 BLOQUEADO NA VALIDAÇÃO — EVIDÊNCIA INSUFICIENTE** (não há defeito de código;
+  falta apenas comprovar o critério 1).
 - **Próxima ação exata:** instalar Node.js ≥ 18 no host e rodar `cd frontend && npm install && npm run dev`,
-  confirmando a tela de status em `http://localhost:5173`; então marcar o critério 1 como concluído e
-  fechar o PB-01 (`PB-01 VALIDADO`).
+  confirmando a tela de status em `http://localhost:5173`; então o QA reexecuta CT-PB01-06, marca o
+  critério 1 como concluído e reemite o veredito (`PB-01 VALIDADO`).
 
 #### PB-02 — Autenticação com Spotify
 
@@ -1026,18 +1034,56 @@ Atualizar esta seção ao encerrar cada sessão.
 - [x] Confirmei que nenhum segredo ou token foi adicionado. — `.env` não rastreado e vazio.
 - [ ] Preparei um commit pequeno e relacionado à história. — **pendente**: aguardando o usuário decidir sobre o commit.
 
-## 17. Modelo de pedido para uma sessão assistida
+## 17. Modelos de prompt (Implementação e Teste)
+
+A coordenação entre os dois papéis é definida no **`AGENTS.md`** (raiz do repositório). A regra central
+é o **portão de espera**: o Agente de Implementação **para e aguarda** o veredito do Agente de Teste
+antes de iniciar o próximo PB ou encerrar a Sprint. Os prompts abaixo devem ser usados em fases
+separadas e explícitas.
+
+### 17.1 Prompt do Agente de Implementação (Dev)
 
 ```text
+PAPEL: Agente de Implementação (Dev). Leia AGENTS.md, este plano (§4 e a Sprint ativa) e
+PLANO_TESTES.md do PB antes de tocar no código.
+
 Sprint ativa: Sprint N
-História ativa: PB-XX
+PB ativo: PB-XX   (apenas UM PB por vez)
 Objetivo desta sessão:
 Critérios de aceitação envolvidos:
 Arquivos ou componentes em escopo:
 Fora do escopo:
-Como verificar (ver PLANO_TESTES.md → PB-XX):
 
-Antes de alterar, inspecione o estado atual. Implemente somente este recorte,
-execute os testes individuais do PB, corrija falhas e atualize o PLANO_EXECUCAO.md
-com o ponto exato de retomada. Não inicie o próximo PB com testes obrigatórios falhando.
+Passos: (1) verificar dependências; (2) planejar o recorte; (3) implementar SOMENTE este PB;
+(4) criar/atualizar os testes do PB; (5) rodar e corrigir localmente; (6) atualizar este plano
+(Status do PB, resultado, arquivos, riscos, próxima ação).
+
+Ao terminar, emita LITERALMENTE:  PB-XX IMPLEMENTADO — INICIANDO VALIDAÇÃO
+e PARE. NÃO inicie o próximo PB. AGUARDE o veredito do Agente de Teste.
+Se REPROVADO, corrija SOMENTE este PB e reemita "IMPLEMENTADO".
 ```
+
+### 17.2 Prompt do Agente de Teste (QA)
+
+```text
+PAPEL: Agente de Teste (QA), autoridade de validação. Não corrija código de produção; execute,
+avalie e reporte. Leia AGENTS.md e PLANO_TESTES.md do PB.
+
+Gatilho: "PB-XX IMPLEMENTADO — INICIANDO VALIDAÇÃO".
+
+Passos: (1) selecionar os casos obrigatórios de PB-XX no PLANO_TESTES.md; (2) executar sucesso,
+entrada inválida, ausência de dados, acesso não autorizado, duplicidade, limites, falha externa,
+persistência, idempotência, privacidade e regressão relacionada (quando aplicável); (3) registrar
+Status + evidência de cada CT (sem segredos); (4) confirmar cada critério de aceitação.
+
+Veredito (emitir LITERALMENTE):
+- tudo passa e critérios cobertos ► PB-XX VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM
+- caso contrário               ► PB-XX REPROVADO NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
+                                  (listar CT, passos, obtido × esperado, evidência)
+
+Ao fim da Sprint, repetir com os testes integrados + regressão e emitir o veredito da Sprint
+(SPRINT N CONCLUÍDA / SPRINT N REPROVADA).
+```
+
+> O Dev **só** inicia o próximo PB após `PB-XX VALIDADO` emitido pelo QA. Exceção: bloqueio externo
+> documentado quando o próximo PB não depende do item bloqueado (ver `AGENTS.md` §2).
