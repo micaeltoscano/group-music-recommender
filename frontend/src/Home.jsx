@@ -31,7 +31,16 @@ export default function Home({ user }) {
   return (
     <main className="app">
       <h1>Vibe Check</h1>
-      <p className="subtitle">Olá, {user?.display_name || 'Usuário'}!</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
+        {user?.image_url && (
+          <img 
+            src={user.image_url} 
+            alt="Perfil" 
+            style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }} 
+          />
+        )}
+        <p className="subtitle" style={{ margin: 0 }}>Olá, {user?.display_name || 'Usuário'}!</p>
+      </div>
 
       <section className="card">
         <h2>Status do ambiente (PB-01)</h2>

@@ -112,7 +112,7 @@ async def callback(request: Request, response: Response, code: str, state: str, 
     db.commit()
 
     # Redireciona para o frontend com o cookie de sessão
-    redirect_url = "http://localhost:5173"
+    redirect_url = "http://127.0.0.1:5173"
     redirect_response = RedirectResponse(redirect_url)
     redirect_response.delete_cookie(STATE_COOKIE_NAME)
     redirect_response.set_cookie(
