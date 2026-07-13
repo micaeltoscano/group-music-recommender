@@ -15,4 +15,5 @@ export const api = {
   baseUrl: API_BASE_URL,
   health: () => getJson('/health'),
   healthDb: () => getJson('/health/db'),
+  getMe: () => getJson('/auth/me'),
 }

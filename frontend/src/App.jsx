@@ -1,47 +1,42 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { api } from './apiClient'
-
-// Tela de fundação (PB-01): verifica a conectividade frontend -> backend -> DB.
-// Não implementa login, salas, motor, etc. (histórias futuras).
-function StatusRow({ label, state }) {
-  const color = state === 'ok' ? '#1db954' : state === 'erro' ? '#e22134' : '#888'
-  return (
-    <div className="status-row">
-      <span className="status-dot" style={{ backgroundColor: color }} />
-      <span className="status-label">{label}</span>
-      <span className="status-value">{state}</span>
-    </div>
-  )
-}
+import Home from './Home'
+import Login from './Login'
 
 export default function App() {
-  const [backend, setBackend] = useState('verificando…')
-  const [database, setDatabase] = useState('verificando…')
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     api
-      .health()
-      .then((r) => setBackend(r.ok ? 'ok' : 'erro'))
-      .catch(() => setBackend('erro'))
-
-    api
-      .healthDb()
-      .then((r) => setDatabase(r.ok ? 'ok' : 'erro'))
-      .catch(() => setDatabase('erro'))
+      .getMe()
+      .then((res) => {
+        if (res.ok) {
+          setUser(res.body)
+        }
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [])
 
-  return (
-    <main className="app">
-      <h1>Vibe Check</h1>
-      <p className="subtitle">Fundação técnica (PB-01)</p>
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Carregando...</div>
+  }
 
-      <section className="card">
-        <h2>Status do ambiente</h2>
-        <StatusRow label="Frontend (Vite)" state="ok" />
-        <StatusRow label="Backend (FastAPI)" state={backend} />
-        <StatusRow label="Banco (PostgreSQL)" state={database} />
-        <p className="hint">API base: {api.baseUrl}</p>
-      </section>
-    </main>
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route 
+          path="/" 
+          element={user ? <Home user={user} /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/login" 
+          element={!user ? <Login /> : <Navigate to="/" replace />} 
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }
