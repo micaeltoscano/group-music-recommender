@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     # --- CORS ----------------------------------------------------------------
     # Origens permitidas para o frontend Vite (separadas por vírgula).
     backend_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    frontend_url: str = "http://localhost:5173"
 
     # --- Segredos de histórias FUTURAS (fora do escopo do PB-01) -------------
     # Declarados como opcionais para que o app suba sem eles. Serão exigidos
@@ -55,6 +56,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     lastfm_api_key: str | None = None
     fernet_key: str | None = None
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.app_env.lower() not in {"development", "test"}
 
     @property
     def cors_origins_list(self) -> list[str]:

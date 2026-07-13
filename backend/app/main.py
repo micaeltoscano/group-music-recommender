@@ -15,6 +15,9 @@ from app.config import settings
 
 
 def create_app() -> FastAPI:
+    if settings.app_env.lower() not in {"development", "test"} and not settings.fernet_key:
+        raise RuntimeError("FERNET_KEY é obrigatória fora do ambiente de desenvolvimento/teste.")
+
     app = FastAPI(
         title=settings.app_name,
         version=__version__,

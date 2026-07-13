@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import User, SpotifyToken, AppSession
 from app.clients import spotify_client, crypto
+from app.config import settings
 
 router = APIRouter()
 
@@ -24,33 +25,45 @@ def login(response: Response):
     url = spotify_client.get_auth_url(state)
     
     # Adiciona o cookie de state
-    response = RedirectResponse(url)
+    response = RedirectResponse(url, status_code=302)
     response.set_cookie(
         key=STATE_COOKIE_NAME,
         value=state,
         httponly=True,
-        secure=False, # True em produção (HTTPS)
+        secure=settings.secure_cookies,
         samesite="lax",
         max_age=600 # 10 minutos
     )
     return response
 
 @router.get("/callback")
-async def callback(request: Request, response: Response, code: str, state: str, db: Session = Depends(get_db)):
+async def callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    db: Session = Depends(get_db),
+):
     """Recebe o callback do Spotify, troca o código por token e cria a sessão."""
+    if error:
+        raise HTTPException(status_code=400, detail="Autorização Spotify negada.")
+
     cookie_state = request.cookies.get(STATE_COOKIE_NAME)
     
     if not state or not cookie_state or state != cookie_state:
         raise HTTPException(status_code=400, detail="State inválido ou ausente.")
         
+    if not code:
+        raise HTTPException(status_code=400, detail="Código de autorização ausente.")
+
     try:
         token_data = await spotify_client.exchange_code_for_token(code)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Falha ao trocar código por token.")
 
     try:
         profile_data = await spotify_client.get_current_user_profile(token_data["access_token"])
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Falha ao buscar perfil do usuário.")
 
     spotify_id = profile_data.get("id")
@@ -112,14 +125,13 @@ async def callback(request: Request, response: Response, code: str, state: str, 
     db.commit()
 
     # Redireciona para o frontend com o cookie de sessão
-    redirect_url = "http://127.0.0.1:5173"
-    redirect_response = RedirectResponse(redirect_url)
+    redirect_response = RedirectResponse(settings.frontend_url, status_code=302)
     redirect_response.delete_cookie(STATE_COOKIE_NAME)
     redirect_response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=raw_session_token,
         httponly=True,
-        secure=False, # True em produção
+        secure=settings.secure_cookies,
         samesite="lax",
         max_age=SESSION_EXPIRY_DAYS * 24 * 60 * 60
     )
@@ -136,7 +148,11 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     session_hash = hashlib.sha256(session_token.encode()).hexdigest()
     app_session = db.query(AppSession).filter(AppSession.session_token_hash == session_hash).first()
     
-    if not app_session or app_session.expires_at < datetime.now(timezone.utc):
+    expires_at = app_session.expires_at if app_session else None
+    if expires_at and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if not app_session or expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Sessão inválida ou expirada.")
         
     user = db.query(User).filter(User.id == app_session.user_id).first()

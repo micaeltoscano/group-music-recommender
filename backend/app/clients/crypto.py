@@ -2,9 +2,6 @@
 
 from cryptography.fernet import Fernet
 from app.config import settings
-import logging
-
-logger = logging.getLogger(__name__)
 
 # Instância do Fernet baseada na chave de configuração
 _fernet: Fernet | None = None
@@ -13,12 +10,10 @@ def _get_fernet() -> Fernet:
     global _fernet
     if _fernet is None:
         if not settings.fernet_key:
-            logger.warning("FERNET_KEY não está definida no ambiente. Usando chave temporária apenas para testes.")
-            # Chave temporária gerada dinamicamente para não quebrar a aplicação caso falte no .env
-            temp_key = Fernet.generate_key()
-            _fernet = Fernet(temp_key)
-        else:
-            _fernet = Fernet(settings.fernet_key.encode('utf-8'))
+            raise RuntimeError(
+                "FERNET_KEY não configurada; defina uma chave persistente antes de armazenar tokens."
+            )
+        _fernet = Fernet(settings.fernet_key.encode("utf-8"))
     return _fernet
 
 def encrypt(text: str) -> str:
