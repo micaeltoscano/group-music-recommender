@@ -8,10 +8,10 @@ Este documento define **como os agentes trabalham em conjunto** neste repositór
 
 Fontes de verdade complementares:
 
-- **Escopo e critérios de aceitação:** `docs/BACKLOG_PRODUTO.md`
+- **Escopo e critérios de aceitação:** `docs/produto/BACKLOG_PRODUTO.md`
 - **Arquitetura e visão:** `README.md`
-- **Execução por Sprint, status e retomada:** `docs/PLANO_EXECUCAO.md`
-- **Testes por PB e por Sprint (contrato de validação):** `docs/PLANO_TESTES.md`
+- **Execução por Sprint, status e retomada:** `docs/planejamento/PLANO_EXECUCAO.md`
+- **Testes por PB e por Sprint (contrato de validação):** `docs/planejamento/PLANO_TESTES.md`
 
 ---
 
@@ -23,7 +23,7 @@ Responsável por planejar e implementar **um PB por vez**, criar/atualizar os te
 e **entregar o PB para validação**. Não decide se o PB está aprovado.
 
 - Trabalha somente na **Sprint ativa** e mantém **apenas um PB principal** em andamento.
-- Segue o **Protocolo obrigatório do agente de implementação** (`docs/PLANO_EXECUCAO.md` §4).
+- Segue o **Protocolo obrigatório do agente de implementação** (`docs/planejamento/PLANO_EXECUCAO.md` §4).
 - Após implementar, **entra em estado de espera** até receber o veredito do Agente de Teste.
 
 ### 1.2 Agente de Teste (QA)
@@ -31,7 +31,7 @@ e **entregar o PB para validação**. Não decide se o PB está aprovado.
 Responsável por **executar e avaliar** os testes do PB (e, ao fim da Sprint, os testes integrados e de
 regressão), emitindo um **veredito objetivo** com evidências.
 
-- Executa os casos definidos em `docs/PLANO_TESTES.md` para o PB/Sprint.
+- Executa os casos definidos em `docs/planejamento/PLANO_TESTES.md` para o PB/Sprint.
 - Não corrige o código de produção; **reporta defeitos** (com CT relacionado, passos e evidência).
 - É a **única autoridade** para declarar `VALIDADO` / `REPROVADO`.
 
@@ -87,7 +87,7 @@ DEV/QA: SPRINT N EM VALIDAÇÃO — EXECUTANDO TESTES INTEGRADOS E DE REGRESSÃO
 ```
 
 - A Sprint **não** é encerrada enquanto houver testes obrigatórios (individuais, integrados ou de
-  regressão) falhando, conforme a *Definition of Done da Sprint* (`docs/BACKLOG_PRODUTO.md` §15.1).
+  regressão) falhando, conforme a *Definition of Done da Sprint* (`docs/produto/BACKLOG_PRODUTO.md` §15.1).
 - Só se inicia a **Sprint seguinte** após `SPRINT N CONCLUÍDA`.
 
 ---
@@ -131,8 +131,8 @@ Após o veredito, o **Status do PB** e o **diário de retomada** são atualizado
 ## 6. Prompt do Agente de Implementação (Dev)
 
 ```text
-PAPEL: Agente de Implementação (Dev). Leia AGENTS.md, docs/PLANO_EXECUCAO.md (§4 e a Sprint ativa)
-e docs/PLANO_TESTES.md do PB antes de tocar no código.
+PAPEL: Agente de Implementação (Dev). Leia AGENTS.md, docs/planejamento/PLANO_EXECUCAO.md (§4 e a Sprint ativa)
+e docs/planejamento/PLANO_TESTES.md do PB antes de tocar no código.
 
 Sprint ativa: Sprint N
 PB ativo: PB-XX  (apenas UM PB por vez)
@@ -141,15 +141,15 @@ Faça, nesta ordem:
 1. Verifique as dependências do PB (não comece se houver dependência não concluída).
 2. Planeje o recorte do PB (arquivos/módulos previstos) sem antecipar PBs futuros.
 3. Implemente SOMENTE o escopo do PB atual.
-4. Crie/atualize os testes do PB junto com o código (ver docs/PLANO_TESTES.md → PB-XX).
+4. Crie/atualize os testes do PB junto com o código (ver docs/planejamento/PLANO_TESTES.md → PB-XX).
 5. Rode os testes do PB localmente e corrija o que puder.
-6. Atualize docs/PLANO_EXECUCAO.md (Status do PB, resultado da implementação, arquivos, riscos).
+6. Atualize docs/planejamento/PLANO_EXECUCAO.md (Status do PB, resultado da implementação, arquivos, riscos).
 
 Ao terminar, emita LITERALMENTE:
    PB-XX IMPLEMENTADO — INICIANDO VALIDAÇÃO
 e PARE. NÃO inicie o próximo PB. AGUARDE o veredito do Agente de Teste.
 
-Ao receber o veredito do QA, antes de agir, leia o relatório em RELATORIOS_TESTES/PB-XX.md
+Ao receber o veredito do QA, antes de agir, leia o relatório em docs/relatorios-testes/PB-XX.md
 (veredito + defeitos DEF-*) e o resumo espelhado no PLANO_EXECUCAO.md:
 - Se VALIDADO, só então inicie o próximo PB.
 - Se REPROVADO/BLOQUEADO, trate cada DEF-* do relatório e reemita "IMPLEMENTADO" (mesmo PB).
@@ -163,12 +163,12 @@ reemita "IMPLEMENTADO".
 
 ```text
 PAPEL: Agente de Teste (QA). Você é a autoridade de validação. Não corrija código de produção;
-apenas execute, avalie e reporte. Leia AGENTS.md e docs/PLANO_TESTES.md do PB.
+apenas execute, avalie e reporte. Leia AGENTS.md e docs/planejamento/PLANO_TESTES.md do PB.
 
 Gatilho: recebeu "PB-XX IMPLEMENTADO — INICIANDO VALIDAÇÃO".
 
 Faça, nesta ordem:
-1. Selecione todos os casos obrigatórios de PB-XX em docs/PLANO_TESTES.md.
+1. Selecione todos os casos obrigatórios de PB-XX em docs/planejamento/PLANO_TESTES.md.
 2. Execute cada caso (sucesso, entrada inválida, ausência de dados, acesso não autorizado,
    duplicidade, limites, falha de serviço externo, persistência, idempotência, privacidade,
    regressão relacionada — conforme aplicável ao PB).
@@ -190,6 +190,6 @@ Ao fim da Sprint, repita o processo com os testes integrados + regressão e emit
 
 ## 8. Onde registrar o resultado
 
-- **Status dos casos de teste:** `docs/PLANO_TESTES.md` (campo *Status* de cada `CT-*`).
-- **Status do PB e da Sprint, evidências e próxima ação:** `docs/PLANO_EXECUCAO.md`.
+- **Status dos casos de teste:** `docs/planejamento/PLANO_TESTES.md` (campo *Status* de cada `CT-*`).
+- **Status do PB e da Sprint, evidências e próxima ação:** `docs/planejamento/PLANO_EXECUCAO.md`.
 - **Nada de segredos** (tokens, chaves) em código, logs, testes ou evidências.

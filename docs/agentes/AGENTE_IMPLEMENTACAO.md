@@ -15,7 +15,7 @@ Antes de modificar qualquer arquivo, leia integralmente:
 3. `PLANO_EXECUCAO.md`
 4. `PLANO_TESTES.md`
 5. `AGENTS.md` ou `CLAUDE.md`, caso existam
-6. o relatório de validação do QA em `RELATORIOS_TESTES/PB-XX.md`, quando existir (veredito, casos executados e defeitos `DEF-*`)
+6. o relatório de validação do QA em `docs/relatorios-testes/PB-XX.md`, quando existir (veredito, casos executados e defeitos `DEF-*`)
 7. arquivos de configuração e código relacionados ao PB ativo
 
 Também examine:
@@ -273,7 +273,7 @@ Não inicie o próximo PB até que o agente testador aprove o atual.
 
 Ao receber o veredito do QA, antes de qualquer ação:
 
-1. leia integralmente o relatório em `RELATORIOS_TESTES/PB-XX.md` (veredito, casos `CT-*` executados
+1. leia integralmente o relatório em `docs/relatorios-testes/PB-XX.md` (veredito, casos `CT-*` executados
    e defeitos `DEF-*` com passos de reprodução);
 2. confira também o resumo espelhado no `PLANO_EXECUCAO.md`.
 

@@ -277,7 +277,7 @@ Depois da execução:
 Crie ou atualize:
 
 ```text
-RELATORIOS_TESTES/PB-XX.md
+docs/relatorios-testes/PB-XX.md
 ```
 
 O relatório deve conter:
