@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#14130d;}
+a{color:#ff5b1c;text-decoration:none}
+a:hover{color:#ffa07a}
+::selection{background:#ff5b1c;color:#14130d}
+input,textarea{outline:none}
+@keyframes eq{0%,100%{transform:scaleY(0.25)}50%{transform:scaleY(1)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#14130d;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;position:relative;overflow-x:hidden">
+
+  <!-- scanline texture -->
+  <sc-if value="{{ scanlines }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0.045;background:repeating-linear-gradient(0deg, #000 0px, #000 1px, transparent 1px, transparent 3px)"></div>
+  </sc-if>
+
+  <!-- ============ TOP BAR ============ -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 36px;border-bottom:1px solid #2b2919">
+    <div style="display:flex;align-items:center;gap:16px;cursor:pointer" onClick="{{ goHome }}">
+      <div style="display:flex;align-items:flex-end;gap:3px;height:24px">
+        <div style="width:4px;height:100%;background:#ff5b1c;border-radius:2px;animation:eq 1.1s ease-in-out infinite;transform-origin:bottom"></div>
+        <div style="width:4px;height:100%;background:#ff5b1c;border-radius:2px;animation:eq 0.8s ease-in-out infinite 0.15s;transform-origin:bottom"></div>
+        <div style="width:4px;height:100%;background:#ff5b1c;border-radius:2px;animation:eq 1.3s ease-in-out infinite 0.3s;transform-origin:bottom"></div>
+        <div style="width:4px;height:100%;background:#ff5b1c;border-radius:2px;animation:eq 0.9s ease-in-out infinite 0.1s;transform-origin:bottom"></div>
+      </div>
+      <div>
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:22px;letter-spacing:0.06em;color:#f2ecdb;line-height:1">VIBE CHECK</div>
+        <div style="font-size:10px;letter-spacing:0.22em;color:#8b8871;margin-top:4px">NEGOCIE. VOTE. CURTA JUNTO.</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px">
+      <sc-if value="{{ inRoom }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border:1px solid #3a382a;border-radius:999px;font-size:12px;color:#c9c4ad">
+          <span style="width:7px;height:7px;border-radius:99px;background:#a8ae6d;display:inline-block"></span>
+          SALA <span style="color:#ff5b1c;font-weight:600">X8F7-9Q2L</span>
+        </div>
+      </sc-if>
+      <div style="font-size:10px;letter-spacing:0.18em;color:#5b5945">VC-01 · GROUP PLAYLIST SYSTEM</div>
+    </div>
+  </div>
+
+  <!-- ============ LOGIN / LANDING ============ -->
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;align-items:center">
+
+      <!-- hero -->
+      <div style="display:flex;align-items:center;gap:64px;max-width:1080px;width:100%;padding:88px 24px 40px;flex-wrap:wrap;justify-content:center">
+        <div style="flex:1;min-width:340px;max-width:520px">
+          <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945;margin-bottom:18px">[ VC-01 · GROUP PLAYLIST SYSTEM ]</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:56px;line-height:1.02;letter-spacing:0.01em">A playlist que <span style="color:#ff5b1c">representa</span> o grupo inteiro.</div>
+          <div style="font-size:14.5px;line-height:1.7;color:#a8a48c;margin-top:22px">Spotify entende o passado musical. O Vibe Check entende o humor do momento e o grupo — e negocia uma playlist única que ninguém odeia e todo mundo curte.</div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:36px">
+            <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;padding:18px 26px;background:#ff5b1c;color:#14130d;border:none;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14.5px;letter-spacing:0.05em;cursor:pointer" style-hover="background:#ff7a45">
+              <span>ENTRAR COM SPOTIFY</span><span>▶</span>
+            </button>
+            <div style="font-size:11px;color:#8b8871;line-height:1.5">🔒 Tokens criptografados.<br>Nunca saem do servidor.</div>
+          </div>
+        </div>
+        <div style="flex:none;width:340px;background:#ff5b1c;border-radius:20px;padding:44px 36px;color:#14130d;box-shadow:0 24px 80px rgba(255,91,28,0.18)">
+          <div style="display:flex;align-items:flex-end;gap:4px;height:30px;margin-bottom:20px">
+            <div style="width:6px;height:100%;background:#14130d;border-radius:3px;animation:eq 1.2s ease-in-out infinite;transform-origin:bottom"></div>
+            <div style="width:6px;height:100%;background:#14130d;border-radius:3px;animation:eq 0.9s ease-in-out infinite 0.2s;transform-origin:bottom"></div>
+            <div style="width:6px;height:100%;background:#14130d;border-radius:3px;animation:eq 1.4s ease-in-out infinite 0.1s;transform-origin:bottom"></div>
+            <div style="width:6px;height:100%;background:#14130d;border-radius:3px;animation:eq 1s ease-in-out infinite 0.35s;transform-origin:bottom"></div>
+            <div style="width:6px;height:100%;background:#14130d;border-radius:3px;animation:eq 1.25s ease-in-out infinite 0.05s;transform-origin:bottom"></div>
+          </div>
+          <div style="font-size:11px;letter-spacing:0.16em;font-weight:600;margin-bottom:10px">SALA · X8F7-9Q2L</div>
+          <div style="font-size:12.5px;line-height:1.6;font-weight:500">"Pré-jogo no apê" · 5 pessoas · modo Democrático</div>
+          <div style="margin-top:18px;padding-top:18px;border-top:1px solid rgba(20,19,13,0.2);display:flex;justify-content:space-between;font-size:11.5px;font-weight:600">
+            <span>SATISFAÇÃO</span><span>87%</span>
+          </div>
+          <div style="height:6px;background:rgba(20,19,13,0.15);border-radius:99px;margin-top:8px;overflow:hidden">
+            <div style="height:100%;width:87%;background:#14130d;border-radius:99px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- social proof strip -->
+      <div style="display:flex;gap:40px;margin-top:8px;font-size:11px;letter-spacing:0.14em;color:#8b8871;flex-wrap:wrap;justify-content:center;padding:0 24px">
+        <span>◉ PLAYLISTS JUSTAS</span><span>◉ TODO MUNDO OUVIDO</span><span>◉ ZERO DRAMA</span><span>◉ FEITO PARA GRUPOS</span>
+      </div>
+
+      <!-- how it works -->
+      <div style="max-width:1080px;width:100%;padding:88px 24px 40px">
+        <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945;text-align:center;margin-bottom:14px">[ COMO FUNCIONA ]</div>
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:30px;text-align:center;margin-bottom:44px">Do "quem vai escolher a música?" à playlist, em 4 passos.</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+          <sc-for list="{{ howItWorks }}" as="hw" hint-placeholder-count="4">
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:16px;padding:26px">
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:26px;color:#ff5b1c">{{ hw.n }}</div>
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:16px;margin-top:10px">{{ hw.title }}</div>
+              <div style="font-size:12px;color:#a8a48c;line-height:1.55;margin-top:8px">{{ hw.text }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- feature grid -->
+      <div style="max-width:1080px;width:100%;padding:56px 24px 40px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+          <sc-for list="{{ features }}" as="f" hint-placeholder-count="3">
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:16px;padding:28px">
+              <div style="font-size:22px">{{ f.icon }}</div>
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:17px;margin-top:14px">{{ f.title }}</div>
+              <div style="font-size:12.5px;color:#a8a48c;line-height:1.6;margin-top:8px">{{ f.text }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- final CTA -->
+      <div style="width:100%;background:#1a1810;border-top:1px solid #2b2919;margin-top:24px;padding:72px 24px 96px;display:flex;flex-direction:column;align-items:center">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:34px;text-align:center;max-width:520px;line-height:1.2">Chame o grupo. Deixa o motor negociar.</div>
+        <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;margin-top:28px;padding:18px 30px;background:#ff5b1c;color:#14130d;border:none;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14.5px;letter-spacing:0.05em;cursor:pointer" style-hover="background:#ff7a45">
+          <span>ENTRAR COM SPOTIFY</span><span>▶</span>
+        </button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ HOME ============ -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:72px 24px 120px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:40px">
+        <div style="width:44px;height:44px;border-radius:99px;background:#ff5b1c;color:#14130d;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px">LU</div>
+        <div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:24px">Bom te ver, Luiza.</div>
+          <div style="font-size:12px;color:#8b8871;margin-top:2px">Conectada via Spotify · top tracks sincronizados há 2h</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center">
+        <div style="width:400px;background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:36px">
+          <div style="font-size:11px;letter-spacing:0.18em;color:#ff5b1c;margin-bottom:14px">01 · CRIAR SALA</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:26px;line-height:1.15">Comece uma sessão para o seu grupo</div>
+          <div style="font-size:12.5px;color:#a8a48c;line-height:1.6;margin-top:12px">Você será o host: define a ocasião, escolhe o modo de consenso e a playlist final é criada no seu Spotify.</div>
+          <button onClick="{{ createRoom }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:28px;padding:16px 20px;background:#ff5b1c;color:#14130d;border:none;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#ff7a45">
+            <span>CRIAR SALA</span><span>▶</span>
+          </button>
+        </div>
+        <div style="width:400px;background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:36px">
+          <div style="font-size:11px;letter-spacing:0.18em;color:#a8ae6d;margin-bottom:14px">02 · ENTRAR COM CÓDIGO</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:26px;line-height:1.15">Te chamaram para uma sala?</div>
+          <div style="font-size:12.5px;color:#a8a48c;line-height:1.6;margin-top:12px">Digite o código curto que o host compartilhou. Sessões expiram em 24h.</div>
+          <input value="{{ code }}" onChange="{{ onCode }}" placeholder="EX: X8F7-9Q2L" style="width:100%;box-sizing:border-box;margin-top:28px;padding:15px 18px;background:#14130d;border:1px solid #3a382a;border-radius:12px;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;font-size:16px;letter-spacing:0.2em" style-focus="border:1px solid #a8ae6d">
+          <button onClick="{{ joinRoom }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:12px;padding:16px 20px;background:transparent;color:#a8ae6d;border:1px solid #a8ae6d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#a8ae6d;color:#14130d">
+            <span>ENTRAR NA SALA</span><span>▶</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ LOBBY ============ -->
+  <sc-if value="{{ isLobby }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1100px;margin:0 auto;padding:40px 24px 120px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
+        <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945">[ VC-01 · ROOM MODULE ]</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;letter-spacing:0.14em;color:#5b5945;margin-right:4px">LAYOUT</span>
+          <sc-for list="{{ variants }}" as="v" hint-placeholder-count="3">
+            <button onClick="{{ v.pick }}" style="{{ v.style }}">{{ v.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- VARIANT A : painel de controle -->
+      <sc-if value="{{ isLobbyA }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:400px 1fr;gap:24px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:24px">
+            <div style="background:#ff5b1c;border-radius:18px;padding:32px;color:#14130d">
+              <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:0.16em;font-weight:600"><span>SALA ATIVA</span><span>EXPIRA EM 23:58</span></div>
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:44px;letter-spacing:0.05em;margin-top:14px">X8F7-9Q2L</div>
+              <button style="margin-top:14px;padding:10px 16px;background:#14130d;color:#f2ecdb;border:none;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;cursor:pointer" style-hover="background:#26241a">COPIAR CÓDIGO ⧉</button>
+            </div>
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px">
+                <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871">MEMBROS ATIVOS</div>
+                <div style="font-size:12px;color:#a8ae6d">5/5</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <sc-for list="{{ members }}" as="m" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:99px;background:{{ m.color }};color:#14130d;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px">{{ m.initials }}</div>
+                    <div style="flex:1;font-size:13px">{{ m.name }}</div>
+                    <sc-if value="{{ m.isHost }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:10px;letter-spacing:0.12em;background:#ff5b1c;color:#14130d;padding:3px 8px;border-radius:5px;font-weight:600">HOST</span>
+                    </sc-if>
+                    <sc-if value="{{ m.vibeDone }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:10px;color:#a8ae6d;letter-spacing:0.08em">VIBE ✓</span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:24px">
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+              <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871;margin-bottom:16px">OCASIÃO</div>
+              <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <sc-for list="{{ occasions }}" as="o" hint-placeholder-count="6">
+                  <button onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+              <input value="{{ desc }}" onChange="{{ onDesc }}" placeholder="Descreva a vibe: 'pré-jogo no apê, clima descontraído…'" style="width:100%;box-sizing:border-box;margin-top:18px;padding:14px 16px;background:#14130d;border:1px solid #3a382a;border-radius:10px;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;font-size:13px" style-focus="border:1px solid #ff5b1c">
+            </div>
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+              <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871;margin-bottom:16px">MODO DE CONSENSO</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <sc-for list="{{ modes }}" as="mo" hint-placeholder-count="3">
+                  <button onClick="{{ mo.pick }}" style="{{ mo.style }}">
+                    <span style="font-weight:600;font-size:13px;display:block">{{ mo.name }}</span>
+                    <span style="font-size:11px;opacity:0.75;display:block;margin-top:6px;line-height:1.4">{{ mo.desc }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871">VIBE CHECK DO GRUPO</div>
+                <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:26px;color:#ff5b1c">{{ vibePctLabel }}</div>
+              </div>
+              <div style="height:8px;background:#14130d;border-radius:99px;margin-top:14px;overflow:hidden">
+                <div style="height:100%;background:#ff5b1c;border-radius:99px;width:{{ vibePct }}"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+                <div style="font-size:12px;color:#a8a48c">{{ vibeStatus }}</div>
+                <button onClick="{{ goVibe }}" style="padding:10px 18px;background:transparent;border:1px solid #a8ae6d;color:#a8ae6d;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#a8ae6d;color:#14130d">{{ vibeCta }} ▶</button>
+              </div>
+            </div>
+            <button onClick="{{ startGen }}" style="display:flex;align-items:center;justify-content:space-between;padding:20px 26px;background:#ff5b1c;color:#14130d;border:none;border-radius:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16px;letter-spacing:0.08em;cursor:pointer" style-hover="background:#ff7a45">
+              <span>GERAR PLAYLIST</span><span>▶▶</span>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- VARIANT B : hero minimal -->
+      <sc-if value="{{ isLobbyB }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:24px">
+          <div style="font-size:11px;letter-spacing:0.2em;color:#8b8871">SALA ATIVA · EXPIRA EM 23:58</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:96px;letter-spacing:0.04em;color:#ff5b1c;line-height:1;margin-top:18px">X8F7-9Q2L</div>
+          <div style="font-size:12px;color:#8b8871;margin-top:12px">compartilhe este código · <a href="#copiar">copiar ⧉</a></div>
+          <div style="display:flex;gap:14px;margin-top:36px">
+            <sc-for list="{{ members }}" as="m" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:52px;height:52px;border-radius:99px;background:{{ m.color }};color:#14130d;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px">{{ m.initials }}</div>
+                <div style="font-size:11px;color:#c9c4ad">{{ m.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:40px;font-size:12px;color:#a8a48c;align-items:center;flex-wrap:wrap;justify-content:center">
+            <span style="padding:9px 16px;border:1px solid #3a382a;border-radius:999px">OCASIÃO: <span style="color:#f2ecdb">{{ occasion }}</span></span>
+            <span style="padding:9px 16px;border:1px solid #3a382a;border-radius:999px">MODO: <span style="color:#f2ecdb">{{ mode }}</span></span>
+            <span style="padding:9px 16px;border:1px solid #3a382a;border-radius:999px">VIBE CHECK: <span style="color:#ff5b1c">{{ vibePctLabel }}</span></span>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:44px">
+            <button onClick="{{ goVibe }}" style="padding:18px 28px;background:transparent;border:1px solid #a8ae6d;color:#a8ae6d;border-radius:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#a8ae6d;color:#14130d">{{ vibeCta }}</button>
+            <button onClick="{{ startGen }}" style="padding:18px 36px;background:#ff5b1c;border:none;color:#14130d;border-radius:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;letter-spacing:0.08em;cursor:pointer" style-hover="background:#ff7a45">GERAR PLAYLIST ▶</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- VARIANT C : mission control -->
+      <sc-if value="{{ isLobbyC }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:20px;align-items:start">
+          <div style="background:#1e1c13;border:1px solid #35331f;border-radius:16px;padding:24px">
+            <div style="font-size:10px;letter-spacing:0.18em;color:#8b8871;margin-bottom:16px">▙ MEMBROS · 5/5</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ members }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#14130d;border-radius:10px">
+                  <div style="width:28px;height:28px;border-radius:99px;background:{{ m.color }};color:#14130d;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px">{{ m.initials }}</div>
+                  <div style="flex:1;font-size:12px">{{ m.name }}</div>
+                  <sc-if value="{{ m.isHost }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;color:#ff5b1c;letter-spacing:0.1em">HOST</span></sc-if>
+                  <sc-if value="{{ m.vibeDone }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;color:#a8ae6d">✓</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="background:#1e1c13;border:1px solid #ff5b1c;border-radius:16px;padding:32px;text-align:center">
+              <div style="font-size:10px;letter-spacing:0.2em;color:#8b8871">CÓDIGO DA SALA</div>
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:52px;color:#ff5b1c;margin-top:10px;letter-spacing:0.04em">X8F7-9Q2L</div>
+              <div style="display:flex;justify-content:center;gap:20px;margin-top:16px;font-size:11px;color:#a8a48c">
+                <span>{{ occasion }}</span><span style="color:#3a382a">|</span><span>{{ mode }}</span><span style="color:#3a382a">|</span><span style="color:#ff5b1c">VIBE {{ vibePctLabel }}</span>
+              </div>
+            </div>
+            <button onClick="{{ startGen }}" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:20px;background:#ff5b1c;color:#14130d;border:none;border-radius:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;letter-spacing:0.08em;cursor:pointer" style-hover="background:#ff7a45">GERAR PLAYLIST ▶▶</button>
+            <button onClick="{{ goVibe }}" style="padding:14px;background:transparent;border:1px solid #a8ae6d;color:#a8ae6d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#a8ae6d;color:#14130d">{{ vibeCta }}</button>
+          </div>
+          <div style="background:#1e1c13;border:1px solid #35331f;border-radius:16px;padding:24px">
+            <div style="font-size:10px;letter-spacing:0.18em;color:#8b8871;margin-bottom:16px">▙ ATIVIDADE RECENTE</div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+                <div style="display:flex;gap:10px;font-size:11.5px;line-height:1.5">
+                  <span style="color:#ff5b1c">▸</span>
+                  <span style="flex:1;color:#c9c4ad">{{ a.text }}</span>
+                  <span style="color:#5b5945">{{ a.when }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ============ VIBE CHECK ============ -->
+  <sc-if value="{{ isVibe }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:72px 24px 120px">
+      <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945;margin-bottom:18px">[ VC-01 · VIBE CHECK MODULE ]</div>
+      <div style="width:620px;max-width:100%;background:#1e1c13;border:1px solid #35331f;border-radius:20px;padding:44px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+          <div style="font-size:12px;letter-spacing:0.14em;color:#a8ae6d">PERGUNTA {{ vibeNum }}/3</div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ vibeDots }}" as="d" hint-placeholder-count="3">
+              <div style="{{ d.style }}"></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:26px;line-height:1.3">{{ vibeQ }}</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:32px">
+          <sc-for list="{{ vibeOpts }}" as="op" hint-placeholder-count="4">
+            <button onClick="{{ op.pick }}" style="display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:18px 20px;background:#14130d;border:1px solid #3a382a;border-radius:12px;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.5;cursor:pointer" style-hover="border:1px solid #ff5b1c;background:#221a12">
+              <span style="width:32px;height:32px;flex:none;border-radius:8px;background:#2b2919;color:#ff5b1c;display:flex;align-items:center;justify-content:center;font-weight:600">{{ op.letter }}</span>
+              <span>{{ op.text }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:28px;font-size:12px">
+          <a href="#pular" onClick="{{ skipVibe }}">pular o vibe check →</a>
+          <span style="color:#5b5945">suas respostas viram variáveis do algoritmo</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ GENERATING ============ -->
+  <sc-if value="{{ isGen }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:72px 24px 120px">
+      <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945;margin-bottom:18px">[ VC-01 · NEGOTIATION ENGINE ]</div>
+      <div style="width:640px;max-width:100%;background:#1e1c13;border:1px solid #35331f;border-radius:20px;padding:40px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:24px">Negociando a playlist…</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:24px;color:#ff5b1c">{{ genPctLabel }}</div>
+        </div>
+        <div style="height:8px;background:#14130d;border-radius:99px;margin-top:18px;overflow:hidden">
+          <div style="height:100%;background:#ff5b1c;border-radius:99px;width:{{ genPct }};transition:width 0.5s ease"></div>
+        </div>
+        <div style="margin-top:28px;background:#14130d;border-radius:12px;padding:22px;min-height:230px;font-size:12.5px;line-height:2;color:#a8ae6d">
+          <sc-for list="{{ genLines }}" as="l" hint-placeholder-count="3">
+            <div><span style="color:#5b5945">$</span> {{ l }}</div>
+          </sc-for>
+          <span style="display:inline-block;width:9px;height:16px;background:#ff5b1c;vertical-align:middle;animation:blink 1s step-end infinite"></span>
+        </div>
+        <div style="font-size:11px;color:#8b8871;margin-top:18px;line-height:1.6">O motor equilibra gosto, contexto, justiça e rejeição — ninguém fica de fora da própria playlist.</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ RESULT ============ -->
+  <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1100px;margin:0 auto;padding:48px 24px 120px">
+      <div style="display:flex;align-items:center;gap:28px;margin-bottom:32px">
+        <div style="width:96px;height:96px;background:#ff5b1c;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:44px;color:#14130d">A−</div>
+        <div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:34px;line-height:1">ÓTIMO VIBE!</div>
+          <div style="font-size:13px;color:#a8a48c;margin-top:8px">Grupo alinhado e satisfeito. Playlist criada no Spotify de Luiza.</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:12px">
+          <button onClick="{{ goFeedback }}" style="padding:14px 22px;background:transparent;border:1px solid #a8ae6d;color:#a8ae6d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.04em;cursor:pointer" style-hover="background:#a8ae6d;color:#14130d">DAR FEEDBACK</button>
+          <button style="padding:14px 22px;background:#ff5b1c;border:none;color:#14130d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:0.04em;cursor:pointer" style-hover="background:#ff7a45">ABRIR NO SPOTIFY ▶</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px">
+        <sc-for list="{{ metrics }}" as="mt" hint-placeholder-count="4">
+          <div style="background:#1e1c13;border:1px solid #35331f;border-radius:14px;padding:22px">
+            <div style="font-size:10px;letter-spacing:0.16em;color:#8b8871">{{ mt.label }}</div>
+            <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:34px;color:#f2ecdb;margin-top:8px">{{ mt.value }}</div>
+            <div style="font-size:11px;color:#a8ae6d;margin-top:4px">{{ mt.note }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:start">
+        <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+            <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871">PLAYLIST FINAL · 20 FAIXAS · 1:02:48</div>
+            <div style="font-size:11px;color:#a8ae6d">SEQUENCIADA POR FLUXO</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ tracks }}" as="t" hint-placeholder-count="8">
+              <div>
+                <sc-if value="{{ t.phase }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:10px;letter-spacing:0.2em;color:#ff5b1c;margin:14px 0 8px">▙ {{ t.phase }}</div>
+                </sc-if>
+                <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#14130d;border-radius:10px" style-hover="background:#221f14">
+                  <span style="width:22px;font-size:12px;color:#5b5945">{{ t.pos }}</span>
+                  <div style="width:38px;height:38px;flex:none;border-radius:8px;background:repeating-linear-gradient(45deg, {{ t.color }} 0px, {{ t.color }} 4px, #14130d 4px, #14130d 8px);opacity:0.9"></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13.5px;font-weight:500">{{ t.name }}</div>
+                    <div style="font-size:11px;color:#8b8871;margin-top:2px">{{ t.artist }} · via {{ t.by }}</div>
+                  </div>
+                  <div style="font-size:11px;color:#a8a48c;max-width:180px;text-align:right;line-height:1.4">{{ t.reason }}</div>
+                  <span style="font-size:11px;font-weight:600;background:#2b2919;color:#a8ae6d;padding:5px 9px;border-radius:6px">FAIR {{ t.fair }}%</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+            <div style="font-size:11px;letter-spacing:0.18em;color:#8b8871;margin-bottom:20px">REPRESENTAÇÃO POR MEMBRO</div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ repBars }}" as="r" hint-placeholder-count="5">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+                    <span>{{ r.name }}</span><span style="color:#ff5b1c;font-weight:600">{{ r.pctLabel }}</span>
+                  </div>
+                  <div style="height:7px;background:#14130d;border-radius:99px;overflow:hidden">
+                    <div style="height:100%;background:{{ r.color }};border-radius:99px;width:{{ r.width }}"></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#1e1c13;border:1px solid #35331f;border-radius:18px;padding:28px">
+            <button onClick="{{ toggleWhy }}" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:transparent;border:none;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;padding:0;letter-spacing:0.04em">
+              <span>POR QUE ESSA PLAYLIST É JUSTA?</span><span style="color:#ff5b1c">{{ whyIcon }}</span>
+            </button>
+            <sc-if value="{{ whyOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+                <sc-for list="{{ whyItems }}" as="w" hint-placeholder-count="4">
+                  <div style="display:flex;gap:10px;font-size:12px;line-height:1.6;color:#c9c4ad">
+                    <span style="color:#a8ae6d">✓</span><span>{{ w }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+          <button onClick="{{ regen }}" style="padding:16px;background:transparent;border:1px dashed #3a382a;color:#8b8871;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.06em;cursor:pointer" style-hover="border:1px dashed #ff5b1c;color:#ff5b1c">↻ REGENERAR PLAYLIST</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ FEEDBACK ============ -->
+  <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:56px 24px 120px">
+      <div style="font-size:11px;letter-spacing:0.2em;color:#5b5945;margin-bottom:18px">[ VC-01 · FEEDBACK MODULE ]</div>
+      <sc-if value="{{ fbSent }}" hint-placeholder-val="{{ false }}">
+        <div style="width:520px;max-width:100%;background:#1e1c13;border:1px solid #a8ae6d;border-radius:20px;padding:48px;text-align:center">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:40px;color:#a8ae6d">✓</div>
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:26px;margin-top:12px">Valeu, Luiza!</div>
+          <div style="font-size:13px;color:#a8a48c;line-height:1.6;margin-top:10px">Seu feedback alimenta as próximas negociações do grupo.</div>
+          <button onClick="{{ backToResult }}" style="margin-top:28px;padding:14px 26px;background:#ff5b1c;border:none;color:#14130d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;cursor:pointer" style-hover="background:#ff7a45">VOLTAR AO RESULTADO</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ fbNotSent }}" hint-placeholder-val="{{ false }}">
+        <div style="width:680px;max-width:100%;background:#1e1c13;border:1px solid #35331f;border-radius:20px;padding:40px">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:26px">Como foi a playlist?</div>
+          <div style="font-size:12.5px;color:#a8a48c;margin-top:8px;line-height:1.6">Marque faixa a faixa — isso ajusta as próximas gerações.</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:26px">
+            <sc-for list="{{ fbTracks }}" as="f" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#14130d;border-radius:10px">
+                <div style="width:32px;height:32px;flex:none;border-radius:7px;background:repeating-linear-gradient(45deg, {{ f.color }} 0px, {{ f.color }} 4px, #14130d 4px, #14130d 8px)"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">{{ f.name }}</div>
+                  <div style="font-size:11px;color:#8b8871">{{ f.artist }}</div>
+                </div>
+                <button onClick="{{ f.like }}" style="{{ f.likeStyle }}">CURTI</button>
+                <button onClick="{{ f.nope }}" style="{{ f.nopeStyle }}">PULAR</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:30px">
+            <div style="font-size:11px;letter-spacing:0.16em;color:#8b8871;margin-bottom:12px">A PLAYLIST TE REPRESENTOU?</div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ repScale }}" as="s" hint-placeholder-count="6">
+                <button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.n }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <textarea value="{{ comment }}" onChange="{{ onComment }}" placeholder="Algum comentário? (opcional)" style="width:100%;box-sizing:border-box;margin-top:24px;padding:14px 16px;background:#14130d;border:1px solid #3a382a;border-radius:10px;color:#f2ecdb;font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:80px;resize:vertical" style-focus="border:1px solid #ff5b1c"></textarea>
+          <button onClick="{{ sendFb }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:20px;padding:17px 22px;background:#ff5b1c;border:none;color:#14130d;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#ff7a45">
+            <span>ENVIAR FEEDBACK</span><span>▶</span>
+          </button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ============ DEV NAV ============ -->
+  <sc-if value="{{ showDevNav }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:4px;background:#1e1c13;border:1px solid #35331f;border-radius:999px;padding:6px 8px;box-shadow:0 8px 30px rgba(0,0,0,0.5)">
+      <sc-for list="{{ devNav }}" as="n" hint-placeholder-count="7">
+        <button onClick="{{ n.pick }}" style="{{ n.style }}">{{ n.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lobbyVariant&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;], &quot;default&quot;: &quot;A&quot;, &quot;tsType&quot;: &quot;'A' | 'B' | 'C'&quot;, &quot;section&quot;: &quot;Layout&quot;}, &quot;scanlines&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Estilo&quot;}, &quot;showDevNav&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Protótipo&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'login',
+    variant: null,
+    occasion: 'Pré-jogo no apê',
+    mode: 'Democrático',
+    desc: '',
+    code: '',
+    vibeIndex: 0,
+    vibeDone: false,
+    genStep: 0,
+    whyOpen: true,
+    fb: {},
+    rep: null,
+    comment: '',
+    fbSent: false,
+  };
+
+  MEMBERS = [
+    { name: 'Luiza', initials: 'LU', color: '#ff5b1c', isHost: true, vibeDone: false },
+    { name: 'Daniel', initials: 'DA', color: '#a8ae6d', isHost: false, vibeDone: true },
+    { name: 'Mari', initials: 'MA', color: '#e0b84a', isHost: false, vibeDone: true },
+    { name: 'Caio', initials: 'CA', color: '#c96f4a', isHost: false, vibeDone: false },
+    { name: 'Isa', initials: 'IS', color: '#8fae8a', isHost: false, vibeDone: true },
+  ];
+
+  OCCASIONS = ['Pré-jogo no apê', 'Festa', 'Churrasco', 'Viagem', 'Estudo', 'Academia'];
+
+  MODES = [
+    { name: 'Democrático', desc: 'todo mundo com o mesmo peso' },
+    { name: 'Festa Segura', desc: 'hits conhecidos, zero risco' },
+    { name: 'Descoberta', desc: 'consenso + faixas novas' },
+  ];
+
+  HOW_IT_WORKS = [
+    { n: '01', title: 'Crie a sala', text: 'Host abre uma sessão, define ocasião e modo de consenso.' },
+    { n: '02', title: 'Grupo entra', text: 'Cada pessoa loga com Spotify e responde o Vibe Check (opcional).' },
+    { n: '03', title: 'Motor negocia', text: 'Gosto, contexto, justiça e rejeição são equilibrados por faixa.' },
+    { n: '04', title: 'Playlist real', text: 'Sai direto no Spotify do host, com explicação de cada escolha.' },
+  ];
+
+  FEATURES = [
+    { icon: '⚖', title: 'Justiça, não média', text: 'Ninguém fica de fora: o motor garante representação mínima por membro, não só a média do grupo.' },
+    { icon: '🎯', title: 'Contexto de verdade', text: 'Descreva a ocasião com suas palavras — o sistema entende o clima e ajusta a seleção.' },
+    { icon: '🛡', title: 'Vetos respeitados', text: 'Rejeição forte de alguém derruba a faixa, mesmo que o resto do grupo curta.' },
+  ];
+
+  ACTIVITY = [
+    { text: 'Isa completou o Vibe Check', when: '1m' },
+    { text: 'Caio entrou na sala', when: '3m' },
+    { text: 'Mari completou o Vibe Check', when: '5m' },
+    { text: 'Luiza definiu a ocasião: Pré-jogo no apê', when: '8m' },
+    { text: 'Sala criada por Luiza', when: '10m' },
+  ];
+
+  QUESTIONS = [
+    {
+      q: 'A festa começou e alguém colocou uma música que ninguém conhece. Você:',
+      opts: ['Dá uma chance se a vibe for boa', 'Pede logo um hit', 'Adora descobrir coisa nova', 'Finge que curtiu mas já quer pular'],
+    },
+    {
+      q: 'O grupo quer muito uma música que você não curte. Você:',
+      opts: ['Deixa rolar, faz parte', 'Aguenta uma, mas não duas', 'Veta na hora, sem dó', 'Sugere outra parecida'],
+    },
+    {
+      q: 'Sua playlist ideal para hoje tem:',
+      opts: ['Só hits que todo mundo canta junto', 'Mistura de hit com novidade', 'Pedradas que ninguém conhece', 'Clássicos nostálgicos'],
+    },
+  ];
+
+  GEN_STEPS = [
+    'Coletando top tracks e artistas dos 5 membros…',
+    "Interpretando contexto: 'pré-jogo no apê' → [party, upbeat, dance]",
+    'Montando pool de candidatas: 142 faixas',
+    'Calculando scores individuais e de grupo…',
+    'Aplicando rejection_penalty (tags: sad, slow)…',
+    'Fairness: garantindo representação mínima por membro…',
+    'Sequenciando: aquecimento → pico → fechamento…',
+    'Criando playlist privada no Spotify de Luiza…',
+  ];
+
+  TRACKS = [
+    { pos: '01', name: 'Electric Feel', artist: 'MGMT', fair: 95, by: 'Luiza', color: '#ff5b1c', reason: 'alta aceitação em todo o grupo', phase: 'AQUECIMENTO' },
+    { pos: '02', name: 'Tadow', artist: 'Masego, FKJ', fair: 93, by: 'Isa', color: '#8fae8a', reason: 'consenso alto, clima certo', phase: null },
+    { pos: '03', name: 'Best Part', artist: 'Daniel Caesar, H.E.R.', fair: 87, by: 'Isa', color: '#8fae8a', reason: 'aquecimento suave', phase: null },
+    { pos: '04', name: 'Brisa', artist: 'IZA', fair: 92, by: 'Mari', color: '#e0b84a', reason: 'pico de energia do grupo', phase: 'PICO' },
+    { pos: '05', name: 'Redbone', artist: 'Childish Gambino', fair: 88, by: 'Daniel', color: '#a8ae6d', reason: 'representa Daniel sem dividir', phase: null },
+    { pos: '06', name: 'Essence', artist: 'Wizkid, Tems', fair: 89, by: 'Luiza', color: '#ff5b1c', reason: 'descoberta segura p/ 3 membros', phase: null },
+    { pos: '07', name: 'Daydreaming', artist: 'Radiohead', fair: 90, by: 'Caio', color: '#c96f4a', reason: 'sobe o mínimo do Caio', phase: 'FECHAMENTO' },
+    { pos: '08', name: 'Amarela', artist: 'ANAVITÓRIA, Rincon Sapiência', fair: 86, by: 'Mari', color: '#e0b84a', reason: 'fechamento nostálgico', phase: null },
+  ];
+
+  METRICS = [
+    { label: 'SATISFAÇÃO DO GRUPO', value: '87%', note: 'excelente' },
+    { label: 'REPRESENTAÇÃO MÍNIMA', value: '79%', note: 'ninguém ficou de fora' },
+    { label: 'DESCOBERTAS', value: '31%', note: 'músicas novas p/ alguém' },
+    { label: 'REJEIÇÕES EVITADAS', value: '23', note: 'conflitos que não rolaram' },
+  ];
+
+  WHY = [
+    'Cada membro tem pelo menos 4 faixas com score alto — mínimo: Caio, 79%.',
+    'Nenhuma faixa com rejeição forte de algum membro entrou (23 descartadas).',
+    'Least misery: o pior score individual nunca fica muito abaixo da média do grupo.',
+    'Máximo de 2 faixas por artista e 31% de descobertas equilibradas com hits.',
+  ];
+
+  REPS = [
+    { name: 'Luiza', pct: 82 },
+    { name: 'Daniel', pct: 84 },
+    { name: 'Mari', pct: 86 },
+    { name: 'Caio', pct: 79 },
+    { name: 'Isa', pct: 81 },
+  ];
+
+  go(screen) { this.setState({ screen }); }
+
+  startGen = () => {
+    this.setState({ screen: 'generating', genStep: 1 });
+    if (this._t) clearInterval(this._t);
+    this._t = setInterval(() => {
+      this.setState((s) => {
+        if (s.screen !== 'generating') { clearInterval(this._t); return {}; }
+        if (s.genStep >= this.GEN_STEPS.length) {
+          clearInterval(this._t);
+          return { screen: 'result' };
+        }
+        return { genStep: s.genStep + 1 };
+      });
+    }, 620);
+  };
+
+  componentWillUnmount() { if (this._t) clearInterval(this._t); }
+
+  chip(active) {
+    return {
+      padding: '9px 16px', borderRadius: '999px',
+      border: '1px solid ' + (active ? '#ff5b1c' : '#3a382a'),
+      background: active ? '#ff5b1c' : 'transparent',
+      color: active ? '#14130d' : '#c9c4ad',
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: '12.5px', fontWeight: 500,
+      letterSpacing: '0.02em', cursor: 'pointer',
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const screen = s.screen;
+    const variant = s.variant || (this.props.lobbyVariant || 'A');
+    const vibePctNum = s.vibeDone ? 80 : 60;
+    const doneCount = s.vibeDone ? 4 : 3;
+    const members = this.MEMBERS.map((m) => ({
+      ...m,
+      vibeDone: m.name === 'Luiza' ? s.vibeDone : m.vibeDone,
+    }));
+
+    const q = this.QUESTIONS[Math.min(s.vibeIndex, 2)];
+
+    const fbButton = (active, color) => ({
+      padding: '8px 14px', borderRadius: '8px',
+      border: '1px solid ' + (active ? color : '#3a382a'),
+      background: active ? color : 'transparent',
+      color: active ? '#14130d' : '#8b8871',
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', fontWeight: 600,
+      letterSpacing: '0.04em', cursor: 'pointer',
+    });
+
+    return {
+      scanlines: this.props.scanlines ?? true,
+      showDevNav: this.props.showDevNav ?? true,
+
+      isLogin: screen === 'login',
+      isHome: screen === 'home',
+      isLobby: screen === 'lobby',
+      isVibe: screen === 'vibe',
+      isGen: screen === 'generating',
+      isResult: screen === 'result',
+      isFeedback: screen === 'feedback',
+      inRoom: ['lobby', 'vibe', 'generating', 'result', 'feedback'].includes(screen),
+
+      goHome: () => this.go('home'),
+      createRoom: () => this.go('lobby'),
+      joinRoom: () => this.go('lobby'),
+      goVibe: () => this.go(s.vibeDone ? 'lobby' : 'vibe'),
+      startGen: this.startGen,
+      goFeedback: () => this.go('feedback'),
+      backToResult: () => this.go('result'),
+      regen: this.startGen,
+      skipVibe: (e) => { e.preventDefault(); this.setState({ screen: 'lobby' }); },
+      toggleWhy: () => this.setState({ whyOpen: !s.whyOpen }),
+      sendFb: () => this.setState({ fbSent: true }),
+
+      code: s.code,
+      onCode: (e) => this.setState({ code: e.target.value.toUpperCase() }),
+      desc: s.desc,
+      onDesc: (e) => this.setState({ desc: e.target.value }),
+      comment: s.comment,
+      onComment: (e) => this.setState({ comment: e.target.value }),
+
+      members,
+      activity: this.ACTIVITY,
+      howItWorks: this.HOW_IT_WORKS,
+      features: this.FEATURES,
+      occasion: s.occasion,
+      mode: s.mode,
+
+      occasions: this.OCCASIONS.map((label) => ({
+        label,
+        style: this.chip(label === s.occasion),
+        pick: () => this.setState({ occasion: label }),
+      })),
+
+      modes: this.MODES.map((m) => ({
+        name: m.name, desc: m.desc,
+        style: {
+          textAlign: 'left', padding: '16px', borderRadius: '12px',
+          border: '1px solid ' + (m.name === s.mode ? '#ff5b1c' : '#3a382a'),
+          background: m.name === s.mode ? '#2a1c11' : '#14130d',
+          color: m.name === s.mode ? '#ff9a6b' : '#c9c4ad',
+          fontFamily: "'IBM Plex Mono', monospace", cursor: 'pointer',
+        },
+        pick: () => this.setState({ mode: m.name }),
+      })),
+
+      variants: ['A', 'B', 'C'].map((v) => ({
+        label: v,
+        style: {
+          width: '30px', height: '30px', borderRadius: '8px',
+          border: '1px solid ' + (v === variant ? '#ff5b1c' : '#3a382a'),
+          background: v === variant ? '#ff5b1c' : 'transparent',
+          color: v === variant ? '#14130d' : '#8b8871',
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+        },
+        pick: () => this.setState({ variant: v }),
+      })),
+      isLobbyA: variant === 'A',
+      isLobbyB: variant === 'B',
+      isLobbyC: variant === 'C',
+
+      vibePct: vibePctNum + '%',
+      vibePctLabel: vibePctNum + '%',
+      vibeStatus: doneCount + '/5 membros responderam',
+      vibeCta: s.vibeDone ? 'REFAZER VIBE CHECK' : 'RESPONDER VIBE CHECK',
+
+      vibeNum: String(Math.min(s.vibeIndex, 2) + 1),
+      vibeQ: q.q,
+      vibeDots: [0, 1, 2].map((i) => ({
+        style: {
+          width: '22px', height: '6px', borderRadius: '99px',
+          background: i <= s.vibeIndex ? '#ff5b1c' : '#2b2919',
+        },
+      })),
+      vibeOpts: q.opts.map((text, i) => ({
+        letter: ['A', 'B', 'C', 'D'][i],
+        text,
+        pick: () => {
+          if (s.vibeIndex >= 2) this.setState({ vibeIndex: 0, vibeDone: true, screen: 'lobby' });
+          else this.setState({ vibeIndex: s.vibeIndex + 1 });
+        },
+      })),
+
+      genLines: this.GEN_STEPS.slice(0, s.genStep),
+      genPct: Math.round((s.genStep / this.GEN_STEPS.length) * 100) + '%',
+      genPctLabel: Math.round((s.genStep / this.GEN_STEPS.length) * 100) + '%',
+
+      tracks: this.TRACKS,
+      metrics: this.METRICS,
+      whyOpen: s.whyOpen,
+      whyIcon: s.whyOpen ? '−' : '+',
+      whyItems: this.WHY,
+      repBars: this.REPS.map((r, i) => ({
+        name: r.name, pct: r.pct, pctLabel: r.pct + '%', width: r.pct + '%',
+        color: this.MEMBERS[i].color,
+      })),
+
+      fbSent: s.fbSent,
+      fbNotSent: !s.fbSent,
+      fbTracks: this.TRACKS.slice(0, 5).map((t) => ({
+        name: t.name, artist: t.artist, color: t.color,
+        likeStyle: fbButton(s.fb[t.name] === 'like', '#a8ae6d'),
+        nopeStyle: fbButton(s.fb[t.name] === 'nope', '#ff5b1c'),
+        like: () => this.setState({ fb: { ...s.fb, [t.name]: s.fb[t.name] === 'like' ? null : 'like' } }),
+        nope: () => this.setState({ fb: { ...s.fb, [t.name]: s.fb[t.name] === 'nope' ? null : 'nope' } }),
+      })),
+      repScale: [0, 1, 2, 3, 4, 5].map((n) => ({
+        n: String(n),
+        style: {
+          width: '44px', height: '44px', borderRadius: '10px',
+          border: '1px solid ' + (s.rep === n ? '#ff5b1c' : '#3a382a'),
+          background: s.rep === n ? '#ff5b1c' : '#14130d',
+          color: s.rep === n ? '#14130d' : '#c9c4ad',
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+        },
+        pick: () => this.setState({ rep: n }),
+      })),
+
+      devNav: [
+        ['LOGIN', 'login'], ['HOME', 'home'], ['SALA', 'lobby'], ['VIBE', 'vibe'],
+        ['GERANDO', 'generating'], ['RESULTADO', 'result'], ['FEEDBACK', 'feedback'],
+      ].map(([label, sc]) => ({
+        label,
+        style: {
+          padding: '8px 12px', borderRadius: '999px', border: 'none',
+          background: screen === sc ? '#ff5b1c' : 'transparent',
+          color: screen === sc ? '#14130d' : '#8b8871',
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: '10.5px', fontWeight: 600,
+          letterSpacing: '0.08em', cursor: 'pointer',
+        },
+        pick: () => { if (sc === 'generating') this.startGen(); else this.go(sc); },
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
