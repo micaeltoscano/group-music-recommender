@@ -352,25 +352,41 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 - **Sprint sugerida:** Sprint 2.
 - **Status inicial:** A fazer.
 
-### PB-14 — Correspondência e criação da playlist no Spotify
+### PB-14 — Correspondência das músicas no Spotify
 
 - **Épico:** EP-06 — Integrações e geração.
-- **História:** Como host, quero receber uma playlist real com músicas válidas na minha conta Spotify, para utilizá-la imediatamente.
-- **Descrição:** Resolver candidatas pelo Spotify Search com o token do host, validar disponibilidade e criar a playlist privada.
+- **História:** Como grupo, queremos que as músicas candidatas sejam corretamente identificadas no Spotify, para que apenas faixas válidas sejam utilizadas na playlist.
+- **Descrição:** Resolver as músicas candidatas usando o Spotify Search, normalizando títulos e artistas, validando disponibilidade e descartando resultados ambíguos ou indisponíveis.
 - **Critérios de aceitação:**
   1. A busca deve usar o mercado associado ao token do host quando disponível.
   2. Título e artista devem ser normalizados para tratar variações como live, remastered e acoustic.
-  3. Resultados abaixo da confiança mínima ou indisponíveis devem ser descartados com motivo registrado.
-  4. A seleção final deve conter de 20 a 30 músicas e no máximo duas músicas por artista.
-  5. A playlist deve ser privada por padrão e criada na conta do host.
-  6. O identificador e a URL da playlist devem ser armazenados na execução correspondente.
+  3. Resultados abaixo da confiança mínima devem ser descartados com o motivo registrado.
+  4. Músicas indisponíveis para o mercado do host não devem ser selecionadas.
+  5. Cada música válida deve possuir o identificador Spotify associado.
 - **Prioridade:** Alta.
-- **Estimativa:** 8 pontos.
+- **Estimativa:** 5 pontos.
 - **Dependências:** PB-02, PB-11, PB-12 e PB-13.
 - **Sprint sugerida:** Sprint 3.
 - **Status inicial:** A fazer.
 
-### PB-15 — Resultado e explicabilidade
+### PB-15 — Criação da playlist no Spotify
+
+- **Épico:** EP-06 — Integrações e geração.
+- **História:** Como host, quero que a playlist seja criada automaticamente na minha conta Spotify, para utilizá-la imediatamente.
+- **Descrição:** Criar uma playlist privada contendo as músicas selecionadas pelo motor de recomendação e registrar sua execução.
+- **Critérios de aceitação:**
+  1. A playlist deve conter entre 20 e 30 músicas.
+  2. Deve haver no máximo duas músicas por artista.
+  3. A playlist deve ser criada como privada por padrão.
+  4. O identificador e a URL da playlist devem ser armazenados na execução correspondente.
+  5. O host deve receber o link da playlist criada.
+- **Prioridade:** Alta.
+- **Estimativa:** 3 pontos.
+- **Dependências:** PB-14.
+- **Sprint sugerida:** Sprint 3.
+- **Status inicial:** A fazer.
+
+### PB-16 — Resultado e explicabilidade
 
 - **Épico:** EP-07 — Experiência e explicabilidade.
 - **História:** Como integrante, quero visualizar o resultado e entender sua justiça, para avaliar se o grupo foi representado.
@@ -381,13 +397,13 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
   3. A representação dos integrantes deve ser exibida em formato compreensível.
   4. Cada música selecionada deve possuir uma justificativa resumida.
   5. As explicações não devem identificar rejeições ou dados sensíveis de outro integrante.
-- **Prioridade:** Alta.
+- **Prioridade:** Média.
 - **Estimativa:** 5 pontos.
-- **Dependências:** PB-13 e PB-14.
+- **Dependências:** PB-13, PB-14 e PB-15.
 - **Sprint sugerida:** Sprint 3.
 - **Status inicial:** A fazer.
 
-### PB-16 — Interpretação estruturada do contexto
+### PB-17 — Interpretação estruturada do contexto
 
 - **Épico:** EP-06 — Integrações e geração.
 - **História:** Como host, quero que minha descrição livre seja interpretada, para transformar a intenção do encontro em critérios musicais estruturados.
@@ -404,7 +420,7 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 - **Sprint sugerida:** Sprint 3.
 - **Status inicial:** A fazer.
 
-### PB-17 — Enriquecimento de contexto com Last.fm
+### PB-18 — Enriquecimento de contexto com Last.fm
 
 - **Épico:** EP-06 — Integrações e geração.
 - **História:** Como grupo, queremos que o contexto das candidatas seja avaliado, para que a playlist combine melhor com a ocasião.
@@ -417,11 +433,11 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
   5. Resposta vazia ou erro do Last.fm não deve interromper a geração.
 - **Prioridade:** Média.
 - **Estimativa:** 5 pontos.
-- **Dependências:** PB-10 e PB-16.
+- **Dependências:** PB-10 e PB-17.
 - **Sprint sugerida:** Sprint 4.
 - **Status inicial:** A fazer.
 
-### PB-18 — Sequenciamento da experiência musical
+### PB-19 — Sequenciamento da experiência musical
 
 - **Épico:** EP-07 — Experiência e explicabilidade.
 - **História:** Como ouvinte, quero uma playlist com fluxo coerente, para evitar uma sequência desorganizada de músicas bem pontuadas.
@@ -433,11 +449,11 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
   4. O sequenciador deve respeitar o limite máximo de duas músicas por artista.
 - **Prioridade:** Média.
 - **Estimativa:** 3 pontos.
-- **Dependências:** PB-12 e PB-14.
+- **Dependências:** PB-12, PB-14 e PB-15.
 - **Sprint sugerida:** Sprint 4.
 - **Status inicial:** A fazer.
 
-### PB-19 — Feedback pós-playlist
+### PB-20 — Feedback pós-playlist
 
 - **Épico:** EP-07 — Experiência e explicabilidade.
 - **História:** Como integrante, quero avaliar faixas e a playlist, para registrar minha satisfação e meu nível de representação.
@@ -450,59 +466,76 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
   5. O sistema deve deixar explícito que o feedback será utilizado em evoluções futuras.
 - **Prioridade:** Média.
 - **Estimativa:** 3 pontos.
-- **Dependências:** PB-15.
+- **Dependências:** PB-16.
 - **Sprint sugerida:** Sprint 4.
 - **Status inicial:** A fazer.
 
-### PB-20 — Qualidade, robustez e documentação
+> **Qualidade, robustez e documentação** deixou de ser um PB (antigo PB-20) e passou a ser a
+> **Definition of Done** — testes de motor/API/clientes mockados, não exposição de tokens, README
+> atualizado e roteiro de demonstração são requisitos de **todos** os PBs, verificados a cada entrega.
 
-- **Épico:** EP-01 — Fundação e qualidade.
-- **História:** Como equipe de desenvolvimento, queremos validar o produto e documentar seu uso, para entregar um incremento verificável e passível de manutenção.
-- **Descrição:** Consolidar testes automatizados, fallbacks, proteção de dados, documentação técnica e roteiro de demonstração.
-- **Critérios de aceitação:**
-  1. O motor deve possuir testes para scoring, justiça, rejeição, duplicidade e limite por artista.
-  2. A API deve possuir testes para autorização, entrada duplicada e Generation Lock.
-  3. Clientes externos devem possuir testes mockados para token expirado, resposta 429, JSON inválido e busca sem resultado.
-  4. Nenhum teste ou log deve expor tokens reais.
-  5. O README deve conter instruções atualizadas de configuração e execução.
-  6. Um roteiro de demonstração do fluxo principal deve ser documentado.
-- **Prioridade:** Alta.
-- **Estimativa:** 8 pontos.
-- **Dependências:** PB-02 a PB-19, sendo executado continuamente durante todas as sprints.
-- **Sprint sugerida:** Sprint 4 para consolidação.
-- **Status inicial:** A fazer.
-
-### PB-21 — Modo Descoberta
+### PB-21 — Modo Descoberta *(pós-MVP)*
 
 - **Épico:** EP-08 — Evolução do produto.
 - **História:** Como grupo, queremos um modo que favoreça músicas novas, para descobrir faixas sem abandonar completamente o consenso.
-- **Descrição:** Criar um perfil de pesos que aumente novidade e diversidade, mantendo limites de rejeição e justiça.
+- **Descrição:** Criar um perfil de pesos que aumente a novidade e diversidade, mantendo limites de rejeição e justiça.
 - **Critérios de aceitação:**
   1. O modo deve ser selecionável apenas quando estiver habilitado na configuração do produto.
   2. A novidade deve possuir peso superior ao utilizado no modo Democrático.
   3. Rejeições fortes e representação mínima devem continuar sendo consideradas.
-  4. O resultado deve explicar que o modo favoreceu descoberta musical.
+  4. O resultado deve explicar que o modo favoreceu a descoberta musical.
 - **Prioridade:** Baixa.
 - **Estimativa:** 5 pontos.
-- **Dependências:** PB-11, PB-12 e PB-15.
-- **Sprint sugerida:** Versão futura.
+- **Dependências:** PB-11, PB-12 e PB-16.
+- **Sprint sugerida:** Sprint 5.
 - **Status inicial:** A fazer.
 
-### PB-22 — Agrupamento de gostos e faixas-ponte
+### PB-22 — Agrupamento de perfis musicais *(pós-MVP)*
 
-- **Épico:** EP-08 — Evolução do produto.
-- **História:** Como grupo com gostos divergentes, queremos que o sistema identifique subgrupos e músicas intermediárias, para reduzir a distância entre preferências muito diferentes.
-- **Descrição:** Agrupar perfis semelhantes e alternar consenso geral, representações dos subgrupos e possíveis faixas-ponte.
+- **Épico:** EP-05 — Negociação e recomendação.
+- **História:** Como grupo com gostos diferentes, queremos que o sistema identifique subgrupos de afinidade, para compreender melhor a diversidade de preferências.
+- **Descrição:** Agrupar participantes com perfis musicais semelhantes utilizando apenas os dados autorizados pelo produto.
 - **Critérios de aceitação:**
-  1. O agrupamento deve utilizar somente dados musicais autorizados e temporários.
-  2. O sistema deve identificar quando não há evidência suficiente para formar subgrupos.
-  3. A seleção deve limitar a predominância de um único subgrupo.
-  4. A explicação deve indicar, de forma agregada, quando uma faixa atua como ponte musical.
-  5. A funcionalidade não deve alterar o comportamento dos modos existentes quando estiver desabilitada.
+  1. O agrupamento deve utilizar apenas dados musicais temporários autorizados.
+  2. O sistema deve identificar quando não houver evidências suficientes para formar subgrupos.
+  3. O agrupamento deve produzir resultados determinísticos para a mesma entrada.
+  4. Os subgrupos identificados devem ficar disponíveis para o motor de recomendação.
 - **Prioridade:** Baixa.
-- **Estimativa:** 13 pontos.
-- **Dependências:** PB-09, PB-11, PB-12 e PB-15.
-- **Sprint sugerida:** Versão futura.
+- **Estimativa:** 4 pontos.
+- **Dependências:** PB-09.
+- **Sprint sugerida:** Sprint 5.
+- **Status inicial:** A fazer.
+
+### PB-23 — Identificação de músicas-ponte *(pós-MVP)*
+
+- **Épico:** EP-05 — Negociação e recomendação.
+- **História:** Como grupo, queremos que o sistema identifique músicas capazes de aproximar diferentes gostos musicais, para aumentar a aceitação coletiva.
+- **Descrição:** Avaliar as músicas candidatas buscando aquelas que apresentam afinidade entre múltiplos subgrupos.
+- **Critérios de aceitação:**
+  1. O sistema deve identificar músicas com boa aceitação entre diferentes subgrupos.
+  2. As músicas-ponte devem receber marcação específica durante o ranqueamento.
+  3. O cálculo não deve alterar os modos existentes quando a funcionalidade estiver desabilitada.
+  4. O resultado deve indicar quais músicas foram consideradas faixas-ponte.
+- **Prioridade:** Baixa.
+- **Estimativa:** 5 pontos.
+- **Dependências:** PB-11 e PB-22.
+- **Sprint sugerida:** Sprint 5.
+- **Status inicial:** A fazer.
+
+### PB-24 — Balanceamento entre subgrupos *(pós-MVP)*
+
+- **Épico:** EP-05 — Negociação e recomendação.
+- **História:** Como grupo com preferências distintas, queremos que a seleção considere os diferentes subgrupos identificados, para evitar que apenas um deles domine a playlist.
+- **Descrição:** Alternar músicas representativas dos subgrupos durante a seleção final, preservando os critérios de consenso e justiça.
+- **Critérios de aceitação:**
+  1. A seleção deve limitar a predominância de um único subgrupo.
+  2. Os critérios de rejeição e justiça já existentes devem continuar sendo respeitados.
+  3. A funcionalidade deve ser opcional e configurável.
+  4. A explicação da playlist deve indicar quando o balanceamento entre subgrupos foi utilizado.
+- **Prioridade:** Baixa.
+- **Estimativa:** 4 pontos.
+- **Dependências:** PB-12, PB-16, PB-22 e PB-23.
+- **Sprint sugerida:** Sprint 5.
 - **Status inicial:** A fazer.
 
 ## 11. Backlog resumido e priorizado
@@ -521,33 +554,38 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 | 10 | PB-12 | EP-05 | Rejeição e justiça | Alta | 5 | PB-11 | Sprint 2 | A fazer |
 | 11 | PB-13 | EP-06 | Controle da geração | Alta | 3 | PB-05, PB-06, PB-11 | Sprint 2 | A fazer |
 | 12 | PB-07 | EP-04 | Vibe Check | Média | 5 | PB-05, PB-06 | Sprint 3 | A fazer |
-| 13 | PB-14 | EP-06 | Playlist no Spotify | Alta | 8 | PB-02, PB-11, PB-12, PB-13 | Sprint 3 | A fazer |
-| 14 | PB-15 | EP-07 | Resultado e explicabilidade | Alta | 5 | PB-13, PB-14 | Sprint 3 | A fazer |
-| 15 | PB-16 | EP-06 | Contexto por LLM | Média | 5 | PB-06, PB-10 | Sprint 3 | A fazer |
-| 16 | PB-03 | EP-02 | Logout e remoção | Média | 3 | PB-02 | Sprint 4 | A fazer |
-| 17 | PB-17 | EP-06 | Contexto Last.fm | Média | 5 | PB-10, PB-16 | Sprint 4 | A fazer |
-| 18 | PB-18 | EP-07 | Sequenciamento | Média | 3 | PB-12, PB-14 | Sprint 4 | A fazer |
-| 19 | PB-19 | EP-07 | Feedback | Média | 3 | PB-15 | Sprint 4 | A fazer |
-| 20 | PB-20 | EP-01 | Qualidade e documentação | Alta | 8 | PB-02 a PB-19 | Sprint 4 | A fazer |
-| 21 | PB-21 | EP-08 | Modo Descoberta | Baixa | 5 | PB-11, PB-12, PB-15 | Futuro | A fazer |
-| 22 | PB-22 | EP-08 | Agrupamento e faixas-ponte | Baixa | 13 | PB-09, PB-11, PB-12, PB-15 | Futuro | A fazer |
+| 13 | PB-14 | EP-06 | Correspondência no Spotify | Alta | 5 | PB-02, PB-11, PB-12, PB-13 | Sprint 3 | A fazer |
+| 14 | PB-15 | EP-06 | Criação da playlist | Alta | 3 | PB-14 | Sprint 3 | A fazer |
+| 15 | PB-16 | EP-07 | Resultado e explicabilidade | Média | 5 | PB-13, PB-14, PB-15 | Sprint 3 | A fazer |
+| 16 | PB-17 | EP-06 | Contexto por LLM | Média | 5 | PB-06, PB-10 | Sprint 3 | A fazer |
+| 17 | PB-03 | EP-02 | Logout e remoção | Média | 3 | PB-02 | Sprint 4 | A fazer |
+| 18 | PB-18 | EP-06 | Contexto Last.fm | Média | 5 | PB-10, PB-17 | Sprint 4 | A fazer |
+| 19 | PB-19 | EP-07 | Sequenciamento | Média | 3 | PB-12, PB-14, PB-15 | Sprint 4 | A fazer |
+| 20 | PB-20 | EP-07 | Feedback | Média | 3 | PB-16 | Sprint 4 | A fazer |
+| 21 | PB-21 | EP-08 | Modo Descoberta | Baixa | 5 | PB-11, PB-12, PB-16 | Sprint 5 | A fazer |
+| 22 | PB-22 | EP-05 | Agrupamento de perfis | Baixa | 4 | PB-09 | Sprint 5 | A fazer |
+| 23 | PB-23 | EP-05 | Músicas-ponte | Baixa | 5 | PB-11, PB-22 | Sprint 5 | A fazer |
+| 24 | PB-24 | EP-05 | Balanceamento entre subgrupos | Baixa | 4 | PB-12, PB-16, PB-22, PB-23 | Sprint 5 | A fazer |
+
+> "Qualidade, robustez e documentação" (antigo PB-20) não é mais item do backlog — virou a
+> **Definition of Done**, aplicada a todos os PBs.
 
 ### 11.1 Totais
 
-- **Total de histórias/itens:** 22.
-- **Total geral:** 112 pontos.
-- **Prioridade Alta:** 14 itens, totalizando 70 pontos.
-- **Prioridade Média:** 6 itens, totalizando 24 pontos.
-- **Prioridade Baixa:** 2 itens, totalizando 18 pontos.
+- **Total de histórias/itens:** 24.
+- **Total geral:** 104 pontos (MVP: 86; expansão pós-MVP: 18).
+- **Prioridade Alta:** 13 itens, totalizando 57 pontos.
+- **Prioridade Média:** 7 itens, totalizando 29 pontos.
+- **Prioridade Baixa:** 4 itens, totalizando 18 pontos.
 - **Sprint 1:** 25 pontos.
 - **Sprint 2:** 24 pontos.
 - **Sprint 3:** 23 pontos.
-- **Sprint 4:** 22 pontos.
-- **Versões futuras:** 18 pontos.
+- **Sprint 4:** 14 pontos.
+- **Sprint 5 (pós-MVP):** 18 pontos.
 
 ## 12. Definição do Produto Mínimo Viável — MVP
 
-O MVP é composto por `PB-01`, `PB-02`, `PB-04`, `PB-05`, `PB-06`, `PB-08`, `PB-09`, `PB-10`, `PB-11`, `PB-12`, `PB-13`, `PB-14` e `PB-15`, com apoio contínuo das práticas de qualidade de `PB-20`.
+O MVP é composto por `PB-01`, `PB-02`, `PB-04`, `PB-05`, `PB-06`, `PB-08`, `PB-09`, `PB-10`, `PB-11`, `PB-12`, `PB-13`, `PB-14`, `PB-15` e `PB-16`, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (ver §15).
 
 Esses itens permitem executar o fluxo principal:
 
@@ -564,7 +602,7 @@ A hipótese validada pelo MVP é: **um motor que considera contexto, menor satis
 
 Vibe Check, interpretação pelo LLM, tags do Last.fm, sequenciamento avançado e feedback são importantes para o MVP completo descrito no README, mas não são indispensáveis para a primeira validação técnica da hipótese. Modo Descoberta e agrupamento de gostos permanecem em versões futuras.
 
-O núcleo do MVP possui 67 pontos nominais, sem contar integralmente a consolidação de PB-20. Com capacidade assumida de 25 pontos por sprint, são necessárias aproximadamente três sprints de duas semanas. Portanto, o prazo original de cerca de um mês exige aumento comprovado de velocidade, paralelização segura ou redução adicional de escopo. Essa decisão deve ser tomada após a equipe medir sua velocidade na primeira sprint.
+O núcleo do MVP possui cerca de 62 pontos nominais, com a consolidação de qualidade distribuída pela Definition of Done. Com capacidade assumida de 25 pontos por sprint, são necessárias aproximadamente três a quatro sprints de duas semanas. Portanto, o prazo original de cerca de um mês exige aumento comprovado de velocidade, paralelização segura ou redução adicional de escopo. Essa decisão deve ser tomada após a equipe medir sua velocidade na primeira sprint.
 
 ## 13. Critérios de priorização
 
