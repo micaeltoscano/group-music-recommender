@@ -26,7 +26,7 @@ guia executável para o agente de implementação e de referência de aceitaçã
 - **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), com testes individuais, e testes integrados das
   Sprints 1 a 4.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
-  PB-14, PB-15, com apoio contínuo de PB-20.
+  PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
 - **Fora do escopo deste plano:** PB-21 (Modo Descoberta) e PB-22 (Agrupamento/faixas-ponte) —
   versões futuras; serão incluídos quando promovidos por decisão de escopo.
 
@@ -194,7 +194,7 @@ Nenhum dado de domínio; usa endpoints de saúde e a tabela `users` vazia.
 - **Resultado esperado:** três status "ok"; API base correta.
 - **Evidência esperada:** captura de tela da página de status.
 - **Critério de aprovação:** os três indicadores em "ok".
-- **Automatizável:** Parcialmente · **Status:** Bloqueado (QA 2026-07-13 — Node/npm ausentes no host; ver DEF-PB01-01 em `RELATORIOS_TESTES/PB-01.md`)
+- **Automatizável:** Parcialmente · **Status:** Bloqueado (QA 2026-07-13 — Node/npm ausentes no host; ver DEF-PB01-01 em `docs/relatorios-testes/PB-01.md`)
 
 > Observação: `vite build` já foi verificado em container Node 20 (compila, `dist/` gerado). Falta a
 > execução **nativa** para encerrar o critério 1 do PB-01.
@@ -885,22 +885,21 @@ Pendente.
 
 ## Sprint 3 — Fluxo principal ponta a ponta
 
-### PB-14 — Correspondência e criação da playlist no Spotify
+### PB-14 — Correspondência das músicas no Spotify
 
 #### Objetivo da validação
-Comprovar track matching robusto, respeito ao mercado do host, descarte motivado, cap de 2/artista,
-faixa 20–30 e criação de playlist privada real, com id/URL persistidos.
+Comprovar track matching robusto, respeito ao mercado do host e descarte motivado, com identificador
+Spotify associado a cada música válida.
 
 #### Requisitos e critérios cobertos
-Critérios 1–6 do PB-14.
+Critérios 1–5 do PB-14.
 
 #### Pré-condições
-Motor (PB-11/PB-12) e execução (PB-13); token do host (PB-02); `SpotifyClient` mockado para unit e
-conta real para o e2e.
+Motor (PB-11/PB-12) e execução (PB-13); token do host (PB-02); `SpotifyClient` mockado.
 
 #### Dados de teste
 Candidatas com variantes ("remastered", "live", "acoustic", "sped up"); faixa indisponível no mercado;
-artista com 3+ faixas fortes (para testar o cap); resultados ambíguos com popularidades distintas.
+resultados ambíguos com popularidades distintas.
 
 #### Casos de teste
 ##### CT-PB14-01 — Normalização de variantes de título/artista
@@ -919,42 +918,55 @@ artista com 3+ faixas fortes (para testar o cap); resultados ambíguos com popul
 
 ##### CT-PB14-04 — Faixa indisponível no mercado é descartada
 - **Tipo:** serviço externo mockado · **Prioridade:** Alta · **Cenário:** indisponível no market do host.
-- **Resultado esperado:** descartada com `discard_reason=unavailable_in_market`; não entra na playlist.
+- **Resultado esperado:** descartada com `discard_reason=unavailable_in_market`; não entra na seleção.
 - **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB14-05 — Cap de 2 músicas por artista
-- **Tipo:** limites · **Prioridade:** Alta · **Cenário:** artista com 3+ candidatas fortes.
-- **Resultado esperado:** no máximo 2 faixas desse artista na seleção final. · **Automatizável:** Sim ·
-  **Status:** Não executado
-
-##### CT-PB14-06 — Seleção final de 20 a 30 músicas
-- **Tipo:** limites · **Prioridade:** Alta · **Resultado esperado:** contagem final ∈ [20,30]. ·
-  **Automatizável:** Sim · **Status:** Não executado
-
-##### CT-PB14-07 — Playlist privada criada na conta do host (e2e real)
-- **Tipo:** e2e · **Prioridade:** Alta · **Cenário:** geração com conta Spotify real da demo.
-- **Resultado esperado:** playlist **privada** aparece de fato na conta do host; `spotify_playlist_id`
-  e URL salvos na execução. · **Evidência esperada:** URL da playlist; captura no Spotify. ·
-  **Automatizável:** Não · **Status:** Não executado
-
-##### CT-PB14-08 — Search sem resultado não quebra a geração
+##### CT-PB14-05 — Search sem resultado não quebra a geração
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** candidata não encontrada.
 - **Resultado esperado:** descartada com `discard_reason=not_found`; geração prossegue. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB14-09 — Falha parcial não deixa dados inconsistentes
+### PB-15 — Criação da playlist no Spotify
+
+#### Objetivo da validação
+Comprovar a criação de playlist privada real (20–30 faixas, cap de 2/artista) na conta do host, com
+id/URL persistidos e link devolvido.
+
+#### Requisitos e critérios cobertos
+Critérios 1–5 do PB-15.
+
+#### Pré-condições
+Músicas correspondidas (PB-14); `SpotifyClient` mockado para unit e conta real para o e2e.
+
+#### Casos de teste
+##### CT-PB15-01 — Cap de 2 músicas por artista
+- **Tipo:** limites · **Prioridade:** Alta · **Cenário:** artista com 3+ candidatas fortes.
+- **Resultado esperado:** no máximo 2 faixas desse artista na playlist. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB15-02 — Playlist final de 20 a 30 músicas
+- **Tipo:** limites · **Prioridade:** Alta · **Resultado esperado:** contagem final ∈ [20,30]. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB15-03 — Playlist privada criada na conta do host (e2e real)
+- **Tipo:** e2e · **Prioridade:** Alta · **Cenário:** geração com conta Spotify real da demo.
+- **Resultado esperado:** playlist **privada** aparece de fato na conta do host; `spotify_playlist_id`
+  e URL salvos na execução; host recebe o link. · **Evidência esperada:** URL da playlist; captura no
+  Spotify. · **Automatizável:** Não · **Status:** Não executado
+
+##### CT-PB15-04 — Falha parcial não deixa dados inconsistentes
 - **Tipo:** recuperação/persistência · **Prioridade:** Alta · **Cenário:** erro após criar a playlist e
   antes de salvar todas as faixas. · **Resultado esperado:** estado coerente (run reflete o real; sem
   faixas órfãs). · **Automatizável:** Parcialmente · **Status:** Não executado
 
-### PB-15 — Resultado e explicabilidade
+### PB-16 — Resultado e explicabilidade
 
 #### Objetivo da validação
 Comprovar a tela de resultado com link, métricas, representação por integrante e justificativas
 legíveis, **sem** expor dados sensíveis de terceiros, restrita a membros.
 
 #### Requisitos e critérios cobertos
-Critérios 1–5 do PB-15.
+Critérios 1–5 do PB-16.
 
 #### Pré-condições
 Execução concluída (PB-13/PB-14).
@@ -964,40 +976,40 @@ Execução com representação desigual entre membros; faixa incluída por veto 
 privacidade da explicação).
 
 #### Casos de teste
-##### CT-PB15-01 — Link da playlist presente
+##### CT-PB16-01 — Link da playlist presente
 - **Tipo:** API/frontend · **Prioridade:** Alta · **Resultado esperado:** resultado traz a URL da
   playlist. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB15-02 — Compatibilidade e fairness exibidos
+##### CT-PB16-02 — Compatibilidade e fairness exibidos
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** compatibility e fairness da
   execução apresentados. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB15-03 — Representação por integrante
+##### CT-PB16-03 — Representação por integrante
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** percentual/indicador por membro
   compreensível. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB15-04 — Justificativa por música
+##### CT-PB16-04 — Justificativa por música
 - **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** cada faixa tem `reason`
   resumido. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB15-05 — Privacidade: não expor rejeições de terceiros
+##### CT-PB16-05 — Privacidade: não expor rejeições de terceiros
 - **Tipo:** privacidade · **Prioridade:** Alta · **Cenário:** explicação de faixa afetada por veto.
 - **Resultado esperado:** texto agregado ("alguns membros indicaram baixa tolerância a X"), **sem**
   nomear quem rejeitou. · **Critério de aprovação:** nenhuma exposição individual. · **Automatizável:**
   Sim · **Status:** Não executado
 
-##### CT-PB15-06 — Acesso restrito a membros
+##### CT-PB16-06 — Acesso restrito a membros
 - **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** não-membro recebe 403 em
   `GET /rooms/{code}/result`. · **Automatizável:** Sim · **Status:** Não executado
 
-### PB-16 — Interpretação estruturada do contexto
+### PB-17 — Interpretação estruturada do contexto
 
 #### Objetivo da validação
 Comprovar que o LLM retorna JSON válido conforme schema, que respostas inválidas/ausentes acionam
 fallback determinístico e que dados brutos não são enviados ao LLM.
 
 #### Requisitos e critérios cobertos
-Critérios 1–5 do PB-16.
+Critérios 1–5 do PB-17.
 
 #### Pré-condições
 `LLMClient` mockável; schema de contexto definido.
@@ -1006,30 +1018,30 @@ Critérios 1–5 do PB-16.
 Descrição "festa muito alegre" e "estudo relaxante"; resposta do LLM válida, JSON inválido e timeout.
 
 #### Casos de teste
-##### CT-PB16-01 — Saída válida segue o schema
+##### CT-PB17-01 — Saída válida segue o schema
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** JSON com ocasião, humor,
   energia, tags +/-, avoid. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB16-02 — JSON inválido aciona fallback sem interromper
+##### CT-PB17-02 — JSON inválido aciona fallback sem interromper
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** LLM devolve JSON malformado.
 - **Resultado esperado:** rejeitado; geração segue com consenso/afinidade/popularidade. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB16-03 — LLM indisponível → fallback determinístico
+##### CT-PB17-03 — LLM indisponível → fallback determinístico
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** timeout/erro do LLM.
 - **Resultado esperado:** pipeline continua sem IA. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB16-04 — Privacidade: dados brutos não vão ao LLM
+##### CT-PB17-04 — Privacidade: dados brutos não vão ao LLM
 - **Tipo:** privacidade · **Prioridade:** Alta · **Cenário:** inspecionar o payload enviado.
 - **Resultado esperado:** só contexto do host / dados agregados; **sem** top tracks/artists brutos. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB16-05 — Contexto muda candidatas/tags
+##### CT-PB17-05 — Contexto muda candidatas/tags
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** "festa" vs "estudo".
 - **Resultado esperado:** tags positivas/negativas e candidatas contextuais diferem coerentemente. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB16-06 — LLM não decide a playlist
+##### CT-PB17-06 — LLM não decide a playlist
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** seleção final vem do
   motor; LLM só fornece critérios. · **Automatizável:** Sim · **Status:** Não executado
 
@@ -1080,11 +1092,11 @@ Conjunto de 3–5 perguntas; respostas do usuário; segunda resposta do mesmo us
 O fluxo principal do MVP funciona de ponta a ponta, produzindo uma playlist real explicável.
 
 #### PBs cobertos
-PB-14, PB-15, PB-16, PB-07.
+PB-07, PB-14, PB-15, PB-16, PB-17.
 
 #### Fluxos integrados
-Sala pronta → contexto interpretado (PB-16/fallback) → (Vibe Check opcional) → motor → seleção →
-criação de playlist real (PB-14) → resultado explicável (PB-15).
+Sala pronta → contexto interpretado (PB-17/fallback) → (Vibe Check opcional) → motor → seleção →
+criação de playlist real (PB-14) → resultado explicável (PB-16).
 
 #### Casos de integração
 ##### CT-S3-INT-01 — E2E completo com playlist real
@@ -1123,7 +1135,7 @@ vê o resultado.
 Usuário percorre o fluxo do início ao fim; resultado compreensível; ocasião reflete no conteúdo.
 
 #### Critérios de aprovação da Sprint
-PBs 14, 15, 16, 07 aprovados; CT-S3-INT-01..05 aprovados; regressão das Sprints 1–2 verde.
+PBs 07, 14, 15, 16, 17 aprovados; CT-S3-INT-01..05 aprovados; regressão das Sprints 1–2 verde.
 
 #### Evidências exigidas
 URL da playlist criada; payload de resultado; logs sanitizados; `pytest` verde; capturas das telas.
@@ -1165,140 +1177,114 @@ Usuário autenticado com dados (sessão, tokens, participação em sala).
 - **Resultado esperado:** dados dos demais membros intactos; sem exposição de tokens. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-### PB-17 — Enriquecimento de contexto com Last.fm
+### PB-18 — Enriquecimento de contexto com Last.fm
 
 #### Objetivo da validação
 Comprovar a cascata (faixa → artista → gêneros Spotify → consenso), cache com confiança e resiliência a
 erro/ausência.
 
 #### Requisitos e critérios cobertos
-Critérios 1–5 do PB-17.
+Critérios 1–5 do PB-18.
 
 #### Pré-condições
 `LastFmClient` mockável; `track_context_cache` migrado.
 
 #### Casos de teste
-##### CT-PB17-01 — Tags da faixa preferidas às do artista
+##### CT-PB18-01 — Tags da faixa preferidas às do artista
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** usa tags da faixa quando
   existem; confiança maior. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB17-02 — Cascata quando faltam tags
+##### CT-PB18-02 — Cascata quando faltam tags
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** sem tags de faixa/artista.
 - **Resultado esperado:** usa gêneros Spotify e demais sinais; confiança menor registrada. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB17-03 — Fonte e confiança registradas
+##### CT-PB18-03 — Fonte e confiança registradas
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** cada resultado tem `source` e
   `confidence`. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB17-04 — Cache válido é reutilizado
+##### CT-PB18-04 — Cache válido é reutilizado
 - **Tipo:** cache · **Prioridade:** Média · **Cenário:** consulta repetida da mesma faixa.
 - **Resultado esperado:** sem nova chamada externa enquanto o cache é válido. · **Automatizável:** Sim ·
   **Status:** Não executado
 
-##### CT-PB17-05 — Erro/vazio do Last.fm não interrompe a geração
+##### CT-PB18-05 — Erro/vazio do Last.fm não interrompe a geração
 - **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** cascata assume; geração segue.
 - **Automatizável:** Sim · **Status:** Não executado
 
-### PB-18 — Sequenciamento da experiência musical
+### PB-19 — Sequenciamento da experiência musical
 
 #### Objetivo da validação
 Comprovar a ordenação: abertura forte, sem 2 do mesmo artista seguidas, risco no meio e cap respeitado.
 
 #### Requisitos e critérios cobertos
-Critérios 1–4 do PB-18.
+Critérios 1–4 do PB-19.
 
 #### Pré-condições
 `engine/sequencer.py`; seleção final do PB-14.
 
 #### Casos de teste
-##### CT-PB18-01 — Sem duas faixas do mesmo artista consecutivas
+##### CT-PB19-01 — Sem duas faixas do mesmo artista consecutivas
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** nenhuma adjacência do mesmo
   artista. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB18-02 — Abertura com alta aceitação
+##### CT-PB19-02 — Abertura com alta aceitação
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** 1ª faixa entre as de maior
   aceitação. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB18-03 — Faixas de maior risco no meio
+##### CT-PB19-03 — Faixas de maior risco no meio
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** posições de risco na região
   intermediária. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB18-04 — Cap de 2/artista preservado após sequenciar
+##### CT-PB19-04 — Cap de 2/artista preservado após sequenciar
 - **Tipo:** limites · **Prioridade:** Alta · **Resultado esperado:** ordenação não viola o cap. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB18-05 — Entrada mínima (poucas faixas / artista único)
+##### CT-PB19-05 — Entrada mínima (poucas faixas / artista único)
 - **Tipo:** limites/robustez · **Prioridade:** Média · **Cenário:** seleção pequena ou dominada por 1
   artista. · **Resultado esperado:** degradação graciosa sem erro; melhor esforço nas regras. ·
   **Automatizável:** Sim · **Status:** Não executado
 
-### PB-19 — Feedback pós-playlist
+### PB-20 — Feedback pós-playlist
 
 #### Objetivo da validação
 Comprovar coleta de feedback por faixa e geral, associada à execução correta, com bloqueio de não-membro
 e aviso de uso futuro.
 
 #### Requisitos e critérios cobertos
-Critérios 1–5 do PB-19.
+Critérios 1–5 do PB-20.
 
 #### Pré-condições
-Execução concluída (PB-15); modelos de feedback migrados.
+Execução concluída (PB-16); modelos de feedback migrados.
 
 #### Casos de teste
-##### CT-PB19-01 — Feedback por faixa
+##### CT-PB20-01 — Feedback por faixa
 - **Tipo:** API · **Prioridade:** Média · **Resultado esperado:** like/dislike/more_like_this/never_again
   registrados. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB19-02 — Feedback geral (representação/satisfação)
+##### CT-PB20-02 — Feedback geral (representação/satisfação)
 - **Tipo:** API · **Prioridade:** Média · **Resultado esperado:** notas persistidas. · **Automatizável:**
   Sim · **Status:** Não executado
 
-##### CT-PB19-03 — Associação à execução correta
+##### CT-PB20-03 — Associação à execução correta
 - **Tipo:** integridade · **Prioridade:** Alta · **Resultado esperado:** feedback vinculado ao
   `playlist_run` e usuário certos. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB19-04 — Não-membro não registra feedback
+##### CT-PB20-04 — Não-membro não registra feedback
 - **Tipo:** autorização · **Prioridade:** Alta · **Cenário:** usuário fora da sala da execução.
 - **Resultado esperado:** 403; nada registrado. · **Automatizável:** Sim · **Status:** Não executado
 
-##### CT-PB19-05 — Aviso de uso futuro explícito
+##### CT-PB20-05 — Aviso de uso futuro explícito
 - **Tipo:** usabilidade · **Prioridade:** Baixa · **Resultado esperado:** UI informa que o feedback é
   para evoluções futuras. · **Automatizável:** Parcialmente · **Status:** Não executado
 
-### PB-20 — Qualidade, robustez e documentação
-
-#### Objetivo da validação
-Comprovar cobertura de testes do motor e da API, mocks de clientes externos, ausência de vazamento de
-segredos, README atualizado e roteiro de demonstração.
-
-#### Requisitos e critérios cobertos
-Critérios 1–6 do PB-20.
-
-#### Pré-condições
-PBs anteriores estáveis; suíte `pytest` consolidada.
-
-#### Casos de teste
-##### CT-PB20-01 — Cobertura do motor
-- **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** testes para scoring, justiça,
-  rejeição, duplicidade e cap por artista presentes e verdes. · **Automatizável:** Sim · **Status:** Não executado
-
-##### CT-PB20-02 — Cobertura da API
-- **Tipo:** API · **Prioridade:** Alta · **Resultado esperado:** testes para autorização (403), entrada
-  duplicada e Generation Lock (409). · **Automatizável:** Sim · **Status:** Não executado
-
-##### CT-PB20-03 — Clientes externos mockados
-- **Tipo:** serviço externo mockado · **Prioridade:** Alta · **Resultado esperado:** testes para token
-  expirado, 429, JSON inválido e busca sem resultado. · **Automatizável:** Sim · **Status:** Não executado
-
-##### CT-PB20-04 — Nenhum token real em teste/log
-- **Tipo:** segurança · **Prioridade:** Alta · **Resultado esperado:** varredura não encontra
-  tokens/segredos em fixtures ou logs. · **Automatizável:** Parcialmente · **Status:** Não executado
-
-##### CT-PB20-05 — README e roteiro de demo atualizados
-- **Tipo:** documentação · **Prioridade:** Média · **Resultado esperado:** instruções de configuração/
-  execução corretas; roteiro do fluxo principal documentado e reproduzível. · **Automatizável:** Não ·
-  **Status:** Não executado
+> **Qualidade, robustez e documentação (antigo PB-20)** deixou de ser um PB e virou a **Definition of
+> Done**, verificada em **todos** os PBs (não só na Sprint 4):
+> - cobertura do motor (scoring, justiça, rejeição, duplicidade, cap por artista);
+> - cobertura da API (autorização 403, entrada duplicada, Generation Lock 409);
+> - clientes externos mockados (token expirado, 429, JSON inválido, busca sem resultado);
+> - nenhum token/segredo em testes ou logs;
+> - README e roteiro de demonstração atualizados.
 
 ### Testes integrados da Sprint 4
 
@@ -1306,7 +1292,7 @@ PBs anteriores estáveis; suíte `pytest` consolidada.
 Experiência complementada (logout/remoção, Last.fm, sequenciamento, feedback) e qualidade consolidada.
 
 #### PBs cobertos
-PB-03, PB-17, PB-18, PB-19, PB-20.
+PB-03, PB-18, PB-19, PB-20.
 
 #### Fluxos integrados
 Fluxo principal + enriquecimento de contexto (Last.fm) + sequenciamento da playlist + coleta de
@@ -1346,7 +1332,7 @@ Cache do Last.fm consistente; feedback vinculado; remoção efetiva e irreversí
 Playlist bem sequenciada; feedback simples; aviso de uso futuro; logout/remoção claros.
 
 #### Critérios de aprovação da Sprint
-PBs 03, 17, 18, 19, 20 aprovados; CT-S4-INT-01..05 aprovados; regressão das Sprints 1–3 verde; suíte
+PBs 03, 18, 19, 20 aprovados; CT-S4-INT-01..05 aprovados; regressão das Sprints 1–3 verde; suíte
 completa verde; documentação e roteiro de demo prontos.
 
 #### Evidências exigidas
@@ -1372,15 +1358,15 @@ Pendente.
 | PB-11 | 2 | 4 (CT-PB11-01..04) | CT-S2-INT-* |
 | PB-12 | 2 | 7 (CT-PB12-01..07) | CT-S2-INT-* |
 | PB-13 | 2 | 6 (CT-PB13-01..06) | CT-S2-INT-* |
-| PB-14 | 3 | 9 (CT-PB14-01..09) | CT-S3-INT-* |
-| PB-15 | 3 | 6 (CT-PB15-01..06) | CT-S3-INT-* |
+| PB-14 | 3 | 5 (CT-PB14-01..05) | CT-S3-INT-* |
+| PB-15 | 3 | 4 (CT-PB15-01..04) | CT-S3-INT-* |
 | PB-16 | 3 | 6 (CT-PB16-01..06) | CT-S3-INT-* |
+| PB-17 | 3 | 6 (CT-PB17-01..06) | CT-S3-INT-* |
 | PB-07 | 3 | 6 (CT-PB07-01..06) | CT-S3-INT-* |
 | PB-03 | 4 | 4 (CT-PB03-01..04) | CT-S4-INT-* |
-| PB-17 | 4 | 5 (CT-PB17-01..05) | CT-S4-INT-* |
 | PB-18 | 4 | 5 (CT-PB18-01..05) | CT-S4-INT-* |
 | PB-19 | 4 | 5 (CT-PB19-01..05) | CT-S4-INT-* |
-| PB-20 | 4 | 5 (CT-PB20-01..05) | todas as Sprints |
+| PB-20 | 4 | 5 (CT-PB20-01..05) | CT-S4-INT-* |
 
 **PB-21 e PB-22:** fora do escopo deste plano (versões futuras). Seus casos serão elaborados quando os
 itens forem promovidos ao backlog ativo.

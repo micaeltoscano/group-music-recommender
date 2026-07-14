@@ -143,12 +143,28 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 |---|---|---|---:|---|
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | **Em andamento** |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | A fazer |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-14, PB-15, PB-16, PB-07 | 23 | A fazer |
-| Sprint 4 | Complementos e consolidação de qualidade | PB-03, PB-17, PB-18, PB-19, PB-20 | 22 | A fazer |
-| Futuro | Evolução do produto (fora do MVP) | PB-21, PB-22 | 18 | A fazer |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | A fazer |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
-- **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, com apoio contínuo de PB-20.
-- **Sprint ativa:** Sprint 1. **PB ativo:** PB-02 (correções implementadas; aguardando revalidação QA).
+- **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
+- **Sprint ativa:** Sprint 1. **Próximo PB acionável:** definido automaticamente pelo campo `Status`
+  de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
+
+> **Convenção de Status (legível por máquina).** A **primeira palavra** do campo `- **Status:**` de
+> cada PB é um *token* de um vocabulário fechado; o texto após ` — ` é detalhe humano livre. O
+> orquestrador percorre a ordem da Sprint ativa e trata o **primeiro PB cujo token não é `VALIDADO`**.
+>
+> | Token | Significado | O orquestrador roda |
+> |---|---|---|
+> | `A-FAZER` | ninguém começou | Implementação → QA |
+> | `EM-IMPLEMENTACAO` | em andamento | Implementação → QA |
+> | `AGUARDANDO-QA` | implementado (por Dev/colega/Codex), falta validar | **só QA** |
+> | `REPROVADO` | QA achou defeito | Implementação (correção) → QA |
+> | `BLOQUEADO` | bloqueio externo/dependência | pula (verificar dependências) |
+> | `VALIDADO` | fechado pelo QA | segue para o próximo PB |
+>
+> Ao **implementar** um PB, marque-o `AGUARDANDO-QA` e faça commit. O QA marca `VALIDADO`/`REPROVADO`.
 
 ---
 
@@ -196,7 +212,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-01 — Fundação técnica do produto
 
-- **Status:** Implementação concluída; revalidação formal do QA pendente.
+- **Status:** AGUARDANDO-QA — Implementação concluída; revalidação formal do QA pendente.
 - **Objetivo:** base local integrada e reproduzível de frontend (React/Vite), backend (FastAPI) e
   banco (PostgreSQL) com SQLAlchemy/Alembic.
 - **Dependências:** Nenhuma.
@@ -230,7 +246,7 @@ A ordem respeita as dependências declaradas no backlog.
   no catálogo do Postgres — `users`/`ix_users_spotify_id` criados/removidos/recriados; `.env` git-ignored).
   **CT-PB01-06 Bloqueado** (Node/npm ausentes no host → frontend nativo não executável; critério 1 sem
   evidência). Defeitos: **DEF-PB01-01** (Média, bloqueio de ambiente) e **DEF-PB01-02** (Baixa, nomes de
-  variáveis do `.env` divergem do `.env.example`). Relatório completo: `RELATORIOS_TESTES/PB-01.md`.
+  variáveis do `.env` divergem do `.env.example`). Relatório completo: `docs/relatorios-testes/PB-01.md`.
   **Veredito QA: PB-01 BLOQUEADO NA VALIDAÇÃO — EVIDÊNCIA INSUFICIENTE** (não há defeito de código;
   falta apenas comprovar o critério 1).
 - **Evidência adicional do Dev (2026-07-13):** Node `v24.18.0`, npm `11.16.0`, `npm run build` OK
@@ -258,7 +274,7 @@ A ordem respeita as dependências declaradas no backlog.
   irrecuperáveis após restart), DEF-PB02-03 (Média — naive/aware quebra sessão em SQLite),
   DEF-PB02-04 (Média — `.env` com `CLIENT_SECRET` errado quebra OAuth real), DEF-PB02-05 (Média —
   entrega sem testes), DEF-PB02-06/07 (Baixa — 307≠302, valores hardcoded, sem tratar `error`;
-  scope creep `Home.jsx`). Relatório: `docs/RELATORIOS_TESTES/PB-02.md`.
+  scope creep `Home.jsx`). Relatório: `docs/relatorios-testes/PB-02.md`.
   **Veredito QA: PB-02 REPROVADO NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS.**
 - **Correções do Dev (2026-07-13):** implementados refresh central e persistência do novo access token;
   falha de refresh marca `reauth_required_at`; removida chave Fernet temporária; datas SQLite
@@ -297,7 +313,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-04 — Criação de sala efêmera
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** criar sala temporária com código curto único, host como primeiro integrante e
   expiração de 24h.
 - **Dependências:** PB-01 e PB-02.
@@ -323,7 +339,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-05 — Entrada e acompanhamento da sala
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** entrar por código sem duplicidade, respeitar o limite de 5 integrantes, proteger o
   acesso (403 para não-membros) e atualizar a sala por polling.
 - **Dependências:** PB-02 e PB-04.
@@ -349,7 +365,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-06 — Contexto e modo de consenso
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** permitir que **somente o host** defina ocasião/descrição e o modo (Democrático ou
   Festa Segura), disponibilizando as alterações na próxima atualização da sala.
 - **Dependências:** PB-04.
@@ -373,7 +389,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-08 — Coleta e cache de dados musicais
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** obter top tracks/artists via Spotify e armazenar snapshots com validade (default 7
   dias), reutilizando snapshots válidos e sinalizando reautenticação em falha de token.
 - **Dependências:** PB-02.
@@ -474,7 +490,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-09 — Modelagem de gosto e compatibilidade
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** perfis individuais (faixas, artistas, gêneros) e compatibilidade normalizada e
   reprodutível, tratando listas vazias e grupo de 1.
 - **Dependências:** PB-05 e PB-08.
@@ -497,7 +513,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-10 — Geração do conjunto de candidatas
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** montar pool de candidatas com contribuição de vários integrantes, deduplicado, com
   origem registrada e descarte motivado de candidatas sem identificação.
 - **Dependências:** PB-06 e PB-09.
@@ -520,7 +536,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-11 — Pontuação individual e coletiva
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** fórmulas configuráveis de score individual e de grupo, com pesos centralizados e
   resultados determinísticos e testados.
 - **Dependências:** PB-09 e PB-10.
@@ -544,7 +560,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-12 — Rejeição, justiça e modos de consenso
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** aplicar penalidade de rejeição, least misery, cobertura, representação mínima e os
   perfis de peso dos modos Democrático e Festa Segura.
 - **Dependências:** PB-11. Opcional: PB-07 (respostas do Vibe Check como entrada, não bloqueante).
@@ -568,7 +584,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-13 — Controle e histórico da geração
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** uma execução (`playlist_run`) por solicitação, com estados e Generation Lock que impede
   concorrência (409) na mesma sala.
 - **Dependências:** PB-05, PB-06 e PB-11.
@@ -638,60 +654,103 @@ e o Vibe Check opcional está disponível.
 
 ### PBs incluídos
 
-- PB-14 — Correspondência e criação da playlist no Spotify
-- PB-15 — Resultado e explicabilidade
-- PB-16 — Interpretação estruturada do contexto
 - PB-07 — Vibe Check opcional
+- PB-14 — Correspondência das músicas no Spotify
+- PB-15 — Criação da playlist no Spotify
+- PB-16 — Resultado e explicabilidade
+- PB-17 — Interpretação estruturada do contexto
 
 ### Dependências da Sprint
 
-- **De Sprints anteriores:** PB-11, PB-12, PB-13 (motor/execução) e PB-02 (token do host) para PB-14;
-  PB-13 para PB-15; PB-06 e PB-10 para PB-16; PB-05 e PB-06 para PB-07.
-- **Entre PBs:** PB-15 depende de PB-14. PB-16 e PB-07 são independentes de PB-14/PB-15 dentro da Sprint.
-- **Externas:** `ANTHROPIC_API_KEY` (LLM) para PB-16 — com fallback determinístico obrigatório.
+- **De Sprints anteriores:** PB-05 e PB-06 para PB-07; PB-02, PB-11, PB-12, PB-13 para PB-14;
+  PB-06 e PB-10 para PB-17.
+- **Entre PBs:** PB-15 depende de PB-14; PB-16 depende de PB-13, PB-14 e PB-15. PB-07 e PB-17 são
+  independentes do caminho da playlist dentro da Sprint.
+- **Externas:** `ANTHROPIC_API_KEY` (LLM) para PB-17 — com fallback determinístico obrigatório.
 
 ### Ordem de implementação
 
-1. PB-14  *(fecha o caminho crítico de playlist real)*
-2. PB-15  *(depende de PB-14)*
-3. PB-16  *(enriquecimento de contexto; tem fallback)*
-4. PB-07  *(opcional; não bloqueia a geração)*
+1. PB-14  *(correspondência das candidatas no Spotify — abre o caminho da playlist)*
+2. PB-15  *(criação da playlist real; depende de PB-14)*
+3. PB-16  *(resultado e explicabilidade; depende de PB-14 e PB-15)*
+4. PB-17  *(interpretação de contexto; tem fallback)*
+5. PB-07  *(Vibe Check opcional; não bloqueia a geração)*
 
 ### Execução dos PBs
 
-#### PB-14 — Correspondência e criação da playlist no Spotify
+#### PB-07 — Vibe Check opcional
 
-- **Status:** A fazer
-- **Objetivo:** resolver candidatas via Spotify Search com o token do host, validar disponibilidade e
-  criar playlist privada (20–30 faixas, máx. 2/artista), guardando id/URL na execução.
+- **Status:** A-FAZER
+- **Objetivo:** questionário curto (3–5 perguntas), pulável, cujas respostas viram preferências
+  normalizadas (0–1) por usuário/sala, atualizáveis a cada nova resposta.
+- **Dependências:** PB-05 e PB-06.
+- **Critérios de aceitação:**
+  1. Entre 3 e 5 perguntas.
+  2. Usuário pode pular sem bloquear a geração.
+  3. Respostas armazenadas por usuário e sala.
+  4. Preferências derivadas entre 0 e 1.
+  5. Nova resposta do mesmo usuário atualiza a participação seguinte.
+- **Plano de implementação:** `GET/POST /rooms/{code}/vibe-check`; persistir `vibe_check_answers`.
+- **Arquivos ou módulos previstos:** `backend/app/api/vibe_check.py`, `backend/app/db/models.py`,
+  `frontend/` (Room — Vibe Check), migração.
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-07).
+- **Bloqueios:** depende de PB-05/PB-06.
+- **Resultado da implementação:** — (não iniciado)
+- **Próxima ação exata:** implementar rotas do Vibe Check e derivação de preferências.
+
+#### PB-14 — Correspondência das músicas no Spotify
+
+- **Status:** A-FAZER
+- **Objetivo:** resolver candidatas via Spotify Search com o token do host, normalizar título/artista,
+  validar disponibilidade e descartar ambíguos/indisponíveis; cada válida com identificador Spotify.
 - **Dependências:** PB-02, PB-11, PB-12 e PB-13.
 - **Critérios de aceitação:**
   1. Busca usa o mercado do token do host quando disponível.
   2. Título/artista normalizados (live, remastered, acoustic…).
-  3. Abaixo da confiança mínima ou indisponível → descartado com motivo.
-  4. Seleção final: 20–30 músicas, máx. 2 por artista.
-  5. Playlist privada por padrão, na conta do host.
-  6. `spotify_playlist_id` e URL armazenados na execução.
+  3. Abaixo da confiança mínima → descartado com motivo registrado.
+  4. Indisponível no mercado do host → não selecionado.
+  5. Cada música válida possui o identificador Spotify associado.
 - **Plano de implementação:** track matching (normalização/variantes/confiança) em `SpotifyClient`;
-  checagem de mercado; criação de playlist + add items; persistir `playlist_run_tracks`
-  (`match_confidence`, `discard_reason`, `source`, `position`).
+  checagem de mercado; persistir candidatas resolvidas (`match_confidence`, `discard_reason`, `source`).
 - **Arquivos ou módulos previstos:** `backend/app/clients/spotify_client.py`,
   `backend/app/services/generation_service.py`, `backend/app/db/models.py` (`playlist_run_tracks`), migração.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-14) — normalização de variantes, confiança
-  mínima, desempate por popularidade, indisponível no mercado, cap de 2/artista, faixa 20–30, privada.
-- **Evidências necessárias:** playlist criada de fato no Spotify do host; descartes motivados registrados.
+  mínima, indisponível no mercado, identificador associado.
 - **Riscos:** R-02, R-04, R-05.
 - **Bloqueios:** contas Spotify da demo; motor (PB-11/PB-12) e execução (PB-13).
 - **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar track matching e criação de playlist com o token do host.
+- **Próxima ação exata:** implementar track matching de candidatas com o token do host.
 
-#### PB-15 — Resultado e explicabilidade
+#### PB-15 — Criação da playlist no Spotify
 
-- **Status:** A fazer
+- **Status:** A-FAZER
+- **Objetivo:** criar playlist privada (20–30 faixas, máx. 2/artista) na conta do host a partir das
+  músicas correspondidas, guardar id/URL na execução e devolver o link ao host.
+- **Dependências:** PB-14.
+- **Critérios de aceitação:**
+  1. A playlist deve conter entre 20 e 30 músicas.
+  2. No máximo duas músicas por artista.
+  3. Playlist privada por padrão.
+  4. `spotify_playlist_id` e URL armazenados na execução.
+  5. O host recebe o link da playlist criada.
+- **Plano de implementação:** criação de playlist + add items via `SpotifyClient`; aplicar cap de
+  2/artista e faixa 20–30; persistir id/URL em `playlist_runs`.
+- **Arquivos ou módulos previstos:** `backend/app/clients/spotify_client.py`,
+  `backend/app/services/generation_service.py`, `backend/app/db/models.py`, migração.
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-15) — cap de 2/artista, faixa 20–30,
+  privada por padrão, id/URL persistidos, link retornado.
+- **Evidências necessárias:** playlist criada de fato no Spotify do host; id/URL persistidos.
+- **Riscos:** R-02, R-05.
+- **Bloqueios:** depende de PB-14.
+- **Resultado da implementação:** — (não iniciado)
+- **Próxima ação exata:** implementar criação da playlist privada com o token do host.
+
+#### PB-16 — Resultado e explicabilidade
+
+- **Status:** A-FAZER
 - **Objetivo:** tela de resultado com link da playlist, compatibilidade, fairness, representação por
   integrante e justificativas legíveis, sem expor dados sensíveis de terceiros.
-- **Dependências:** PB-13 e PB-14.
+- **Dependências:** PB-13, PB-14 e PB-15.
 - **Critérios de aceitação:**
   1. Apresentar o link da playlist criada.
   2. Apresentar compatibilidade e fairness score da execução.
@@ -701,18 +760,17 @@ e o Vibe Check opcional está disponível.
 - **Plano de implementação:** `GET /rooms/{code}/result`; montagem de `explanation_json`;
   tela Result no frontend com representação agregada e motivos por faixa.
 - **Arquivos ou módulos previstos:** `backend/app/api/rooms.py`, `backend/app/services/`, `frontend/` (Result).
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-15) — presença do link/métricas,
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-16) — presença do link/métricas,
   representação, privacidade das explicações, acesso restrito a membros.
 - **Evidências necessárias:** payload de resultado; verificação de que nenhuma rejeição individual é exposta.
 - **Riscos:** R-08 (privacidade nas explicações).
-- **Bloqueios:** depende de PB-14.
+- **Bloqueios:** depende de PB-14 e PB-15.
 - **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar `GET /rooms/{code}/result` e a tela Result.
 
-#### PB-16 — Interpretação estruturada do contexto
+#### PB-17 — Interpretação estruturada do contexto
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** LLM interpreta a descrição livre do host em um schema JSON validado, com fallback
   determinístico e sem enviar dados brutos de tops ao LLM.
 - **Dependências:** PB-06 e PB-10.
@@ -735,31 +793,6 @@ e o Vibe Check opcional está disponível.
 - **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar `LLMClient` com validação de schema e fallback determinístico.
 
-#### PB-07 — Vibe Check opcional
-
-- **Status:** A fazer
-- **Objetivo:** questionário curto (3–5 perguntas), pulável, cujas respostas viram preferências
-  normalizadas (0–1) por usuário/sala, atualizáveis a cada nova resposta.
-- **Dependências:** PB-05 e PB-06.
-- **Critérios de aceitação:**
-  1. Entre 3 e 5 perguntas.
-  2. Usuário pode pular sem bloquear a geração.
-  3. Respostas armazenadas por usuário e sala.
-  4. Preferências derivadas entre 0 e 1.
-  5. Nova resposta do mesmo usuário atualiza a participação seguinte.
-- **Plano de implementação:** `GET/POST /rooms/{code}/vibe-check`; persistir `vibe_check_answers`
-  (`answers_json`, `derived_preferences_json`); mapear respostas → variáveis do README §9.
-- **Arquivos ou módulos previstos:** `backend/app/api/vibe_check.py`, `backend/app/schemas/`,
-  `backend/app/db/models.py` (`vibe_check_answers`), `frontend/` (Room — Vibe Check), migração.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-07) — limites 3–5, pular não bloqueia,
-  faixa [0,1], atualização por regravação, associação usuário/sala.
-- **Evidências necessárias:** `derived_preferences_json` correto; geração segue ao pular.
-- **Riscos:** R-11 (abandono por questionário).
-- **Bloqueios:** depende de PB-05/PB-06.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar rotas do Vibe Check e derivação de preferências.
-
 ### Testes integrados da Sprint 3
 
 Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
@@ -773,7 +806,7 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ### Critérios de encerramento da Sprint 3
 
-- [ ] PB-14, PB-15, PB-16, PB-07 concluídos e critérios validados;
+- [ ] PB-07, PB-14, PB-15, PB-16, PB-17 concluídos e critérios validados;
 - [ ] testes individuais de cada PB passando;
 - [ ] testes integrados da Sprint 3 passando;
 - [ ] regressão das Sprints 1 e 2 passando;
@@ -792,41 +825,39 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ---
 
-## Sprint 4 — Complementos e consolidação de qualidade
+## Sprint 4 — Complementos da experiência
 
 ### Objetivo da Sprint
 
-Ao final da Sprint 4, a experiência está complementada (logout/remoção de dados, enriquecimento de
-contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a qualidade consolidada
-(testes, fallbacks, proteção de dados, documentação e roteiro de demonstração).
+Ao final da Sprint 4, a experiência está complementada: logout/remoção de dados, enriquecimento de
+contexto por Last.fm, sequenciamento da playlist e coleta de feedback. A consolidação de qualidade
+(testes, fallbacks, proteção de dados, documentação, roteiro de demonstração) é a **Definition of
+Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 ### PBs incluídos
 
 - PB-03 — Logout e remoção de dados
-- PB-17 — Enriquecimento de contexto com Last.fm
-- PB-18 — Sequenciamento da experiência musical
-- PB-19 — Feedback pós-playlist
-- PB-20 — Qualidade, robustez e documentação
+- PB-18 — Enriquecimento de contexto com Last.fm
+- PB-19 — Sequenciamento da experiência musical
+- PB-20 — Feedback pós-playlist
 
 ### Dependências da Sprint
 
-- **De Sprints anteriores:** PB-02 (PB-03); PB-10 e PB-16 (PB-17); PB-12 e PB-14 (PB-18); PB-15 (PB-19).
-- **PB-20:** consolida testes/qualidade de todos os PBs (execução contínua desde a Sprint 1, encerrada aqui).
-- **Externas:** `LASTFM_API_KEY` (PB-17) — com cascata de fallback obrigatória.
+- **De Sprints anteriores:** PB-02 (PB-03); PB-10 e PB-17 (PB-18); PB-12, PB-14 e PB-15 (PB-19); PB-16 (PB-20).
+- **Externas:** `LASTFM_API_KEY` (PB-18) — com cascata de fallback obrigatória.
 
 ### Ordem de implementação
 
 1. PB-03
-2. PB-17
-3. PB-18
-4. PB-19
-5. PB-20  *(consolidação final)*
+2. PB-18
+3. PB-19
+4. PB-20
 
 ### Execução dos PBs
 
 #### PB-03 — Logout e remoção de dados
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** encerrar sessão (invalidando-a no backend) e excluir/anonimizar dados pessoais sem
   expor tokens ou dados de terceiros.
 - **Dependências:** PB-02.
@@ -846,12 +877,12 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar logout com invalidação de sessão e fluxo de remoção.
 
-#### PB-17 — Enriquecimento de contexto com Last.fm
+#### PB-18 — Enriquecimento de contexto com Last.fm
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** tags do Last.fm (faixa → artista) combinadas com gêneros Spotify, em cache com
   confiança, sem interromper a geração em erro/ausência.
-- **Dependências:** PB-10 e PB-16.
+- **Dependências:** PB-10 e PB-17.
 - **Critérios de aceitação:**
   1. Tenta tags da faixa antes das do artista.
   2. Sem Last.fm, usa gêneros Spotify e demais sinais.
@@ -861,7 +892,7 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Plano de implementação:** `LastFmClient` + cascata; cache em `track_context_cache` com `confidence`/`source`.
 - **Arquivos ou módulos previstos:** `backend/app/clients/lastfm_client.py`,
   `backend/app/db/models.py` (`track_context_cache`), migração.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-17) — cascata, cache válido reutilizado,
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-18) — cascata, cache válido reutilizado,
   erro/vazio não quebra, confiança por fonte.
 - **Evidências necessárias:** `track_context_cache` com fonte/confiança; cascata exercida.
 - **Riscos:** R-07 (sem tags).
@@ -870,12 +901,12 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar `LastFmClient` com cascata e cache.
 
-#### PB-18 — Sequenciamento da experiência musical
+#### PB-19 — Sequenciamento da experiência musical
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** ordenar a seleção final com abertura de alta aceitação, faixas arriscadas no meio,
   sem 2 do mesmo artista consecutivas e respeitando o cap de 2/artista.
-- **Dependências:** PB-12 e PB-14.
+- **Dependências:** PB-12, PB-14 e PB-15.
 - **Critérios de aceitação:**
   1. Sem duas do mesmo artista consecutivas.
   2. Começar por música de alta aceitação.
@@ -883,7 +914,7 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
   4. Respeitar o cap de 2 músicas por artista.
 - **Plano de implementação:** `engine/sequencer.py` (regras determinísticas sobre a seleção final).
 - **Arquivos ou módulos previstos:** `backend/app/engine/sequencer.py`, testes.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-18) — sem repetição consecutiva,
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-19) — sem repetição consecutiva,
   abertura forte, risco no meio, cap respeitado.
 - **Evidências necessárias:** ordem final validada por testes.
 - **Riscos:** conflito entre regras e cap (empates).
@@ -892,12 +923,12 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar `engine/sequencer.py` com as regras do README §15.
 
-#### PB-19 — Feedback pós-playlist
+#### PB-20 — Feedback pós-playlist
 
-- **Status:** A fazer
+- **Status:** A-FAZER
 - **Objetivo:** coletar feedback por faixa (like/dislike/more_like_this/never_again) e geral
   (representação/satisfação), associado à execução correta, sem uso no ranking do MVP.
-- **Dependências:** PB-15.
+- **Dependências:** PB-16.
 - **Critérios de aceitação:**
   1. Marcar like/dislike/more_like_this/never_again por faixa.
   2. Informar satisfação e representação da playlist.
@@ -907,7 +938,7 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Plano de implementação:** `POST /playlist-runs/{id}/tracks/{track_id}/feedback` e
   `POST /playlist-runs/{id}/feedback`; persistir `member_track_feedback` e `playlist_feedback`.
 - **Arquivos ou módulos previstos:** `backend/app/api/feedback.py`, `backend/app/db/models.py`, migração, `frontend/`.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-19) — associação correta, bloqueio de
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-20) — associação correta, bloqueio de
   não-membro, aviso de uso futuro, persistência.
 - **Evidências necessárias:** feedback persistido e vinculado; não-membro bloqueado.
 - **Riscos:** vinculação incorreta de execução.
@@ -916,29 +947,10 @@ contexto por Last.fm, sequenciamento da playlist e coleta de feedback) e a quali
 - **Resultado dos testes:** — (não executado)
 - **Próxima ação exata:** implementar rotas de feedback e persistência.
 
-#### PB-20 — Qualidade, robustez e documentação
-
-- **Status:** A fazer *(execução contínua desde a Sprint 1; consolidação na Sprint 4)*
-- **Objetivo:** consolidar testes do motor e da API, mocks de clientes externos, proteção de dados,
-  documentação e roteiro de demonstração do fluxo principal.
-- **Dependências:** PB-02 a PB-19 (contínuo).
-- **Critérios de aceitação:**
-  1. Testes de motor: scoring, justiça, rejeição, duplicidade, cap por artista.
-  2. Testes de API: autorização, entrada duplicada, Generation Lock.
-  3. Clientes externos mockados: token expirado, 429, JSON inválido, busca sem resultado.
-  4. Nenhum teste/log expõe tokens reais.
-  5. README com instruções atualizadas.
-  6. Roteiro de demonstração documentado.
-- **Plano de implementação:** ampliar `backend/tests/`; revisar sanitização de logs; atualizar README;
-  escrever roteiro de demo (pode consolidar em `PLANO_TESTES.md`/`README.md`).
-- **Arquivos ou módulos previstos:** `backend/tests/**`, `README.md`, `docs/PLANO_TESTES.md`.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-20) e todos os testes integrados.
-- **Evidências necessárias:** suíte completa verde; README atualizado; roteiro de demo.
-- **Riscos:** R-08 (vazamento em logs/testes).
-- **Bloqueios:** depende da estabilidade dos PBs anteriores.
-- **Resultado da implementação:** — (parcial: fundação de testes do PB-01 já existe)
-- **Resultado dos testes:** — (4 testes de saúde já passam; suíte completa pendente)
-- **Próxima ação exata:** ao longo das Sprints, manter cobertura; consolidar e documentar na Sprint 4.
+> **Nota — Qualidade/robustez/documentação (antigo PB-20):** deixou de ser um PB e virou a
+> **Definition of Done**, aplicada a **todos** os PBs desde a Sprint 1 (ver `../produto/BACKLOG_PRODUTO.md`
+> §15): testes de motor/API, clientes externos mockados (token expirado, 429, JSON inválido, busca vazia),
+> nenhum segredo em logs/testes, README atualizado e roteiro de demonstração. Verificada a cada entrega.
 
 ### Testes integrados da Sprint 4
 
@@ -953,7 +965,7 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 4". Cobrem, no mínimo:
 
 ### Critérios de encerramento da Sprint 4
 
-- [ ] PB-03, PB-17, PB-18, PB-19, PB-20 concluídos e critérios validados;
+- [ ] PB-03, PB-18, PB-19, PB-20 concluídos e critérios validados;
 - [ ] testes individuais de cada PB passando;
 - [ ] testes integrados da Sprint 4 passando;
 - [ ] regressão das Sprints 1–3 passando;
@@ -971,12 +983,21 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 4". Cobrem, no mínimo:
 
 ---
 
-## Backlog de versões futuras (fora do MVP)
+## Sprint 5 — Expansão pós-MVP (fora do MVP)
 
-Não iniciar sem decisão explícita de escopo, e somente com o MVP estável.
+Não iniciar sem decisão explícita de escopo, e somente com o MVP (Sprints 1–4) estável. Todos com
+**Status:** A-FAZER.
 
-- **PB-21 — Modo Descoberta** (Baixa, 5 pts; depende de PB-11, PB-12, PB-15).
-- **PB-22 — Agrupamento de gostos e faixas-ponte** (Baixa, 13 pts; depende de PB-09, PB-11, PB-12, PB-15).
+- **PB-21 — Modo Descoberta** (Baixa, 5 pts) — perfil de pesos que favorece novidade/diversidade,
+  mantendo rejeição e justiça. Depende de PB-11, PB-12 e PB-16.
+- **PB-22 — Agrupamento de perfis musicais** (Baixa, 4 pts) — identifica subgrupos de afinidade a
+  partir de dados autorizados, de forma determinística. Depende de PB-09.
+- **PB-23 — Identificação de músicas-ponte** (Baixa, 5 pts) — marca faixas com boa aceitação entre
+  subgrupos durante o ranqueamento. Depende de PB-11 e PB-22.
+- **PB-24 — Balanceamento entre subgrupos** (Baixa, 4 pts) — alterna representantes dos subgrupos na
+  seleção final, preservando consenso e justiça. Depende de PB-12, PB-16, PB-22 e PB-23.
+
+Detalhes e critérios de aceitação em `../produto/BACKLOG_PRODUTO.md` (§10, PB-21 a PB-24).
 
 ---
 
