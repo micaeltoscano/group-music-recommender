@@ -1,77 +1,107 @@
+/* =========================================================================
+   Vibe Check — Design tokens (base do frontend)
+   Fonte de verdade visual: docs/design/ (README + screenshots + protótipo).
+   TODA tela nova deve usar estas variáveis (var(--...)) em vez de cores fixas.
+   ========================================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
 :root {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color-scheme: light dark;
-  background-color: #121212;
-  color: #f5f5f5;
+  /* Cores — base */
+  --bg: #14130d;
+  --surface: #1e1c13;
+  --surface-2: #1a1810;
+  --border: #35331f;
+  --border-2: #3a382a;
+  --hairline: #2b2919;
+
+  /* Cores — acento */
+  --accent: #ff5b1c;         /* signal orange (primário) */
+  --accent-hover: #ff7a45;
+  --accent-2: #a8ae6d;       /* olive (positivo / "safe") */
+
+  /* Texto */
+  --text: #f2ecdb;
+  --muted: #a8a48c;
+  --muted-2: #8b8871;
+  --dim: #5b5945;
+
+  /* Avatares (paleta rotativa por integrante) */
+  --avatar-1: #ff5b1c; --avatar-2: #a8ae6d; --avatar-3: #e0b84a;
+  --avatar-4: #c96f4a; --avatar-5: #8fae8a;
+
+  /* Tipografia */
+  --font-display: "Chakra Petch", system-ui, sans-serif;  /* títulos, números */
+  --font-body: "IBM Plex Mono", ui-monospace, monospace;  /* corpo, UI, labels */
+
+  /* Forma & elevação */
+  --radius-card: 18px;
+  --radius-btn: 12px;
+  --radius-pill: 999px;
+  --shadow-hero: 0 24px 80px rgba(255, 91, 28, 0.18);
+
+  color-scheme: dark;
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  display: flex;
   min-height: 100vh;
+  display: flex;
   justify-content: center;
   align-items: center;
+  background: var(--bg);
 }
 
-.app {
-  text-align: center;
-  padding: 2rem;
+/* Títulos e números usam a fonte de display */
+h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.01em; }
+
+h1 { margin: 0; font-size: 2.4rem; color: var(--text); font-weight: 700; }
+h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
+
+/* Eyebrow / label em bracket, ex.: [ VC-01 · LOGIN MODULE ] */
+.eyebrow {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--dim); font-weight: 600;
 }
 
-h1 {
-  margin: 0;
-  font-size: 2.4rem;
-  color: #1db954;
+/* ---- Componentes reutilizáveis (base para novas telas) ---- */
+
+.btn {
+  font-family: var(--font-body); font-weight: 600; font-size: 0.9rem;
+  padding: 0.7rem 1.2rem; border-radius: var(--radius-btn);
+  border: 1px solid transparent; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.btn-primary { background: var(--accent); color: #14130d; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-outline { background: transparent; color: var(--accent-2); border-color: var(--accent-2); }
+.btn-outline:hover { background: rgba(168, 174, 109, 0.1); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0.7rem; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); font-size: 0.8rem; color: var(--muted);
 }
 
-.subtitle {
-  margin-top: 0.25rem;
-  color: #b3b3b3;
-}
+/* ---- Classes existentes (retematizadas para o design) ---- */
+
+.app { text-align: center; padding: 2rem; }
+.subtitle { margin-top: 0.25rem; color: var(--muted); }
 
 .card {
-  margin-top: 2rem;
-  padding: 1.5rem 2rem;
-  border-radius: 12px;
-  background: #1e1e1e;
-  min-width: 320px;
-  text-align: left;
+  margin-top: 2rem; padding: 1.5rem 2rem;
+  border-radius: var(--radius-card);
+  background: var(--surface); border: 1px solid var(--border);
+  min-width: 320px; text-align: left;
 }
 
-.card h2 {
-  margin-top: 0;
-  font-size: 1.1rem;
-}
+.status-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0; }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.status-label { flex: 1; }
+.status-value { font-variant: small-caps; color: var(--muted); }
 
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 0;
-}
-
-.status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.status-label {
-  flex: 1;
-}
-
-.status-value {
-  font-variant: small-caps;
-  color: #b3b3b3;
-}
-
-.hint {
-  margin-top: 1rem;
-  font-size: 0.8rem;
-  color: #777;
-}
+.hint { margin-top: 1rem; font-size: 0.8rem; color: var(--dim); }
