@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { api } from './apiClient'
 import Home from './Home'
 import Login from './Login'
+import Room from './Room'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -35,6 +36,10 @@ export default function App() {
         <Route 
           path="/login" 
           element={!user ? <Login /> : <Navigate to="/" replace />} 
+        />
+        <Route
+          path="/rooms/:code"
+          element={user ? <Room user={user} /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </BrowserRouter>

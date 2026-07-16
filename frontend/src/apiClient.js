@@ -18,4 +18,6 @@ export const api = {
   healthDb: () => requestJson('/health/db'),
   getMe: () => requestJson('/auth/me'),
   createRoom: () => requestJson('/rooms', { method: 'POST' }),
+  joinRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  getRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}`),
 }

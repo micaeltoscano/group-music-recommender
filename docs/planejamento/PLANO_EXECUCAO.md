@@ -316,8 +316,8 @@ A ordem respeita as dependências declaradas no backlog.
 - **Status:** VALIDADO (QA 2026-07-14) — CT-PB04-01..06 reexecutados pelo QA contra Postgres real
   (401 não-autenticado, 201 autenticado, 20 criações concorrentes com códigos únicos, host consistente,
   expiração de 24h, payload sanitizado); migração `0003` ida/volta/ida OK; regressão 27/27. Sem defeito
-  de código. Pendência apenas operacional: Dev deve commitar o PB (sandbox impediu o commit — `.git`
-  somente leitura). Relatório: `docs/relatorios-testes/PB-04.md`.
+  de código. Commit concluído em `f87b220` (`feat(PB04): Criação de sala efêmera`). Relatório:
+  `docs/relatorios-testes/PB-04.md`.
 - **Objetivo:** criar sala temporária com código curto único, host como primeiro integrante e
   expiração de 24h.
 - **Dependências:** PB-01 e PB-02.
@@ -347,7 +347,7 @@ A ordem respeita as dependências declaradas no backlog.
 - **Comandos executados:** `pytest tests/test_pb04_rooms.py -q`; regressão PB-01/PB-02;
   `pytest tests -q`; `python -m compileall -q app tests`; `pip check`; `npm run build`; Alembic na revisão
   anterior: `upgrade head` → `downgrade 23f017f2fbb2` → `upgrade head`; `git add ...` (bloqueado
-  pelo sandbox antes de escrever no índice).
+  pelo sandbox naquela sessão; commit concluído posteriormente em `f87b220`).
 - **Resultado da implementação:** endpoint `POST /rooms`, persistência, autenticação, retry de código,
   resposta tipada/sanitizada e Home responsiva concluídos.
 - **Resultado dos testes técnicos (2026-07-14):** PB-04 **8 passed / 0 failed**; regressão PB-01/PB-02
@@ -356,44 +356,59 @@ A ordem respeita as dependências declaradas no backlog.
 - **Resultados observados:** `POST /rooms` autenticado → 201; ausente/inválido → 401 sem escrita;
   12 criações concorrentes → 12 códigos únicos; colisão forçada recuperada sem registro parcial;
   resposta sem token/hash/dados de terceiro.
-- **Critérios pendentes:** nenhum na validação interna; todos aguardam execução independente do QA.
-- **Riscos e limitações:** o sandbox negou acesso ao Docker/PostgreSQL. A cadeia Alembic completa em
-  SQLite também é impedida por `DEFAULT now()` na migração preexistente do PB-02; a revisão PB-04 foi
-  validada isoladamente e de forma reversível. O QA deve repetir o ciclo no PostgreSQL alvo.
-- **Bloqueios:** metadados `.git` sem permissão de escrita impedem `git add`/`git commit`; validação
-  PostgreSQL real também depende de ambiente com acesso ao Docker/socket local. Código e testes não
-  possuem bloqueio técnico.
-- **Próxima ação exata:** em ambiente com `.git` gravável, mudar este Status para `AGUARDANDO-QA`,
-  versionar apenas os arquivos/hunks do PB-04 e criar `feat(PB-04): criar sala efêmera`; depois o QA
-  executa CT-PB04-01..06 e o ciclo da migração no PostgreSQL.
-- **Ponto de retomada:** implementação pronta no working tree; falta somente resolver a permissão do
-  índice Git, atualizar o token de Status e criar o commit antes do handoff formal.
+- **Critérios pendentes:** nenhum; validação independente concluída pelo QA.
+- **Riscos e limitações:** limitações do sandbox da implementação foram encerradas pelo QA, que
+  repetiu a concorrência e o ciclo Alembic no PostgreSQL alvo.
+- **Bloqueios:** nenhum; validação QA e commit concluídos.
+- **Próxima ação exata:** nenhuma para o PB-04 (encerrado).
+- **Ponto de retomada:** PB-04 encerrado; PB-05 liberado pelas dependências.
 
 #### PB-05 — Entrada e acompanhamento da sala
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — implementação e testes técnicos concluídos em 2026-07-15; QA independente pendente.
 - **Objetivo:** entrar por código sem duplicidade, respeitar o limite de 5 integrantes, proteger o
   acesso (403 para não-membros) e atualizar a sala por polling.
 - **Dependências:** PB-02 e PB-04.
 - **Critérios de aceitação:**
-  1. Rejeitar código inexistente ou sala expirada.
-  2. Máximo de cinco integrantes.
-  3. Mesmo usuário não é associado duas vezes.
-  4. Só membros consultam a sala; demais recebem 403.
-  5. Interface atualiza por polling a cada 3–5s.
-- **Plano de implementação:** `POST /rooms/{code}/join` (valida existência/expiração/limite/duplicidade,
-  PK composta em `music_session_members` evita duplicidade) e `GET /rooms/{code}` (guarda de membro,
-  lista integrantes e estado). Polling no frontend a cada 3–5s.
-- **Arquivos ou módulos previstos:** `backend/app/api/rooms.py`, `backend/app/services/room_service.py`,
-  `frontend/` (Room + polling em `apiClient`).
+  1. [x] Rejeitar código inexistente (404) ou sala expirada (410), sem criar vínculo.
+  2. [x] Máximo de cinco integrantes; sexto ingresso recebe 409 inclusive sob concorrência real.
+  3. [x] Mesmo usuário não é associado duas vezes; join repetido retorna o estado atual (200).
+  4. [x] Só membros consultam a sala; não-membro recebe 403 sem payload da sala.
+  5. [x] Interface atualiza por polling a cada 4s, dentro da faixa de 3–5s.
+- **Plano de implementação:** *(concluído)* `POST /rooms/{code}/join` normaliza o código, trava a linha
+  da sala no PostgreSQL, valida expiração/limite e trata duplicidade de forma idempotente;
+  `GET /rooms/{code}` aplica guarda de membro e devolve somente dados públicos em ordem estável. Home
+  cria/entra e navega ao lobby; Room mostra código, expiração, capacidade e membros com polling de 4s.
+- **Arquivos criados:** `backend/tests/test_pb05_rooms.py`, `frontend/src/Room.jsx`.
+- **Arquivos alterados:** `backend/app/api/rooms.py`, `backend/app/services/room_service.py`,
+  `frontend/src/{App,Home,apiClient,index.css}`, este plano.
+- **Migrações:** nenhuma; PB-05 reutiliza `music_sessions` e `music_session_members` da revisão
+  `0003_pb04_rooms`, incluindo a PK composta `(session_id, user_id)`.
+- **Decisões:** join duplicado é idempotente mesmo com a sala cheia; códigos digitados são normalizados
+  para `XXXX-XXXX`; o limite concorrente usa `SELECT ... FOR UPDATE` por sala no PostgreSQL; a resposta
+  lista apenas `user_id`, nome, imagem, papel e horário de entrada; contexto/modo permanecem no PB-06.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-05) — código inválido/expirado, 6º membro
   bloqueado, join duplicado idempotente, 403 para não-membro, atualização por polling.
-- **Evidências necessárias:** respostas 403/409/limite, estado atualizado no polling.
-- **Riscos:** condição de corrida no limite de 5; vazamento de dados de sala alheia.
-- **Bloqueios:** depende de PB-04.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `join` com verificação de limite/duplicidade e guarda de membro.
+- **Comandos executados:** `pytest tests/test_pb05_rooms.py -q` em SQLite e PostgreSQL isolado;
+  `pytest tests -q`; `python -m compileall -q app tests`; `pip check`; `npm run build`; `npm run dev`
+  + HTTP 200; Alembic no PostgreSQL isolado: `upgrade head` → `downgrade 23f017f2fbb2` → `upgrade head`.
+- **Resultado da implementação:** rotas de join/leitura, autorização, concorrência, Home de entrada e
+  lobby responsivo com polling concluídos, sem antecipar contexto, modo, Vibe Check ou geração.
+- **Resultado dos testes técnicos (2026-07-15):** PB-05 **10 passed / 0 failed** (9 testes de
+  API/regra em SQLite + 1 teste opt-in de concorrência no PostgreSQL, com 4 vagas preenchidas, 1
+  rejeição e total final = 5); suíte local completa **36 passed / 0 failed / 1 skipped** (o teste
+  PostgreSQL opt-in); build Vite **43 módulos**; servidor Vite respondeu HTTP 200; `compileall`,
+  `pip check` e ciclo Alembic sem falhas.
+- **Resultados observados:** join válido → 200 e membro persistido; inexistente → 404; expirada → 410;
+  sexto → 409; repetido → 200 com um vínculo; não-membro no GET → 403 sem dados; leitura posterior
+  reflete novo membro e leituras repetidas mantêm o mesmo estado.
+- **Critérios pendentes:** nenhum na validação interna; CT-PB05-01..07 aguardam execução independente.
+- **Riscos e limitações:** o teste visual pixel a pixel do lobby e o intervalo real no navegador devem
+  ser confirmados pelo QA; a concorrência já foi exercitada no PostgreSQL alvo, não apenas em SQLite.
+- **Bloqueios:** nenhum.
+- **Próxima ação exata:** QA executa CT-PB05-01..07, inspeção visual/polling de 4s, regressão PB-01/02/04
+  e registra o veredito em `docs/relatorios-testes/PB-05.md`; Dev não inicia PB-06 antes do veredito.
+- **Ponto de retomada:** implementação entregue no commit do PB-05; aguardando exclusivamente QA.
 
 #### PB-06 — Contexto e modo de consenso
 
@@ -483,8 +498,7 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01, PB-02 e PB-04 VALIDADOS (PB-04 com commit pendente pelo Dev); PB-05, PB-06
-e PB-08 a fazer (todos livres).
+**Em andamento** — PB-01, PB-02 e PB-04 VALIDADOS; PB-05 AGUARDANDO-QA; PB-06 e PB-08 a fazer.
 
 ---
 
@@ -1081,36 +1095,35 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-14.
+- **Data da última sessão:** 2026-07-15.
 - **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-04 — implementação concluída; handoff bloqueado pela permissão de `.git`.
-- **Último resultado concluído:** criação autenticada de sala, código único com retry, host como primeiro
-  membro, expiração de 24h, payload sanitizado e Home de criação; **27 testes backend aprovados**.
-- **Onde parou:** código/testes/documentação prontos; `git add` falhou ao criar `.git/index.lock`.
-- **Próxima ação exata:** liberar escrita em `.git`; mudar PB-04 para `AGUARDANDO-QA`; criar o commit
-  `feat(PB-04): criar sala efêmera`; só então acionar o QA. Dev não inicia PB-05/PB-06.
+- **PB em andamento:** PB-05 — implementação concluída e marcada `AGUARDANDO-QA`.
+- **Último resultado concluído:** join/leitura protegida de sala, limite concorrente de cinco,
+  idempotência, Home de entrada e lobby com polling; **10/10 testes PB-05** (9 SQLite + 1 concorrente
+  no PostgreSQL) e regressão local **36 passed / 1 skipped**.
+- **Onde parou:** código, testes, documentação e commit do PB-05 prontos; aguarda QA independente.
+- **Próxima ação exata:** Claude/QA executa CT-PB05-01..07 e escreve
+  `docs/relatorios-testes/PB-05.md`; Dev não inicia PB-06/PB-08 antes do veredito do PB-05.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb04_rooms.py -q
+  .venv/bin/pytest tests/test_pb05_rooms.py -q
   .venv/bin/pytest tests -q
-  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic upgrade head
-  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic downgrade 23f017f2fbb2
-  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic upgrade head
+  TEST_DATABASE_URL=<postgres-de-teste> .venv/bin/pytest tests/test_pb05_rooms.py -q
+  cd ../frontend && npm run build
   ```
-- **Bloqueios:** `.git` somente leitura impede o commit obrigatório; Docker/PostgreSQL também são
-  inacessíveis neste sandbox. Integração Spotify real continua fora do PB-04.
+- **Bloqueios:** nenhum no PB-05; Spotify não é usado neste PB.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — PB-04 8/8; regressão 19/19; suíte 27/27.
+- [x] Rodei os testes e verificações relevantes. — PB-05 10/10 (9 SQLite + 1 Postgres); suíte local 36/36 + 1 opt-in.
 - [x] Comparei o resultado com os critérios da história. — 5/5 cobertos internamente; QA pendente.
-- [x] Atualizei checkboxes e status sem declarar validação independente. — `BLOQUEADO` pelo commit.
-- [x] Registrei decisões ou bloqueios novos. — retry de código e limitação PostgreSQL do sandbox.
+- [x] Atualizei checkboxes e status sem declarar validação independente. — `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — lock de linha e ausência de bloqueios.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — este plano; README e PLANO_TESTES sem mudança necessária.
 - [x] Confirmei que nenhum segredo ou token foi adicionado. — diff revisado; somente dados fictícios.
-- [ ] Preparei um commit pequeno e relacionado à história. — impossível: `.git/index.lock` sem permissão.
+- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-05): implementar entrada e lobby`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 
