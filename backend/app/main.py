@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import health, auth
+from app.api import auth, health, rooms
 from app.config import settings
 
 
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
+    app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
 
     @app.get("/", tags=["root"], summary="Raiz")
     def root() -> dict[str, str]:

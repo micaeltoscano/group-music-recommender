@@ -3,9 +3,10 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
-async function getJson(path) {
+async function requestJson(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'include',
+    ...options,
   })
   const body = await res.json().catch(() => ({}))
   return { ok: res.ok, status: res.status, body }
@@ -13,7 +14,8 @@ async function getJson(path) {
 
 export const api = {
   baseUrl: API_BASE_URL,
-  health: () => getJson('/health'),
-  healthDb: () => getJson('/health/db'),
-  getMe: () => getJson('/auth/me'),
+  health: () => requestJson('/health'),
+  healthDb: () => requestJson('/health/db'),
+  getMe: () => requestJson('/auth/me'),
+  createRoom: () => requestJson('/rooms', { method: 'POST' }),
 }

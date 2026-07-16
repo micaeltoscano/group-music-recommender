@@ -212,7 +212,7 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-01 — Fundação técnica do produto
 
-- **Status:** AGUARDANDO-QA — Implementação concluída; revalidação formal do QA pendente.
+- **Status:** VALIDADO (QA revalidação 2026-07-14) — bloqueio de ambiente (Node) removido; CT-PB01-06 reexecutado e aprovado; todos os obrigatórios passam.
 - **Objetivo:** base local integrada e reproduzível de frontend (React/Vite), backend (FastAPI) e
   banco (PostgreSQL) com SQLAlchemy/Alembic.
 - **Dependências:** Nenhuma.
@@ -251,7 +251,7 @@ A ordem respeita as dependências declaradas no backlog.
   falta apenas comprovar o critério 1).
 - **Evidência adicional do Dev (2026-07-13):** Node `v24.18.0`, npm `11.16.0`, `npm run build` OK
   (42 módulos), `npm run dev` OK e frontend nativo respondeu HTTP 200. O bloqueio ambiental foi removido.
-- **Próxima ação exata:** QA reexecuta CT-PB01-06 e emite o veredito formal do PB-01.
+- **Próxima ação exata:** nenhuma para o PB-01 (encerrado). Dev (Codex) pode puxar PB-04 e PB-08.
 
 #### PB-02 — Autenticação com Spotify
 
@@ -313,29 +313,61 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-04 — Criação de sala efêmera
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO (QA 2026-07-14) — CT-PB04-01..06 reexecutados pelo QA contra Postgres real
+  (401 não-autenticado, 201 autenticado, 20 criações concorrentes com códigos únicos, host consistente,
+  expiração de 24h, payload sanitizado); migração `0003` ida/volta/ida OK; regressão 27/27. Sem defeito
+  de código. Pendência apenas operacional: Dev deve commitar o PB (sandbox impediu o commit — `.git`
+  somente leitura). Relatório: `docs/relatorios-testes/PB-04.md`.
 - **Objetivo:** criar sala temporária com código curto único, host como primeiro integrante e
   expiração de 24h.
 - **Dependências:** PB-01 e PB-02.
 - **Critérios de aceitação:**
-  1. Apenas usuário autenticado cria sala.
-  2. Cada sala recebe código curto único.
-  3. Criador registrado como host e primeiro integrante.
-  4. Expiração de 24h a partir da criação.
-  5. Retornar código e dados iniciais da sala.
+  1. [x] Apenas usuário autenticado cria sala — sessão ausente/inválida retorna 401 e não persiste.
+  2. [x] Cada sala recebe código curto único — formato `XXXX-XXXX`, `UNIQUE` no banco e retry após
+     colisão; 12 criações concorrentes produziram 12 códigos distintos.
+  3. [x] Criador registrado como host e primeiro integrante — sala e vínculo gravados no mesmo commit.
+  4. [x] Expiração de 24h a partir da criação — diferença exata validada na resposta e persistência.
+  5. [x] Retornar código e dados iniciais da sala — resposta 201 sanitizada com sala e host.
 - **Plano de implementação:** `POST /rooms` cria `music_sessions` (code único, `host_user_id`,
   `status=open`, `expires_at = now + 24h`) e `music_session_members` (host). Geração de código
-  colisão-resistente. Migração para `music_sessions` e `music_session_members`.
-- **Arquivos ou módulos previstos:** `backend/app/api/rooms.py`, `backend/app/services/room_service.py`,
-  `backend/app/db/models.py`, `frontend/` (Home), nova migração Alembic.
+  colisão-resistente. Migração para `music_sessions` e `music_session_members`. Home cria a sala e
+  exibe o código retornado sem antecipar lobby, join ou polling (PB-05).
+- **Arquivos criados:** `backend/app/api/rooms.py`, `backend/app/services/{__init__,room_service}.py`,
+  `backend/app/schemas/{__init__,rooms}.py`, `backend/alembic/versions/0003_pb04_rooms.py`,
+  `backend/tests/test_pb04_rooms.py`.
+- **Arquivos alterados:** `backend/app/db/models.py`, `backend/app/main.py`, `frontend/src/Home.jsx`,
+  `frontend/src/apiClient.js`, `frontend/src/index.css`, este plano.
+- **Migração:** `0003_pb04_rooms` (down revision `23f017f2fbb2`) cria `music_sessions` e
+  `music_session_members`; downgrade remove primeiro os vínculos e depois as salas.
+- **Decisões:** código usa alfabeto sem caracteres ambíguos e 8 símbolos em dois blocos; restrição
+  única é a garantia final contra concorrência; sala+membro são atômicos; payload expõe apenas dados
+  públicos da sala/host; entrada na sala e lobby permanecem fora deste PB.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-04) — só autenticado cria, unicidade do
   código, host como membro, `expires_at` = 24h, payload de retorno.
-- **Evidências necessárias:** registro persistido, código único sob concorrência, resposta da API.
-- **Riscos:** colisão de código; criação sem autenticação.
-- **Bloqueios:** depende de PB-02.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** modelar `music_sessions`/`music_session_members` e `POST /rooms`.
+- **Comandos executados:** `pytest tests/test_pb04_rooms.py -q`; regressão PB-01/PB-02;
+  `pytest tests -q`; `python -m compileall -q app tests`; `pip check`; `npm run build`; Alembic na revisão
+  anterior: `upgrade head` → `downgrade 23f017f2fbb2` → `upgrade head`; `git add ...` (bloqueado
+  pelo sandbox antes de escrever no índice).
+- **Resultado da implementação:** endpoint `POST /rooms`, persistência, autenticação, retry de código,
+  resposta tipada/sanitizada e Home responsiva concluídos.
+- **Resultado dos testes técnicos (2026-07-14):** PB-04 **8 passed / 0 failed**; regressão PB-01/PB-02
+  **19 passed / 0 failed**; suíte completa **27 passed / 0 failed**; build Vite **42 módulos**;
+  `compileall` e `pip check` sem falhas; migração PB-04 ida/volta/ida aprovada em SQLite isolado.
+- **Resultados observados:** `POST /rooms` autenticado → 201; ausente/inválido → 401 sem escrita;
+  12 criações concorrentes → 12 códigos únicos; colisão forçada recuperada sem registro parcial;
+  resposta sem token/hash/dados de terceiro.
+- **Critérios pendentes:** nenhum na validação interna; todos aguardam execução independente do QA.
+- **Riscos e limitações:** o sandbox negou acesso ao Docker/PostgreSQL. A cadeia Alembic completa em
+  SQLite também é impedida por `DEFAULT now()` na migração preexistente do PB-02; a revisão PB-04 foi
+  validada isoladamente e de forma reversível. O QA deve repetir o ciclo no PostgreSQL alvo.
+- **Bloqueios:** metadados `.git` sem permissão de escrita impedem `git add`/`git commit`; validação
+  PostgreSQL real também depende de ambiente com acesso ao Docker/socket local. Código e testes não
+  possuem bloqueio técnico.
+- **Próxima ação exata:** em ambiente com `.git` gravável, mudar este Status para `AGUARDANDO-QA`,
+  versionar apenas os arquivos/hunks do PB-04 e criar `feat(PB-04): criar sala efêmera`; depois o QA
+  executa CT-PB04-01..06 e o ciclo da migração no PostgreSQL.
+- **Ponto de retomada:** implementação pronta no working tree; falta somente resolver a permissão do
+  índice Git, atualizar o token de Status e criar o commit antes do handoff formal.
 
 #### PB-05 — Entrada e acompanhamento da sala
 
@@ -451,7 +483,8 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01 em teste; PB-02, PB-04, PB-05, PB-06 e PB-08 a fazer.
+**Em andamento** — PB-01, PB-02 e PB-04 VALIDADOS (PB-04 com commit pendente pelo Dev); PB-05, PB-06
+e PB-08 a fazer (todos livres).
 
 ---
 
@@ -1048,34 +1081,36 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-13.
+- **Data da última sessão:** 2026-07-14.
 - **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-02 — correções concluídas, entregue para revalidação independente.
-- **Último resultado concluído:** refresh/reauth, configuração Fernet persistente, timezone e fluxo
-  OAuth corrigidos; **16 testes backend aprovados**; frontend build e Vite nativo aprovados.
-- **Onde parou:** PB-02 pronto para o QA reexecutar CT-PB02-01..07.
-- **Próxima ação exata:** QA valida PB-01/CT-PB01-06 e PB-02; Dev não inicia PB-04 antes dos vereditos.
+- **PB em andamento:** PB-04 — implementação concluída; handoff bloqueado pela permissão de `.git`.
+- **Último resultado concluído:** criação autenticada de sala, código único com retry, host como primeiro
+  membro, expiração de 24h, payload sanitizado e Home de criação; **27 testes backend aprovados**.
+- **Onde parou:** código/testes/documentação prontos; `git add` falhou ao criar `.git/index.lock`.
+- **Próxima ação exata:** liberar escrita em `.git`; mudar PB-04 para `AGUARDANDO-QA`; criar o commit
+  `feat(PB-04): criar sala efêmera`; só então acionar o QA. Dev não inicia PB-05/PB-06.
 - **Comando/teste para retomada:**
   ```bash
-  node --version            # confirmar Node ≥18 instalado
-  cd frontend && npm install && npm run dev
-  # em outro terminal, backend + banco:
-  docker compose up -d db
-  cd backend && source .venv/bin/activate && alembic upgrade head && uvicorn app.main:app --reload --port 8000
+  cd backend
+  .venv/bin/pytest tests/test_pb04_rooms.py -q
+  .venv/bin/pytest tests -q
+  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic upgrade head
+  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic downgrade 23f017f2fbb2
+  DATABASE_URL=<postgres-de-teste> .venv/bin/alembic upgrade head
   ```
-- **Bloqueios:** integração Spotify real depende das credenciais/configuração M0; testes automatizados
-  permanecem mockados. O `.env` local ainda precisa receber uma `FERNET_KEY` persistente válida.
+- **Bloqueios:** `.git` somente leitura impede o commit obrigatório; Docker/PostgreSQL também são
+  inacessíveis neste sandbox. Integração Spotify real continua fora do PB-04.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — `pytest` (4 passed, 2026-07-13).
-- [x] Comparei o resultado com os critérios da história. — PB-01: 3/4 critérios verificados; "frontend inicia" pendente.
-- [x] Atualizei checkboxes e status sem declarar trabalho incompleto como pronto.
-- [x] Registrei decisões ou bloqueios novos. — reorganização por Sprint; criação do `PLANO_TESTES.md`.
+- [x] Rodei os testes e verificações relevantes. — PB-04 8/8; regressão 19/19; suíte 27/27.
+- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos internamente; QA pendente.
+- [x] Atualizei checkboxes e status sem declarar validação independente. — `BLOQUEADO` pelo commit.
+- [x] Registrei decisões ou bloqueios novos. — retry de código e limitação PostgreSQL do sandbox.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — este plano e o novo `PLANO_TESTES.md`.
-- [x] Confirmei que nenhum segredo ou token foi adicionado. — `.env` não rastreado e vazio.
-- [ ] Preparei um commit pequeno e relacionado à história. — **pendente**: aguardando o usuário decidir sobre o commit.
+- [x] Atualizei a documentação afetada. — este plano; README e PLANO_TESTES sem mudança necessária.
+- [x] Confirmei que nenhum segredo ou token foi adicionado. — diff revisado; somente dados fictícios.
+- [ ] Preparei um commit pequeno e relacionado à história. — impossível: `.git/index.lock` sem permissão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

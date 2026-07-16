@@ -53,9 +53,11 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   background: var(--bg);
 }
+
+#root { width: 100%; min-height: 100vh; }
 
 /* Títulos e números usam a fonte de display */
 h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.01em; }
@@ -105,3 +107,90 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 .status-value { font-variant: small-caps; color: var(--muted); }
 
 .hint { margin-top: 1rem; font-size: 0.8rem; color: var(--dim); }
+
+/* ---- Home / criação de sala (PB-04) ---- */
+
+.home-shell { min-height: 100vh; width: 100%; background: var(--bg); }
+
+.product-header {
+  min-height: 80px; padding: 0 36px; border-bottom: 1px solid var(--hairline);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.product-brand { display: flex; align-items: center; gap: 14px; text-align: left; }
+.product-brand strong {
+  display: block; font-family: var(--font-display); font-size: 1.35rem;
+  letter-spacing: 0.04em;
+}
+.product-brand span:not(.equalizer-mark) {
+  display: block; margin-top: 2px; color: var(--dim); font-size: 0.56rem;
+  letter-spacing: 0.22em;
+}
+
+.equalizer-mark { height: 30px; display: flex; align-items: flex-end; gap: 3px; }
+.equalizer-mark i { width: 4px; display: block; background: var(--accent); border-radius: 2px 2px 0 0; }
+.equalizer-mark i:nth-child(1) { height: 20px; }
+.equalizer-mark i:nth-child(2) { height: 29px; }
+.equalizer-mark i:nth-child(3) { height: 24px; }
+.equalizer-mark i:nth-child(4) { height: 14px; }
+
+.home-content {
+  width: min(880px, calc(100% - 48px)); margin: 0 auto; padding: 70px 0 100px;
+}
+
+.greeting-row {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  margin-bottom: 40px; text-align: left;
+}
+.greeting-row h1 { font-size: 1.5rem; }
+.greeting-row p { margin: 3px 0 0; color: var(--muted-2); font-size: 0.75rem; }
+
+.user-avatar {
+  width: 46px; height: 46px; border-radius: var(--radius-pill); flex: none;
+  object-fit: cover; border: 1px solid var(--border);
+}
+.user-initials {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--bg); border: none; font-weight: 600;
+}
+
+.create-room-card {
+  width: min(474px, 100%); margin: 0 auto; padding: 36px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-card); text-align: left;
+}
+.card-kicker {
+  margin: 0 0 14px; color: var(--accent); font-size: 0.7rem;
+  letter-spacing: 0.18em;
+}
+.create-room-card h2 { margin: 0; font-size: 1.65rem; line-height: 1.15; }
+.card-copy { margin: 14px 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.65; }
+
+.create-room-button {
+  width: 100%; margin-top: 28px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  letter-spacing: 0.06em;
+}
+.create-room-button:disabled { cursor: wait; opacity: 0.65; }
+
+.room-created {
+  margin-top: 28px; padding: 18px 20px; border: 1px solid var(--accent-2);
+  border-radius: var(--radius-btn); background: rgba(168, 174, 109, 0.06);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.room-created span { color: var(--accent-2); font-size: 0.65rem; letter-spacing: 0.14em; }
+.room-created strong {
+  font-family: var(--font-display); color: var(--text); font-size: 2rem;
+  letter-spacing: 0.14em;
+}
+.room-created small { color: var(--muted-2); }
+.form-error { margin: 14px 0 0; color: var(--accent-hover); font-size: 0.75rem; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .product-header { padding: 0 20px; }
+  .product-header > .eyebrow { display: none; }
+  .home-content { width: min(100% - 32px, 474px); padding-top: 48px; }
+  .greeting-row { justify-content: flex-start; }
+  .greeting-row h1 { font-size: 1.25rem; }
+  .create-room-card { padding: 28px 24px; }
+}

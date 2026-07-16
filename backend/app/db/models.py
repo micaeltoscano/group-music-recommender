@@ -1,20 +1,14 @@
-"""Modelos ORM.
-
-Escopo PB-01: apenas a tabela fundacional `users`, suficiente para exercitar a
-migração inicial (upgrade/downgrade) e demonstrar a integração com o Postgres.
-As demais tabelas do modelo de dados (sessões, salas, snapshots, etc.) serão
-adicionadas nas histórias correspondentes.
-"""
+"""Modelos ORM do Vibe Check."""
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func, ForeignKey, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-import uuid
 
 
 class User(Base):
@@ -40,8 +34,22 @@ class User(Base):
         nullable=False,
     )
 
-    spotify_token: Mapped["SpotifyToken"] = relationship(back_populates="user", cascade="all, delete-orphan")
-    sessions: Mapped[list["AppSession"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    spotify_token: Mapped["SpotifyToken"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    sessions: Mapped[list["AppSession"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    hosted_music_sessions: Mapped[list["MusicSession"]] = relationship(
+        back_populates="host",
+        cascade="all, delete-orphan",
+    )
+    music_session_memberships: Mapped[list["MusicSessionMember"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
         return f"<User id={self.id} spotify_id={self.spotify_id!r}>"
@@ -51,12 +59,21 @@ class SpotifyToken(Base):
     """Armazena os tokens do Spotify do usuário (criptografados)."""
     __tablename__ = "spotify_tokens"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     access_token: Mapped[str] = mapped_column(Text, nullable=False)  # Armazenado criptografado
     refresh_token: Mapped[str] = mapped_column(Text, nullable=False) # Armazenado criptografado
     token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    refresh_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    reauth_required_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    refresh_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    reauth_required_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     scopes: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -77,7 +94,12 @@ class AppSession(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    session_token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    session_token_hash: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -87,3 +109,62 @@ class AppSession(Base):
 
     def __repr__(self) -> str:
         return f"<AppSession id={self.id} user_id={self.user_id}>"
+
+
+class MusicSession(Base):
+    """Sala efêmera criada por um host autenticado."""
+
+    __tablename__ = "music_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    code: Mapped[str] = mapped_column(String(9), unique=True, nullable=False)
+    host_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="open")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    host: Mapped["User"] = relationship(back_populates="hosted_music_sessions")
+    members: Mapped[list["MusicSessionMember"]] = relationship(
+        back_populates="music_session",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return f"<MusicSession id={self.id} code={self.code!r}>"
+
+
+class MusicSessionMember(Base):
+    """Vínculo entre uma sala e um integrante."""
+
+    __tablename__ = "music_session_members"
+
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    music_session: Mapped["MusicSession"] = relationship(back_populates="members")
+    user: Mapped["User"] = relationship(back_populates="music_session_memberships")
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return (
+            f"<MusicSessionMember session_id={self.session_id} "
+            f"user_id={self.user_id} role={self.role!r}>"
+        )
