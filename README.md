@@ -311,10 +311,15 @@ histórias posteriores.
 cp .env.example .env
 ```
 
-O `.env` é ignorado pelo Git. Para o PB-01 os **defaults já funcionam** (o
-`DATABASE_URL` aponta para o Postgres do compose). As chaves de Spotify /
-Anthropic / Last.fm ficam **vazias** — são de histórias futuras. Nunca comite
-segredos.
+O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e cache
+(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7` e `SPOTIFY_TOP_ITEMS_LIMIT=50`). As chaves de Spotify /
+Anthropic / Last.fm ficam **vazias no exemplo** e só devem ser preenchidas no `.env` local quando a
+integração correspondente for exercitada. Nunca comite segredos.
+
+No PB-08, `GET /me/top` reutiliza o snapshot fresco e
+`POST /me/refresh-music-snapshot` força uma nova coleta. Ambos aceitam `time_range` como
+`short_term`, `medium_term` (padrão) ou `long_term`. Em rate limit, o último snapshot disponível é
+reutilizado; sem cache, a API devolve 429 com `Retry-After`.
 
 ### 2. Banco de dados (PostgreSQL)
 

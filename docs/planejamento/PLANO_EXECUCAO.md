@@ -496,29 +496,82 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-08 — Coleta e cache de dados musicais
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO (QA 2026-07-16, commit `b662e52`) — CT-PB08-01..06 executados e aprovados;
+  21 testes adicionais de QA em `backend/tests/test_pb08_music_snapshots_qa.py`; suíte contra
+  PostgreSQL real **111 passed / 0 skipped**; migração comprovada reversível no ciclo
+  `0004 → 0005 → 0004 → 0005`. Permanece aberto o **DEF-PB08-01 (Média)**: coleta concorrente do mesmo
+  usuário devolve HTTP 500 por `IntegrityError` não tratado — sem corrupção de dados e sem defeito
+  bloqueante/alto. Integração real com o Spotify **não** validada (tudo mockado).
+  Relatório: [`docs/relatorios-testes/PB-08.md`](../relatorios-testes/PB-08.md).
 - **Objetivo:** obter top tracks/artists via Spotify e armazenar snapshots com validade (default 7
   dias), reutilizando snapshots válidos e sinalizando reautenticação em falha de token.
 - **Dependências:** PB-02.
 - **Critérios de aceitação:**
-  1. Consultar apenas endpoints Spotify autorizados no MVP.
-  2. Faixas e artistas associados ao usuário em um snapshot.
-  3. Snapshot com menos de 7 dias reutilizado por padrão.
-  4. Snapshot vencido atualizado antes da geração.
-  5. Falha de renovação de token marca necessidade de nova autenticação.
-- **Plano de implementação:** `GET /me/top` e `POST /me/refresh-music-snapshot`; persistir
-  `user_music_snapshots` (`top_tracks_json`, `top_artists_json`, `fetched_at`, `time_range`);
-  política de expiração configurável; integração com refresh central do `SpotifyClient`.
-- **Arquivos ou módulos previstos:** `backend/app/api/music.py`, `backend/app/clients/spotify_client.py`,
-  `backend/app/db/models.py` (`user_music_snapshots`), nova migração Alembic.
+  1. Consultar apenas endpoints Spotify autorizados no MVP. — cobertura técnica confirma somente
+     `GET /me/top/tracks` e `/me/top/artists`, com escopo `user-top-read` já solicitado no OAuth.
+  2. Faixas e artistas associados ao usuário em um snapshot. — JSON persistido com FK do usuário.
+  3. Snapshot com menos de 7 dias reutilizado por padrão. — `GET /me/top` não chama o cliente externo.
+  4. Snapshot vencido atualizado antes da geração. — registro existente é atualizado sem duplicação;
+     `POST /me/refresh-music-snapshot` força coleta mesmo quando o cache está fresco.
+  5. Falha de renovação de token marca necessidade de nova autenticação. — refresh central do PB-02
+     grava `reauth_required_at` e a API responde 401 com instrução de novo login.
+- **Plano de implementação:** *(concluído)* `GET /me/top` e
+  `POST /me/refresh-music-snapshot`; persistência de `user_music_snapshots`; TTL configurável;
+  integração com refresh central; coleta restrita a top tracks/artists; fallback para o último
+  snapshot em 429 e resposta controlada quando não existe cache.
+- **Arquivos criados:** `backend/app/api/music.py`, `backend/app/schemas/music.py`,
+  `backend/app/services/music_service.py`,
+  `backend/alembic/versions/0005_pb08_music_snapshots.py`,
+  `backend/tests/test_pb08_music_snapshots.py`.
+- **Arquivos alterados:** `backend/app/clients/spotify_client.py`, `backend/app/config.py`,
+  `backend/app/db/models.py`, `backend/app/main.py`, `.env.example`, `README.md`, este plano.
+- **Migração:** `0005_pb08_music_snapshots` (down revision `0004_pb06_context_mode`) cria tabela com
+  UUID, FK `user_id`, `time_range`, `top_tracks_json`, `top_artists_json`, `fetched_at`, índice por
+  usuário e unicidade `(user_id, time_range)`; downgrade remove índice e tabela.
+- **Decisões:** manter um snapshot atual por usuário/faixa temporal e atualizá-lo em vez de acumular
+  duplicatas; suportar `short_term`, `medium_term` e `long_term`; limite default 50; cache é fresco
+  somente com idade estritamente menor que sete dias; 429 reutiliza snapshot existente (mesmo vencido)
+  com aviso e preserva `Retry-After` quando não há cache; listas vazias formam snapshot válido com aviso.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-08) — reuso de snapshot fresco, refetch de
   vencido, falha de token → reauth, escopo de endpoints, resposta 429 mockada.
 - **Evidências necessárias:** snapshot persistido, reuso vs refetch conforme idade, marcação de reauth.
-- **Riscos:** R-02 (endpoints), R-03 (token), R-13 (integrante sem dados).
-- **Bloqueios:** depende de PB-02 (tokens válidos).
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** modelar `user_music_snapshots` e implementar coleta com cache por idade.
+- **Comandos executados:** `pytest tests/test_pb08_music_snapshots.py -q`; `pytest tests -q` em
+  SQLite e com `TEST_DATABASE_URL` no PostgreSQL local; `python -m compileall -q app tests`;
+  `pip check`; `npm run build`; Alembic/PostgreSQL `current` → `upgrade head` → inspeção da tabela e
+  índices → `downgrade 0004_pb06_context_mode` → confirmação da remoção → `upgrade head`;
+  `git diff --check`.
+- **Resultado da implementação:** coleta e cache de tops integrados à autenticação, com payload
+  sanitizado (sem tokens), persistência por usuário, atualização configurável e fallbacks controlados.
+- **Resultado dos testes técnicos (2026-07-16):** PB-08 **16 passed / 0 failed**; suíte local
+  **84 passed / 0 failed / 6 skipped**; suíte completa contra PostgreSQL **90 passed / 0 failed**;
+  build Vite **43 módulos**; `compileall`, `pip check` e `git diff --check` sem falhas. Migração real
+  comprovada em ciclo `0004 → 0005 → 0004 → 0005`, terminando em
+  `0005_pb08_music_snapshots` com tabela, FK, PK, índice e unicidade esperados.
+- **Resultados observados:** snapshot fresco não acessa Spotify; vencido é atualizado no mesmo ID;
+  refresh falho grava reauth e responde 401; 429 usa cache ou responde 429 com `Retry-After`; tops
+  vazios persistem sem crash; rotas sem sessão retornam 401.
+- **Critérios pendentes:** nenhum. CT-PB08-01..06 executados pelo QA em 2026-07-16 — todos aprovados;
+  os cinco critérios de aceitação estão comprovados por evidência independente.
+- **Resultado da validação (QA 2026-07-16):** VALIDADO com um defeito Média em aberto. Verificados
+  além do plano: isolamento entre usuários (snapshot de A não vaza nem serve de cache para B),
+  fronteira exata do TTL (6d23h59 reusa; 7d01min recoleta), TTL vindo de configuração e não fixo no
+  código, ausência de token na resposta e no snapshot persistido, aderência da marcação de reauth,
+  `time_range` inválido → 422, e 429 no meio da coleta não gravando snapshot parcial. Escopo de
+  endpoints confirmado por varredura: só `/v1/me` (PB-02) e `/v1/me/top/{tracks,artists}` (PB-08).
+- **DEF-PB08-01 (Média, Aberto):** `get_or_refresh_snapshot` não trata `IntegrityError` no commit;
+  duas coletas simultâneas do mesmo usuário/faixa fazem a perdedora retornar **HTTP 500**. Banco não
+  corrompido (unicidade segura; 1 snapshot) e retry funciona. Corrigir com o padrão já usado em
+  `join_room`. Recomendado corrigir **antes da validação integrada da Sprint 1**.
+- **Limitação relevante:** integração real com o Spotify **não** foi validada — todos os caminhos
+  externos são mockados. Necessária execução real com evidência sanitizada antes da demonstração.
+- **Riscos e limitações:** integração real com contas Spotify/spike externo não foi executada nesta
+  rodada; todos os caminhos externos usam mocks, conforme o plano. A documentação oficial consultada
+  em 2026-07-16 confirma os endpoints, escopo, parâmetros e semântica de rate limit usados.
+- **Bloqueios:** nenhum para validação mockada; credenciais/contas autorizadas são necessárias apenas
+  para o teste real de demonstração/fechamento da Sprint.
+- **Próxima ação exata:** QA executa CT-PB08-01..06, com atenção a cache, reauth, 429, payload vazio e
+  migração PostgreSQL. Após `VALIDADO`, iniciar a validação integrada da Sprint 1, não outro PB.
+- **Ponto de retomada:** código, testes, documentação e migração do PB-08 prontos; aguarda QA.
 
 ### Testes integrados da Sprint 1
 
@@ -558,8 +611,19 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01, PB-02, PB-04, PB-05 e PB-06 VALIDADOS; PB-08 A-FAZER (último da Sprint 1).
-O próximo passo é a validação independente do PB-06; PB-08 não deve começar antes do veredito.
+**Em andamento** — PB-01, PB-02, PB-04, PB-05, PB-06 e PB-08 VALIDADOS: todos os PBs da Sprint 1
+passaram na validação independente (QA 2026-07-16). O próximo passo é a **validação integrada da
+Sprint 1** (`CT-S1-INT-*` + regressão), ainda **não** executada — é um ciclo próprio e anunciado, que
+o QA não iniciou junto com o PB-08.
+
+Pendências que **não** bloqueiam os PBs individuais, mas devem ser tratadas antes de fechar a Sprint:
+
+- **DEF-PB08-01 (Média, aberto):** coleta concorrente do mesmo usuário devolve HTTP 500; corrigir com
+  o padrão de `join_room`. Ver [`docs/relatorios-testes/PB-08.md`](../relatorios-testes/PB-08.md).
+- **Integração real com o Spotify nunca foi exercitada** — toda a validação do PB-02 e do PB-08 é
+  mockada. Necessária execução real com credenciais autorizadas e evidência sanitizada antes da
+  demonstração do incremento.
+- **OBS-PB06-01:** host consegue editar sala expirada; decisão de produto pendente.
 
 ---
 
@@ -1158,32 +1222,33 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-16.
 - **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-06 — implementação concluída e marcada `AGUARDANDO-QA`.
-- **Último resultado concluído:** contexto/modo host-only no backend e lobby, migração reversível
-  `0004_pb06_context_mode`; **10/10 testes PB-06** e suíte completa **52/52** no PostgreSQL.
-- **Onde parou:** código, testes, documentação, migração real e commit do PB-06 prontos; aguarda QA.
-- **Próxima ação exata:** Claude/QA executa CT-PB06-01..05 e registra o veredito; Dev não inicia PB-08.
+- **PB em andamento:** PB-08 — implementação concluída e marcada `AGUARDANDO-QA`.
+- **Último resultado concluído:** coleta/cache de top tracks/artists com migração reversível
+  `0005_pb08_music_snapshots`; **16/16 testes PB-08** e suíte completa **90/90** no PostgreSQL.
+- **Onde parou:** código, testes, documentação e migração real do PB-08 prontos; aguarda QA.
+- **Próxima ação exata:** Claude/QA executa CT-PB08-01..06; após `VALIDADO`, inicia a validação
+  integrada da Sprint 1. Dev não inicia PB-09 antes do fechamento formal da Sprint.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb06_rooms.py -q
+  .venv/bin/pytest tests/test_pb08_music_snapshots.py -q
   .venv/bin/pytest tests -q
   TEST_DATABASE_URL=<postgres-de-teste> .venv/bin/pytest tests -q
   .venv/bin/alembic current
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum no PB-06; Spotify não é usado neste PB.
+- **Bloqueios:** nenhum para QA mockado do PB-08; fluxo Spotify real depende das contas de demo.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — PB-06 10/10; suíte completa 52/52 no PostgreSQL.
-- [x] Comparei o resultado com os critérios da história. — 4/4 cobertos tecnicamente; QA pendente.
+- [x] Rodei os testes e verificações relevantes. — PB-08 16/16; suíte completa 90/90 no PostgreSQL.
+- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos tecnicamente; QA pendente.
 - [x] Atualizei checkboxes e status sem declarar validação independente. — `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — migração necessária, enum fechado e ausência de bloqueios.
+- [x] Registrei decisões ou bloqueios novos. — cache por faixa temporal, fallback 429 e spike real pendente.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — este plano; README e PLANO_TESTES sem mudança necessária.
+- [x] Atualizei a documentação afetada. — este plano, README e `.env.example`; PLANO_TESTES inalterado.
 - [x] Confirmei que nenhum segredo ou token foi adicionado. — diff revisado; somente dados fictícios.
-- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-06): implementar contexto e consenso`.
+- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-08): implementar snapshots musicais`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

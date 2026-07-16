@@ -84,6 +84,18 @@ class ReauthenticationRequired(Exception):
     """Indica que o usuário precisa autorizar o aplicativo novamente."""
 
 
+class SpotifyRateLimited(Exception):
+    """Indica rate limit da Web API e preserva o Retry-After recebido."""
+
+    def __init__(self, retry_after: int) -> None:
+        self.retry_after = retry_after
+        super().__init__(f"Spotify temporariamente limitado; tente em {retry_after}s.")
+
+
+class SpotifyInvalidResponse(Exception):
+    """Indica payload inesperado da Web API sem expor seu conteúdo."""
+
+
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
@@ -130,3 +142,70 @@ async def get_current_user_profile(access_token: str) -> dict:
         response = await client.get(f"{SPOTIFY_API_BASE}/me", headers=headers)
         response.raise_for_status()
         return response.json()
+
+
+def _retry_after_seconds(value: str | None) -> int:
+    try:
+        return max(1, int(value or "1"))
+    except ValueError:
+        return 1
+
+
+async def get_user_top_items(
+    access_token: str,
+    item_type: str,
+    *,
+    time_range: str = "medium_term",
+    limit: int = 50,
+) -> list[dict]:
+    """Busca top tracks ou artists usando somente o endpoint autorizado do MVP."""
+    if item_type not in {"tracks", "artists"}:
+        raise ValueError("Tipo de top item inválido.")
+    if time_range not in {"short_term", "medium_term", "long_term"}:
+        raise ValueError("Faixa temporal inválida.")
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"time_range": time_range, "limit": limit, "offset": 0}
+    async with AsyncClient() as client:
+        response = await client.get(
+            f"{SPOTIFY_API_BASE}/me/top/{item_type}",
+            headers=headers,
+            params=params,
+        )
+        if response.status_code == 429:
+            raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))
+        response.raise_for_status()
+        payload = response.json()
+
+    items = payload.get("items")
+    if not isinstance(items, list):
+        raise SpotifyInvalidResponse("Spotify retornou um payload de top items inválido.")
+    return items
+
+
+async def get_top_tracks(
+    access_token: str,
+    *,
+    time_range: str = "medium_term",
+    limit: int = 50,
+) -> list[dict]:
+    return await get_user_top_items(
+        access_token,
+        "tracks",
+        time_range=time_range,
+        limit=limit,
+    )
+
+
+async def get_top_artists(
+    access_token: str,
+    *,
+    time_range: str = "medium_term",
+    limit: int = 50,
+) -> list[dict]:
+    return await get_user_top_items(
+        access_token,
+        "artists",
+        time_range=time_range,
+        limit=limit,
+    )

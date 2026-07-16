@@ -528,7 +528,7 @@ resposta 429 e falha de refresh mockadas.
 - **Passos:** `POST /me/refresh-music-snapshot`; inspecionar `user_music_snapshots`.
 - **Resultado esperado:** snapshot com `top_tracks_json`/`top_artists_json` associado ao usuário.
 - **Critério de aprovação:** dados persistidos corretamente.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ##### CT-PB08-02 — Snapshot fresco (<7d) é reutilizado
 - **Tipo:** cache/regra de negócio · **Prioridade:** Alta · **Cenário:** com snapshot recente, não há
@@ -537,35 +537,35 @@ resposta 429 e falha de refresh mockadas.
 - **Resultado esperado:** reuso do snapshot; **sem** chamada externa.
 - **Evidência esperada:** mock do Spotify não invocado.
 - **Critério de aprovação:** cache respeitado.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ##### CT-PB08-03 — Snapshot vencido (>7d) é refetchado
 - **Tipo:** cache · **Prioridade:** Alta · **Cenário:** snapshot antigo é atualizado antes da geração.
 - **Passos:** ter snapshot >7d; solicitar tops/geração.
 - **Resultado esperado:** nova coleta; `fetched_at` atualizado.
 - **Critério de aprovação:** refetch ocorre.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ##### CT-PB08-04 — Falha de refresh marca reauth necessária
 - **Tipo:** recuperação após falha · **Prioridade:** Alta · **Cenário:** refresh falha durante coleta.
 - **Passos:** mockar refresh com erro; solicitar tops.
 - **Resultado esperado:** operação não crasha; usuário marcado para reautenticação.
 - **Critério de aprovação:** reauth sinalizada.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ##### CT-PB08-05 — Resposta 429 do Spotify é tratada
 - **Tipo:** serviço externo mockado · **Prioridade:** Média · **Cenário:** rate limit no Spotify.
 - **Passos:** mockar 429; solicitar tops.
 - **Resultado esperado:** backoff/retry ou uso de cache; sem crash.
 - **Critério de aprovação:** degradação graciosa.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ##### CT-PB08-06 — Integrante sem dados musicais
 - **Tipo:** ausência de dados · **Prioridade:** Média · **Cenário:** tops vazios para um usuário.
 - **Passos:** mockar listas vazias.
 - **Resultado esperado:** snapshot vazio válido; sistema segue e registra limitação.
 - **Critério de aprovação:** sem crash; limitação registrada.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `b662e52`)
 
 ### Testes integrados da Sprint 1
 

@@ -42,6 +42,10 @@ class Settings(BaseSettings):
         default="postgresql+psycopg2://vibe:vibe@localhost:5432/vibe",
     )
 
+    # --- Snapshots musicais (PB-08) -----------------------------------------
+    music_snapshot_ttl_days: int = Field(default=7, ge=1)
+    spotify_top_items_limit: int = Field(default=50, ge=1, le=50)
+
     # --- CORS ----------------------------------------------------------------
     # Origens permitidas para o frontend Vite (separadas por vírgula).
     backend_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -47,6 +47,10 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     music_session_memberships: Mapped[list["MusicSessionMember"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    music_snapshots: Mapped[list["UserMusicSnapshot"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
@@ -170,4 +174,40 @@ class MusicSessionMember(Base):
         return (
             f"<MusicSessionMember session_id={self.session_id} "
             f"user_id={self.user_id} role={self.role!r}>"
+        )
+
+
+class UserMusicSnapshot(Base):
+    """Top tracks/artists temporários usados como entrada do motor."""
+
+    __tablename__ = "user_music_snapshots"
+    __table_args__ = (
+        UniqueConstraint("user_id", "time_range", name="uq_music_snapshot_user_range"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    time_range: Mapped[str] = mapped_column(String(32), nullable=False)
+    top_tracks_json: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
+    top_artists_json: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="music_snapshots")
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return (
+            f"<UserMusicSnapshot id={self.id} user_id={self.user_id} "
+            f"time_range={self.time_range!r}>"
         )
