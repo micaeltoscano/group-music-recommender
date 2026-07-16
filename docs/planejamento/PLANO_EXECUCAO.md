@@ -429,27 +429,70 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-06 — Contexto e modo de consenso
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO (QA 2026-07-16, commit `432a23c`) — CT-PB06-01..05 executados e aprovados;
+  22 testes adicionais de QA em `backend/tests/test_pb06_rooms_qa.py`; suíte contra PostgreSQL real
+  **74 passed / 0 skipped**; migração comprovada reversível no ciclo `0004 → 0003 → 0004`; testes do
+  implementador validados por mutação (guarda de host e commit). Nenhum defeito bloqueante/alto/médio.
+  Relatório: [`docs/relatorios-testes/PB-06.md`](../relatorios-testes/PB-06.md).
 - **Objetivo:** permitir que **somente o host** defina ocasião/descrição e o modo (Democrático ou
   Festa Segura), disponibilizando as alterações na próxima atualização da sala.
 - **Dependências:** PB-04.
 - **Critérios de aceitação:**
-  1. Somente o host altera contexto e modo.
-  2. Aceitar ocasião, descrição livre ou ambos.
-  3. Modo é Democrático ou Festa Segura.
-  4. Alterações visíveis na próxima atualização da sala.
-- **Plano de implementação:** `PUT /rooms/{code}/context` e `PUT /rooms/{code}/mode` com guarda de host;
-  persistir `occasion`, `description`, `mode` em `music_sessions`; validar enum de modo.
-- **Arquivos ou módulos previstos:** `backend/app/api/rooms.py`, `backend/app/schemas/`,
-  `frontend/` (Room — formulário de contexto/modo).
+  1. Somente o host altera contexto e modo. — cobertura técnica: host 200; membro 403 e estado intacto.
+  2. Aceitar ocasião, descrição livre ou ambos. — as três combinações foram persistidas nos testes.
+  3. Modo é Democrático ou Festa Segura. — ambos aceitos; valor fora do enum retorna 422 sem alteração.
+  4. Alterações visíveis na próxima atualização da sala. — `GET` do membro devolve o novo estado e o
+     frontend continua consultando a cada 4s.
+- **Plano de implementação:** *(concluído)* `PUT /rooms/{code}/context` e
+  `PUT /rooms/{code}/mode` com guarda de host; persistência de `occasion`, `description` e `mode`;
+  enum fechado aos dois modos do MVP; exposição no `RoomResponse`; lobby React editável pelo host e
+  somente leitura para membros.
+- **Arquivos criados:** `backend/alembic/versions/0004_pb06_context_mode.py`,
+  `backend/tests/test_pb06_rooms.py`.
+- **Arquivos alterados:** `backend/app/db/models.py`, `backend/app/schemas/rooms.py`,
+  `backend/app/services/room_service.py`, `backend/app/api/rooms.py`,
+  `backend/tests/test_pb04_rooms.py`, `frontend/src/{Room.jsx,apiClient.js,index.css}`, este plano.
+- **Migração:** `0004_pb06_context_mode` (down revision `0003_pb04_rooms`) adiciona as colunas
+  nullable `occasion varchar(100)`, `description text` e `mode varchar(32)`; downgrade remove somente
+  essas três colunas. A inspeção inicial confirmou que, apesar do texto anterior do plano, PB-04 não
+  havia criado essas colunas no modelo nem no banco.
+- **Decisões:** `PUT /context` substitui o par ocasião/descrição e exige ao menos um valor não vazio;
+  textos são aparados e limitados a 100/1000 caracteres; o modo é armazenado pelos nomes públicos
+  `Democrático`/`Festa Segura`; `Descoberta` não foi incluído por ser pós-MVP; o frontend preserva o
+  rascunho do host durante o polling.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-06) — membro comum recebe erro apropriado,
   host altera, modo inválido rejeitado, propagação via polling.
 - **Evidências necessárias:** resposta 403 para membro comum, persistência do contexto/modo.
-- **Riscos:** autorização insuficiente (membro alterando contexto).
-- **Bloqueios:** depende de PB-04.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar as rotas de contexto/modo com guarda de host.
+- **Comandos executados:** `pytest tests/test_pb06_rooms.py -q`; `pytest tests -q` em SQLite e com
+  `TEST_DATABASE_URL` no PostgreSQL local; `python -m compileall -q app tests`; `pip check`;
+  `npm run build`; Alembic/PostgreSQL `current` → `upgrade head` → `downgrade 0003_pb04_rooms` →
+  inspeção das colunas → `upgrade head` → inspeção final; `git diff --check`.
+- **Resultado da implementação:** API, banco e lobby entregam edição host-only e leitura sincronizada
+  de contexto/modo, sem incluir Vibe Check ou geração de playlist.
+- **Resultado dos testes técnicos (2026-07-16):** PB-06 **10 passed / 0 failed**; suíte local
+  **46 passed / 0 failed / 6 skipped** (casos PostgreSQL opt-in); suíte completa contra PostgreSQL
+  **52 passed / 0 failed**; build Vite **43 módulos**; `compileall`, `pip check` e `git diff --check`
+  sem falhas; Vite dev pronto em 60 ms e rota do lobby respondeu HTTP 200. Migração real comprovada
+  em ciclo `0003 → 0004 → 0003 → 0004`, terminando em
+  `0004_pb06_context_mode` com as nove colunas esperadas.
+- **Resultados observados:** host altera contexto/modo com 200; membro recebe 403 nas duas rotas;
+  modo inválido recebe 422; leituras do membro e após recarga mantêm os valores persistidos.
+- **Critérios pendentes:** nenhum. CT-PB06-01..05 executados pelo QA em 2026-07-16 — todos aprovados;
+  os quatro critérios de aceitação estão comprovados por evidência independente.
+- **Resultado da validação (QA 2026-07-16):** VALIDADO. Autorização confirmada também contra
+  não-membro, requisição anônima (401), sala inexistente (404) e host de outra sala; enum de modo
+  resistiu a 8 variantes inválidas; limites 100/1000 verificados nas fronteiras. Observação
+  OBS-PB06-01 (host consegue editar sala expirada, comportamento herdado do GET do PB-05, sem
+  regressão introduzida aqui) encaminhada como decisão de produto, fora do escopo deste PB.
+  Pendência não bloqueante: inspeção visual do lobby em navegador real contra `03-sala-lobby.png`.
+- **Riscos e limitações:** frontend compilado e comparado estruturalmente com `03-sala-lobby.png`, mas
+  ainda sem inspeção visual em navegador real nesta rodada; limites textuais adicionais não alteram os
+  critérios. Spotify não é utilizado neste PB.
+- **Bloqueios:** nenhum.
+- **Próxima ação exata:** QA executa CT-PB06-01..05, incluindo autorização, persistência, polling e
+  inspeção visual do lobby, e registra o veredito sem iniciar PB-08 antes disso.
+- **Ponto de retomada:** código, testes, documentação, migração aplicada no PostgreSQL local e commit
+  do PB-06 prontos; aguarda validação independente.
 
 #### PB-08 — Coleta e cache de dados musicais
 
@@ -515,8 +558,8 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01, PB-02, PB-04 e PB-05 VALIDADOS; restam PB-06 e PB-08 (ambos livres). Após
-esses dois, executar os testes integrados da Sprint 1.
+**Em andamento** — PB-01, PB-02, PB-04, PB-05 e PB-06 VALIDADOS; PB-08 A-FAZER (último da Sprint 1).
+O próximo passo é a validação independente do PB-06; PB-08 não deve começar antes do veredito.
 
 ---
 
@@ -1113,35 +1156,34 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-15.
+- **Data da última sessão:** 2026-07-16.
 - **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-05 — implementação concluída e marcada `AGUARDANDO-QA`.
-- **Último resultado concluído:** join/leitura protegida de sala, limite concorrente de cinco,
-  idempotência, Home de entrada e lobby com polling; **10/10 testes PB-05** (9 SQLite + 1 concorrente
-  no PostgreSQL) e regressão local **36 passed / 1 skipped**.
-- **Onde parou:** código, testes, documentação e commit do PB-05 prontos; aguarda QA independente.
-- **Próxima ação exata:** Claude/QA executa CT-PB05-01..07 e escreve
-  `docs/relatorios-testes/PB-05.md`; Dev não inicia PB-06/PB-08 antes do veredito do PB-05.
+- **PB em andamento:** PB-06 — implementação concluída e marcada `AGUARDANDO-QA`.
+- **Último resultado concluído:** contexto/modo host-only no backend e lobby, migração reversível
+  `0004_pb06_context_mode`; **10/10 testes PB-06** e suíte completa **52/52** no PostgreSQL.
+- **Onde parou:** código, testes, documentação, migração real e commit do PB-06 prontos; aguarda QA.
+- **Próxima ação exata:** Claude/QA executa CT-PB06-01..05 e registra o veredito; Dev não inicia PB-08.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb05_rooms.py -q
+  .venv/bin/pytest tests/test_pb06_rooms.py -q
   .venv/bin/pytest tests -q
-  TEST_DATABASE_URL=<postgres-de-teste> .venv/bin/pytest tests/test_pb05_rooms.py -q
+  TEST_DATABASE_URL=<postgres-de-teste> .venv/bin/pytest tests -q
+  .venv/bin/alembic current
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum no PB-05; Spotify não é usado neste PB.
+- **Bloqueios:** nenhum no PB-06; Spotify não é usado neste PB.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — PB-05 10/10 (9 SQLite + 1 Postgres); suíte local 36/36 + 1 opt-in.
-- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos internamente; QA pendente.
+- [x] Rodei os testes e verificações relevantes. — PB-06 10/10; suíte completa 52/52 no PostgreSQL.
+- [x] Comparei o resultado com os critérios da história. — 4/4 cobertos tecnicamente; QA pendente.
 - [x] Atualizei checkboxes e status sem declarar validação independente. — `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — lock de linha e ausência de bloqueios.
+- [x] Registrei decisões ou bloqueios novos. — migração necessária, enum fechado e ausência de bloqueios.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — este plano; README e PLANO_TESTES sem mudança necessária.
 - [x] Confirmei que nenhum segredo ou token foi adicionado. — diff revisado; somente dados fictícios.
-- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-05): implementar entrada e lobby`.
+- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-06): implementar contexto e consenso`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

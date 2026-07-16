@@ -38,6 +38,10 @@ class RoomAccessDeniedError(PermissionError):
     """Indica tentativa de consultar uma sala sem ser integrante."""
 
 
+class RoomHostRequiredError(PermissionError):
+    """Indica tentativa de alteração da sala por quem não é o host."""
+
+
 def _generate_room_code() -> str:
     """Gera um código legível de oito caracteres, agrupado em dois blocos."""
     raw = "".join(secrets.choice(ROOM_CODE_ALPHABET) for _ in range(8))
@@ -175,6 +179,46 @@ def get_room_for_member(db: Session, code: str, user_id: int) -> MusicSession:
     membership = db.get(MusicSessionMember, (room.id, user_id))
     if membership is None:
         raise RoomAccessDeniedError("Apenas integrantes podem consultar esta sala.")
+    return room
+
+
+def _get_room_for_host(db: Session, code: str, user_id: int) -> MusicSession:
+    """Obtém uma sala apenas quando o usuário autenticado é seu host."""
+    room = get_room_for_member(db, code, user_id)
+    if room.host_user_id != user_id:
+        raise RoomHostRequiredError("Somente o host pode alterar esta sala.")
+    return room
+
+
+def update_room_context(
+    db: Session,
+    code: str,
+    user_id: int,
+    *,
+    occasion: str | None,
+    description: str | None,
+) -> MusicSession:
+    """Substitui ocasião/descrição depois de validar o papel de host."""
+    room = _get_room_for_host(db, code, user_id)
+    room.occasion = occasion
+    room.description = description
+    db.commit()
+    db.refresh(room)
+    return room
+
+
+def update_room_mode(
+    db: Session,
+    code: str,
+    user_id: int,
+    *,
+    mode: str,
+) -> MusicSession:
+    """Persiste um modo já validado pelo contrato da API."""
+    room = _get_room_for_host(db, code, user_id)
+    room.mode = mode
+    db.commit()
+    db.refresh(room)
     return room
 
 

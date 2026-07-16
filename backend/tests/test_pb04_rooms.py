@@ -235,7 +235,18 @@ def test_ct_pb04_06_response_contains_only_room_and_host_public_data(client, ses
 
     assert response.status_code == 201
     body = response.json()
-    assert set(body) == {"id", "code", "status", "created_at", "expires_at", "members"}
+    assert set(body) == {
+        "id",
+        "code",
+        "status",
+        "occasion",
+        "description",
+        "mode",
+        "created_at",
+        "expires_at",
+        "members",
+    }
+    assert body["occasion"] is body["description"] is body["mode"] is None
     assert set(body["members"][0]) == {
         "user_id",
         "display_name",

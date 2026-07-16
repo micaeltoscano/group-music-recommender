@@ -467,21 +467,21 @@ Ocasião "festa"; descrição livre; modos válidos e um modo inválido ("qualqu
 - **Resultado esperado:** host 200; membro comum 403; contexto inalterado pelo membro.
 - **Evidência esperada:** 403 para membro; contexto persistido só pelo host.
 - **Critério de aprovação:** apenas host altera.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `432a23c`)
 
 ##### CT-PB06-02 — Aceita ocasião, descrição ou ambos
 - **Tipo:** regra de negócio · **Prioridade:** Média · **Cenário:** combinações válidas de entrada.
 - **Passos:** enviar só ocasião; só descrição; ambos.
 - **Resultado esperado:** todas aceitas e persistidas corretamente.
 - **Critério de aprovação:** flexibilidade respeitada.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `432a23c`)
 
 ##### CT-PB06-03 — Modo inválido é rejeitado
 - **Tipo:** entrada inválida · **Prioridade:** Alta · **Cenário:** modo fora do enum permitido.
 - **Passos:** `PUT /rooms/{code}/mode` com "qualquer".
 - **Resultado esperado:** 422/400; modo não alterado.
 - **Critério de aprovação:** só Democrático/Festa Segura aceitos.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `432a23c`)
 
 ##### CT-PB06-04 — Alteração visível para os membros no polling
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** membro vê o novo contexto/modo na próxima
@@ -489,14 +489,14 @@ Ocasião "festa"; descrição livre; modos válidos e um modo inválido ("qualqu
 - **Passos:** host altera; membro consulta a sala depois.
 - **Resultado esperado:** membro recebe contexto/modo atualizados.
 - **Critério de aprovação:** propagação correta.
-- **Automatizável:** Parcialmente · **Status:** Não executado
+- **Automatizável:** Parcialmente · **Status:** Aprovado (QA 2026-07-16, commit `432a23c`)
 
 ##### CT-PB06-05 — Persistência do contexto após recarga
 - **Tipo:** persistência · **Prioridade:** Média · **Cenário:** contexto/modo sobrevivem a recarregar.
 - **Passos:** definir contexto; recarregar; ler novamente.
 - **Resultado esperado:** valores mantidos.
 - **Critério de aprovação:** estado durável.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-16, commit `432a23c`)
 
 ---
 

@@ -3,6 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from './apiClient'
 
 const POLLING_INTERVAL_MS = 4000
+const OCCASIONS = ['Pré-jogo no apê', 'Festa', 'Churrasco', 'Viagem', 'Estudo', 'Academia']
+const CONSENSUS_MODES = [
+  { name: 'Democrático', description: 'todo mundo com o mesmo peso' },
+  { name: 'Festa Segura', description: 'hits conhecidos, baixa rejeição' },
+]
 
 function EqualizerMark() {
   return (
@@ -36,6 +41,11 @@ export default function Room({ user }) {
   const [lastUpdated, setLastUpdated] = useState(null)
   const [now, setNow] = useState(Date.now())
   const [copied, setCopied] = useState(false)
+  const [contextDraft, setContextDraft] = useState({ occasion: '', description: '' })
+  const [contextDirty, setContextDirty] = useState(false)
+  const [savingContext, setSavingContext] = useState(false)
+  const [savingMode, setSavingMode] = useState(false)
+  const [settingsFeedback, setSettingsFeedback] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -75,6 +85,15 @@ export default function Room({ user }) {
     () => room?.members.find((member) => member.user_id === user?.id),
     [room, user],
   )
+  const isHost = currentMember?.role === 'host'
+
+  useEffect(() => {
+    if (!room || contextDirty) return
+    setContextDraft({
+      occasion: room.occasion || '',
+      description: room.description || '',
+    })
+  }, [room?.occasion, room?.description, contextDirty])
 
   const copyCode = async () => {
     try {
@@ -83,6 +102,79 @@ export default function Room({ user }) {
       window.setTimeout(() => setCopied(false), 1800)
     } catch {
       setCopied(false)
+    }
+  }
+
+  const selectOccasion = (occasion) => {
+    if (!isHost) return
+    setContextDraft((current) => ({ ...current, occasion }))
+    setContextDirty(true)
+    setSettingsFeedback(null)
+  }
+
+  const changeDescription = (event) => {
+    setContextDraft((current) => ({ ...current, description: event.target.value }))
+    setContextDirty(true)
+    setSettingsFeedback(null)
+  }
+
+  const saveContext = async (event) => {
+    event.preventDefault()
+    if (!isHost || savingContext) return
+
+    const payload = {
+      occasion: contextDraft.occasion.trim() || null,
+      description: contextDraft.description.trim() || null,
+    }
+    if (!payload.occasion && !payload.description) {
+      setSettingsFeedback({ type: 'error', message: 'Escolha uma ocasião ou descreva a vibe.' })
+      return
+    }
+
+    setSavingContext(true)
+    setSettingsFeedback(null)
+    try {
+      const response = await api.updateRoomContext(code, payload)
+      if (!response.ok) {
+        setSettingsFeedback({
+          type: 'error',
+          message: response.body?.detail || 'Não foi possível salvar o contexto.',
+        })
+        return
+      }
+      setRoom(response.body)
+      setContextDraft({
+        occasion: response.body.occasion || '',
+        description: response.body.description || '',
+      })
+      setContextDirty(false)
+      setSettingsFeedback({ type: 'success', message: 'Contexto salvo para todo o grupo.' })
+    } catch {
+      setSettingsFeedback({ type: 'error', message: 'Conexão perdida ao salvar o contexto.' })
+    } finally {
+      setSavingContext(false)
+    }
+  }
+
+  const saveMode = async (mode) => {
+    if (!isHost || savingMode || room.mode === mode) return
+    setSavingMode(true)
+    setSettingsFeedback(null)
+    try {
+      const response = await api.updateRoomMode(code, mode)
+      if (!response.ok) {
+        setSettingsFeedback({
+          type: 'error',
+          message: response.body?.detail || 'Não foi possível salvar o modo.',
+        })
+        return
+      }
+      setRoom(response.body)
+      setSettingsFeedback({ type: 'success', message: `Modo ${mode} selecionado.` })
+    } catch {
+      setSettingsFeedback({ type: 'error', message: 'Conexão perdida ao salvar o modo.' })
+    } finally {
+      setSavingMode(false)
     }
   }
 
@@ -163,16 +255,84 @@ export default function Room({ user }) {
               </section>
             </div>
 
-            <section className="waiting-card">
-              <p className="card-kicker">GRUPO EM FORMAÇÃO</p>
-              <h1>{currentMember?.role === 'host' ? 'Compartilhe o código.' : 'Você entrou na sala.'}</h1>
-              <p>
-                {currentMember?.role === 'host'
-                  ? 'Convide até quatro pessoas. A lista ao lado acompanha automaticamente cada entrada.'
-                  : 'Aguarde o restante do grupo. Esta tela acompanha automaticamente quem já chegou.'}
-              </p>
+            <div className="room-settings-column">
+              <section className="room-setting-card context-card">
+                <div className="setting-heading-row">
+                  <span>OCASIÃO</span>
+                  <small>{isHost ? 'VOCÊ CONTROLA' : 'DEFINIDO PELO HOST'}</small>
+                </div>
+                <form onSubmit={saveContext}>
+                  <div className="occasion-options" aria-label="Ocasião da sala">
+                    {OCCASIONS.map((occasion) => (
+                      <button
+                        className={contextDraft.occasion === occasion ? 'occasion-chip selected' : 'occasion-chip'}
+                        type="button"
+                        key={occasion}
+                        disabled={!isHost || savingContext}
+                        aria-pressed={contextDraft.occasion === occasion}
+                        onClick={() => selectOccasion(occasion)}
+                      >
+                        {occasion}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="context-description-label">
+                    <span className="eyebrow">DESCRIÇÃO LIVRE</span>
+                    <input
+                      type="text"
+                      value={contextDraft.description}
+                      maxLength={1000}
+                      readOnly={!isHost}
+                      disabled={savingContext}
+                      onChange={changeDescription}
+                      placeholder="Descreva a vibe: 'pré-jogo no apê, clima descontraído…'"
+                    />
+                  </label>
+                  {isHost && (
+                    <button
+                      className="save-context-button"
+                      type="submit"
+                      disabled={savingContext || !contextDirty}
+                    >
+                      <span>{savingContext ? 'SALVANDO…' : contextDirty ? 'SALVAR CONTEXTO' : 'CONTEXTO SALVO'}</span>
+                      <span aria-hidden="true">{contextDirty ? '▶' : '✓'}</span>
+                    </button>
+                  )}
+                </form>
+              </section>
 
-              <div className="polling-status" role={error ? 'alert' : 'status'}>
+              <section className="room-setting-card mode-card">
+                <div className="setting-heading-row">
+                  <span>MODO DE CONSENSO</span>
+                  {savingMode && <small>SALVANDO…</small>}
+                </div>
+                <div className="mode-options">
+                  {CONSENSUS_MODES.map((mode) => (
+                    <button
+                      className={room.mode === mode.name ? 'mode-option selected' : 'mode-option'}
+                      type="button"
+                      key={mode.name}
+                      disabled={!isHost || savingMode}
+                      aria-pressed={room.mode === mode.name}
+                      onClick={() => saveMode(mode.name)}
+                    >
+                      <strong>{mode.name}</strong>
+                      <span>{mode.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {settingsFeedback && (
+                <p
+                  className={`settings-feedback ${settingsFeedback.type}`}
+                  role={settingsFeedback.type === 'error' ? 'alert' : 'status'}
+                >
+                  {settingsFeedback.message}
+                </p>
+              )}
+
+              <div className="polling-status compact" role={error ? 'alert' : 'status'}>
                 <span className={error ? 'polling-dot polling-dot-error' : 'polling-dot'} />
                 <div>
                   <strong>{error ? 'RECONECTANDO' : 'SALA SINCRONIZADA'}</strong>
@@ -183,16 +343,7 @@ export default function Room({ user }) {
                   </small>
                 </div>
               </div>
-
-              <div className="room-capacity-track" aria-label={`${room.members.length} de 5 membros`}>
-                {Array.from({ length: 5 }, (_, index) => (
-                  <span key={index} className={index < room.members.length ? 'filled' : ''} />
-                ))}
-              </div>
-              <p className="waiting-note">
-                O contexto e o modo de consenso serão definidos pelo host na próxima etapa.
-              </p>
-            </section>
+            </div>
           </div>
         )}
       </section>

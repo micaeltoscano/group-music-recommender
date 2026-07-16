@@ -20,4 +20,14 @@ export const api = {
   createRoom: () => requestJson('/rooms', { method: 'POST' }),
   joinRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
   getRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}`),
+  updateRoomContext: (code, context) => requestJson(`/rooms/${encodeURIComponent(code)}/context`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context),
+  }),
+  updateRoomMode: (code, mode) => requestJson(`/rooms/${encodeURIComponent(code)}/mode`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  }),
 }

@@ -122,6 +122,9 @@ class MusicSession(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
+    occasion: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mode: Mapped[str | None] = mapped_column(String(32), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

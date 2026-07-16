@@ -308,6 +308,65 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
   margin: 16px 0 0; color: var(--dim); font-size: 0.62rem; line-height: 1.6;
 }
 
+/* ---- Contexto e modo de consenso (PB-06) ---- */
+
+.room-settings-column { display: flex; flex-direction: column; gap: 24px; }
+.room-setting-card {
+  padding: 28px; border: 1px solid var(--border); border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.setting-heading-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  margin-bottom: 16px; color: var(--muted-2); font-size: 0.62rem; letter-spacing: 0.16em;
+}
+.setting-heading-row small { color: var(--dim); font-size: 0.52rem; }
+.occasion-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.occasion-chip {
+  padding: 9px 16px; border: 1px solid var(--border-2); border-radius: var(--radius-pill);
+  background: transparent; color: var(--muted); font-family: var(--font-body); font-size: 0.7rem;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.occasion-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+.occasion-chip.selected { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+.occasion-chip:disabled { cursor: default; }
+.context-description-label { display: block; margin-top: 18px; }
+.context-description-label > span { display: block; margin-bottom: 8px; }
+.context-description-label input {
+  width: 100%; padding: 14px 16px; border: 1px solid var(--border-2);
+  border-radius: 10px; outline: none; background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 0.75rem;
+}
+.context-description-label input:focus { border-color: var(--accent); }
+.context-description-label input::placeholder { color: var(--dim); }
+.context-description-label input:read-only { color: var(--muted); cursor: default; }
+.save-context-button {
+  width: 100%; margin-top: 14px; padding: 12px 15px; display: flex; align-items: center;
+  justify-content: space-between; border: 1px solid var(--accent); border-radius: 10px;
+  background: transparent; color: var(--accent); font-family: var(--font-body); font-size: 0.66rem;
+  font-weight: 600; letter-spacing: 0.08em; cursor: pointer;
+}
+.save-context-button:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+.save-context-button:disabled { border-color: var(--border); color: var(--dim); cursor: default; }
+.mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mode-option {
+  min-height: 84px; padding: 16px; border: 1px solid var(--border-2);
+  border-radius: var(--radius-btn); background: var(--bg); color: var(--muted);
+  font-family: var(--font-body); text-align: left; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.mode-option:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+.mode-option.selected { border-color: var(--accent); color: var(--accent-hover); }
+.mode-option:disabled { cursor: default; }
+.mode-option strong { display: block; font-size: 0.74rem; }
+.mode-option span { display: block; margin-top: 6px; font-size: 0.62rem; line-height: 1.45; opacity: 0.78; }
+.settings-feedback {
+  margin: -10px 0 0; padding: 12px 15px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface); font-size: 0.65rem; line-height: 1.5;
+}
+.settings-feedback.success { color: var(--accent-2); }
+.settings-feedback.error { color: var(--accent-hover); }
+.polling-status.compact { margin-top: 0; background: var(--surface); }
+
 @media (max-width: 640px) {
   .product-header { padding: 0 20px; }
   .product-header > .eyebrow { display: none; }
@@ -322,7 +381,9 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
   .room-code-card { min-height: 180px; padding: 26px 24px; }
   .room-code-card > strong { font-size: 2.3rem; }
   .members-card, .waiting-card { padding: 24px; }
+  .room-setting-card { padding: 24px; }
   .waiting-card { min-height: 380px; }
+  .mode-options { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {

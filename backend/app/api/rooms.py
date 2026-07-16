@@ -8,17 +8,25 @@ from sqlalchemy.orm import Session
 from app.api.auth import get_current_user
 from app.db.models import MusicSession
 from app.db.session import get_db
-from app.schemas.rooms import RoomMemberResponse, RoomResponse
+from app.schemas.rooms import (
+    RoomContextUpdate,
+    RoomMemberResponse,
+    RoomModeUpdate,
+    RoomResponse,
+)
 from app.services.room_service import (
     RoomAccessDeniedError,
     RoomCodeGenerationError,
     RoomExpiredError,
     RoomFullError,
+    RoomHostRequiredError,
     RoomNotFoundError,
     create_room,
     get_room_for_member,
     join_room,
     list_room_members,
+    update_room_context,
+    update_room_mode,
 )
 
 router = APIRouter()
@@ -39,6 +47,9 @@ def _room_response(db: Session, room: MusicSession) -> RoomResponse:
         id=room.id,
         code=room.code,
         status=room.status,
+        occasion=room.occasion,
+        description=room.description,
+        mode=room.mode,
         created_at=room.created_at,
         expires_at=room.expires_at,
         members=members,
@@ -93,4 +104,53 @@ def read_music_room(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except RoomAccessDeniedError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    return _room_response(db, room)
+
+
+def _raise_room_update_error(exc: Exception) -> None:
+    if isinstance(exc, RoomNotFoundError):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    if isinstance(exc, (RoomAccessDeniedError, RoomHostRequiredError)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    raise exc
+
+
+@router.put("/{code}/context", response_model=RoomResponse)
+def set_music_room_context(
+    code: str,
+    payload: RoomContextUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RoomResponse:
+    """Substitui ocasião/descrição da sala quando solicitado pelo host."""
+    try:
+        room = update_room_context(
+            db,
+            code,
+            current_user["id"],
+            occasion=payload.occasion,
+            description=payload.description,
+        )
+    except (RoomNotFoundError, RoomAccessDeniedError, RoomHostRequiredError) as exc:
+        _raise_room_update_error(exc)
+    return _room_response(db, room)
+
+
+@router.put("/{code}/mode", response_model=RoomResponse)
+def set_music_room_mode(
+    code: str,
+    payload: RoomModeUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RoomResponse:
+    """Seleciona um dos dois modos de consenso disponíveis no MVP."""
+    try:
+        room = update_room_mode(
+            db,
+            code,
+            current_user["id"],
+            mode=payload.mode,
+        )
+    except (RoomNotFoundError, RoomAccessDeniedError, RoomHostRequiredError) as exc:
+        _raise_room_update_error(exc)
     return _room_response(db, room)
