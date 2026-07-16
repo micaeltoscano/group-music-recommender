@@ -365,7 +365,8 @@ A ordem respeita as dependências declaradas no backlog.
 
 #### PB-05 — Entrada e acompanhamento da sala
 
-- **Status:** AGUARDANDO-QA — implementação e testes técnicos concluídos em 2026-07-15; QA independente pendente.
+- **Status:** VALIDADO (QA 2026-07-15, commit `4061eb4`) — CT-PB05-01..07 executados e aprovados contra
+  PostgreSQL isolado; sem defeitos, sem regressões. Relatório: `docs/relatorios-testes/PB-05.md`.
 - **Objetivo:** entrar por código sem duplicidade, respeitar o limite de 5 integrantes, proteger o
   acesso (403 para não-membros) e atualizar a sala por polling.
 - **Dependências:** PB-02 e PB-04.
@@ -402,13 +403,29 @@ A ordem respeita as dependências declaradas no backlog.
 - **Resultados observados:** join válido → 200 e membro persistido; inexistente → 404; expirada → 410;
   sexto → 409; repetido → 200 com um vínculo; não-membro no GET → 403 sem dados; leitura posterior
   reflete novo membro e leituras repetidas mantêm o mesmo estado.
-- **Critérios pendentes:** nenhum na validação interna; CT-PB05-01..07 aguardam execução independente.
-- **Riscos e limitações:** o teste visual pixel a pixel do lobby e o intervalo real no navegador devem
-  ser confirmados pelo QA; a concorrência já foi exercitada no PostgreSQL alvo, não apenas em SQLite.
+- **Critérios pendentes:** nenhum — os cinco critérios foram comprovados pelo QA.
+- **Validação QA (2026-07-15):** CT-PB05-01..07 **todos Aprovados** contra PostgreSQL isolado
+  (`vibe_qa_pb05`) com servidor uvicorn real: join → 200 e convidado visível no GET; inexistente → 404;
+  expirada → 410 (inclusive no limite exato); 6º → 409 com contagem final 5; join repetido → 200 com um
+  único vínculo, mesmo com a sala cheia; não-membro → 403 sem qualquer dado da sala; 3 leituras
+  byte-a-byte idênticas. **Concorrência real:** teste do Dev (5 disputantes) → 4/1/total 5 e teste QA de
+  contenção pesada (20 disputantes) → 4/16/**total 5**. **Experimento de mutação:** removendo o
+  `SELECT ... FOR UPDATE` só em memória, o total chega a **6** — provando que o lock é indispensável e
+  que o teste detectaria a regressão. **Polling medido em navegador real (Chromium):** intervalos de
+  **4002/4000 ms** (média 4001), dentro de 3–5s; reload mantém o estado; `clearInterval` no unmount sem
+  vazamento. **Visual:** lobby fiel a `03-sala-lobby.png` no escopo do PB-05 (OCASIÃO/MODO são PB-06 e
+  estão corretamente ausentes). Suíte completa **42 passed / 0 failed** (37 Dev + 5 QA) — sem regressão
+  em PB-01/02/04; build Vite 43 módulos. Testes de QA em `backend/tests/test_pb05_rooms_qa.py`.
+  **Defeitos: nenhum.** **Veredito QA: PB-05 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM.**
+- **Riscos e limitações:** polling medido apenas em Chromium headless (não em Safari/Firefox nem em aba
+  em segundo plano); comparação com o design foi estrutural, não pixel a pixel; sessões semeadas no banco
+  (OAuth real do Spotify fica para o fechamento da Sprint). O teste de concorrência depende de
+  `TEST_DATABASE_URL` — sem ela é **pulado**; garantir essa variável na CI.
 - **Bloqueios:** nenhum.
-- **Próxima ação exata:** QA executa CT-PB05-01..07, inspeção visual/polling de 4s, regressão PB-01/02/04
-  e registra o veredito em `docs/relatorios-testes/PB-05.md`; Dev não inicia PB-06 antes do veredito.
-- **Ponto de retomada:** implementação entregue no commit do PB-05; aguardando exclusivamente QA.
+- **Próxima ação exata:** Dev liberado para o próximo PB da Sprint 1 — **PB-06** (dep. PB-04 ✔) e
+  **PB-08** (dep. PB-02 ✔) estão livres. Após PB-06 e PB-08, executar os testes integrados da Sprint 1.
+- **Ponto de retomada:** PB-05 encerrado pelo QA no commit `4061eb4`; Sprint 1 com PB-01, PB-02, PB-04 e
+  PB-05 validados; faltam PB-06 e PB-08.
 
 #### PB-06 — Contexto e modo de consenso
 
@@ -498,7 +515,8 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01, PB-02 e PB-04 VALIDADOS; PB-05 AGUARDANDO-QA; PB-06 e PB-08 a fazer.
+**Em andamento** — PB-01, PB-02, PB-04 e PB-05 VALIDADOS; restam PB-06 e PB-08 (ambos livres). Após
+esses dois, executar os testes integrados da Sprint 1.
 
 ---
 

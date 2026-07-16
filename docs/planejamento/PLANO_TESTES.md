@@ -194,7 +194,7 @@ Nenhum dado de domínio; usa endpoints de saúde e a tabela `users` vazia.
 - **Resultado esperado:** três status "ok"; API base correta.
 - **Evidência esperada:** captura de tela da página de status.
 - **Critério de aprovação:** os três indicadores em "ok".
-- **Automatizável:** Parcialmente · **Status:** Bloqueado (QA 2026-07-13 — Node/npm ausentes no host; ver DEF-PB01-01 em `docs/relatorios-testes/PB-01.md`)
+- **Automatizável:** Parcialmente · **Status:** Aprovado (QA revalidação 2026-07-14 — bloqueio removido: Node v24.18.0/npm 11.16.0; Vite nativo :5173 → 200, backend :8000 → 200, CORS da origem :5173 → 200; DEF-PB01-01 resolvido)
 
 > Observação: `vite build` já foi verificado em container Node 20 (compila, `dist/` gerado). Falta a
 > execução **nativa** para encerrar o critério 1 do PB-01.
@@ -320,14 +320,14 @@ Host autenticado `demo_user_1`; relógio de referência para validar expiração
 - **Resultado esperado:** 201 com `code` e dados iniciais; host registrado em `music_session_members`.
 - **Evidência esperada:** payload + registro persistido.
 - **Critério de aprovação:** sala e host criados.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14, Postgres real — `POST /rooms` → 201 com código e host persistido)
 
 ##### CT-PB04-02 — Criação sem autenticação é bloqueada
 - **Tipo:** autorização · **Prioridade:** Alta · **Cenário:** requisição sem sessão válida.
 - **Passos:** `POST /rooms` sem cookie de sessão.
 - **Resultado esperado:** 401; nenhuma sala criada.
 - **Critério de aprovação:** acesso negado.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14 — sem cookie e com cookie inválido → 401; nenhuma sala criada)
 
 ##### CT-PB04-03 — Código curto único
 - **Tipo:** integração/concorrência · **Prioridade:** Alta · **Cenário:** múltiplas criações não geram
@@ -336,21 +336,21 @@ Host autenticado `demo_user_1`; relógio de referência para validar expiração
 - **Resultado esperado:** todos os códigos distintos; `code` com restrição de unicidade.
 - **Evidência esperada:** conjunto de códigos sem repetição.
 - **Critério de aprovação:** unicidade garantida.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14, Postgres real — 20 criações concorrentes → 20 códigos distintos; `UNIQUE(code)` no catálogo + retry em colisão)
 
 ##### CT-PB04-04 — Host é o primeiro integrante e tem papel host
 - **Tipo:** integração · **Prioridade:** Alta · **Cenário:** criador entra como `role=host`.
 - **Passos:** criar sala; consultar membros.
 - **Resultado esperado:** exatamente 1 membro (host) com papel host.
 - **Critério de aprovação:** papel e associação corretos.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14 — exatamente 1 membro `role=host`; 21/21 salas com vínculo consistente)
 
 ##### CT-PB04-05 — Expiração de 24h
 - **Tipo:** banco/regra de negócio · **Prioridade:** Alta · **Cenário:** `expires_at ≈ created_at + 24h`.
 - **Passos:** criar sala; comparar `expires_at` e `created_at`.
 - **Resultado esperado:** diferença de 24h (dentro de tolerância).
 - **Critério de aprovação:** janela de expiração correta.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14 — `expires_at − created_at` = 24h exatas no payload e no banco)
 
 ##### CT-PB04-06 — Retorno da API não expõe dados sensíveis
 - **Tipo:** privacidade · **Prioridade:** Média · **Cenário:** payload de criação não traz tokens nem
@@ -358,7 +358,7 @@ Host autenticado `demo_user_1`; relógio de referência para validar expiração
 - **Passos:** inspecionar o corpo de `POST /rooms`.
 - **Resultado esperado:** somente dados da sala/host.
 - **Critério de aprovação:** sem vazamento.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-14 — payload só com dados públicos da sala/host; sem token, sessão ou dados de terceiros)
 
 ---
 
@@ -389,14 +389,14 @@ passado.
 - **Passos:** `POST /rooms/{code}/join` autenticado.
 - **Resultado esperado:** 200; usuário aparece na lista de membros no próximo `GET /rooms/{code}`.
 - **Critério de aprovação:** associação criada e visível.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15, Postgres real — `POST /rooms/{code}/join` → 200; convidado visível no `GET` seguinte; código aceito em minúsculas)
 
 ##### CT-PB05-02 — Código inexistente ou sala expirada rejeitados
 - **Tipo:** entrada inválida · **Prioridade:** Alta · **Cenário:** join em código inválido/expirado.
 - **Passos:** join com código inexistente; join em sala com `expires_at` passado.
 - **Resultado esperado:** 404 (inexistente) e 410/403 (expirada) — sem associação criada.
 - **Critério de aprovação:** ambos rejeitados com mensagem apropriada.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15, Postgres real — inexistente → 404 "Sala não encontrada."; expirada → 410 "Esta sala expirou."; nenhum vínculo criado)
 
 ##### CT-PB05-03 — Limite de cinco integrantes
 - **Tipo:** limites (máximo) · **Prioridade:** Alta · **Cenário:** o 6º ingresso é barrado.
@@ -404,7 +404,7 @@ passado.
 - **Resultado esperado:** 5 aceitos; 6º recebe erro (409/403) e não é associado.
 - **Evidência esperada:** contagem final = 5.
 - **Critério de aprovação:** limite respeitado.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15, Postgres real — 6º → 409, contagem final 5; concorrência pesada QA: 20 disputantes → 4 entram/16 recusados, total 5; mutante sem `FOR UPDATE` chega a 6, provando que o lock é necessário)
 
 ##### CT-PB05-04 — Join duplicado não cria segundo vínculo
 - **Tipo:** duplicidade/idempotência · **Prioridade:** Alta · **Cenário:** mesmo usuário faz join 2×.
@@ -412,7 +412,7 @@ passado.
 - **Resultado esperado:** sem duplicar `music_session_members` (PK composta); resposta idempotente.
 - **Evidência esperada:** 1 vínculo por usuário.
 - **Critério de aprovação:** anti-duplicidade garantida.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15, Postgres real — join repetido → 200 com 1 vínculo, inclusive com a sala cheia; 10 joins simultâneos do mesmo usuário → todos 200 e 1 único vínculo)
 
 ##### CT-PB05-05 — Não-membro recebe 403 ao consultar a sala
 - **Tipo:** autorização/privacidade · **Prioridade:** Alta · **Cenário:** usuário externo tenta ler a
@@ -420,7 +420,7 @@ passado.
 - **Passos:** `GET /rooms/{code}` autenticado como não-membro.
 - **Resultado esperado:** 403; nenhum dado da sala/membros retornado.
 - **Critério de aprovação:** acesso negado sem vazamento.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15, Postgres real — não-membro → 403; corpo só com `detail`, sem código/id/membros/expiração da sala)
 
 ##### CT-PB05-06 — Estado atualizado no polling reflete novos membros
 - **Tipo:** integração/e2e · **Prioridade:** Média · **Cenário:** entrada de um membro aparece para os
@@ -428,7 +428,7 @@ passado.
 - **Passos:** membro A consulta; membro B entra; A consulta novamente (3–5s depois).
 - **Resultado esperado:** B aparece na 2ª leitura de A.
 - **Critério de aprovação:** propagação por polling funciona.
-- **Automatizável:** Parcialmente · **Status:** Não executado
+- **Automatizável:** Parcialmente · **Status:** Aprovado (QA 2026-07-15 — API: 1ª leitura 1 membro → B entra → 2ª leitura 2 membros; navegador real (Chromium): intervalos medidos 4002/4000 ms, média 4001 ms, todos dentro de 3–5s)
 
 ##### CT-PB05-07 — Estado consistente após recarregar
 - **Tipo:** persistência · **Prioridade:** Média · **Cenário:** recarregar a página mantém a lista de
@@ -436,7 +436,7 @@ passado.
 - **Passos:** recarregar `GET /rooms/{code}`.
 - **Resultado esperado:** mesma composição e estado persistidos.
 - **Critério de aprovação:** consistência mantida.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-15 — 3 leituras consecutivas byte-a-byte idênticas; reload no navegador real mantém a mesma composição de membros)
 
 ---
 
