@@ -242,9 +242,44 @@ class PlaylistRun(Base):
     )
 
     music_session: Mapped["MusicSession"] = relationship(back_populates="playlist_runs")
+    tracks: Mapped[list["PlaylistRunTrack"]] = relationship(
+        back_populates="playlist_run",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<PlaylistRun id={self.id} session_id={self.session_id} status={self.status!r}>"
+
+
+class PlaylistRunTrack(Base):
+    """Faixa candidata resolvida e associada a uma execução de geração (PB-14)."""
+
+    __tablename__ = "playlist_run_tracks"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    candidate_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    spotify_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    spotify_uri: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    artist: Mapped[str] = mapped_column(Text, nullable=False)
+    match_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    discard_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="matched")
+    source: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON ou lista em string
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    
+    playlist_run: Mapped["PlaylistRun"] = relationship(back_populates="tracks")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<PlaylistRunTrack id={self.id} status={self.status!r}>"
 
 
 class VibeCheckAnswer(Base):

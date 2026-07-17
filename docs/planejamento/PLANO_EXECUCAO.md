@@ -872,7 +872,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-14 — Correspondência das músicas no Spotify
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — correspondência e match_confidence criados. Relatório de testes salvo.
 - **Objetivo:** resolver candidatas via Spotify Search com o token do host, normalizar título/artista,
   validar disponibilidade e descartar ambíguos/indisponíveis; cada válida com identificador Spotify.
 - **Dependências:** PB-02, PB-11, PB-12 e PB-13.

@@ -209,3 +209,36 @@ async def get_top_artists(
         time_range=time_range,
         limit=limit,
     )
+
+
+async def search_track(
+    access_token: str,
+    query: str,
+    market: str = "from_token",
+    limit: int = 3,
+) -> list[dict]:
+    """Busca faixas no Spotify por termo, retornando os itens encontrados."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {
+        "q": query,
+        "type": "track",
+        "market": market,
+        "limit": limit,
+    }
+    async with AsyncClient() as client:
+        response = await client.get(
+            f"{SPOTIFY_API_BASE}/search",
+            headers=headers,
+            params=params,
+        )
+        if response.status_code == 429:
+            raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))
+        response.raise_for_status()
+        payload = response.json()
+
+    tracks_data = payload.get("tracks", {})
+    items = tracks_data.get("items")
+    if not isinstance(items, list):
+        raise SpotifyInvalidResponse("Spotify retornou um payload de busca inválido.")
+    
+    return items
