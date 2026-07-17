@@ -101,6 +101,8 @@ class PlaylistRunResponse(BaseModel):
     session_id: UUID
     status: Literal["running", "completed", "failed"]
     error_message: str | None
+    spotify_playlist_id: str | None
+    spotify_playlist_url: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -139,4 +141,3 @@ class RoomResultResponse(BaseModel):
     representation: list[MemberRepresentation]
     tracks: list[TrackResultResponse]
     why_items: list[str]
-

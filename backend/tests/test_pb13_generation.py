@@ -12,7 +12,11 @@ from app.db.base import Base
 from app.db.models import AppSession, MusicSession, PlaylistRun, User, MusicSessionMember
 from app.db.session import get_db
 from app.main import app
-from app.services.generation_service import complete_generation, fail_generation
+from app.services.generation_service import (
+    complete_generation,
+    fail_generation,
+    get_generation_executor,
+)
 
 
 @pytest.fixture()
@@ -38,6 +42,9 @@ def db(session_factory):
 
 @pytest.fixture()
 def client(session_factory):
+    async def _keep_run_pending(db_session, run_id, _host_id):
+        return db_session.get(PlaylistRun, run_id)
+
     def _override_get_db():
         db_session = session_factory()
         try:
@@ -46,6 +53,7 @@ def client(session_factory):
             db_session.close()
             
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_generation_executor] = lambda: _keep_run_pending
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

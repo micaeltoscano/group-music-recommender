@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from './apiClient'
 
 const POLLING_INTERVAL_MS = 4000
@@ -35,6 +35,7 @@ function formatRemaining(expiresAt, now) {
 
 export default function Room({ user }) {
   const { code } = useParams()
+  const navigate = useNavigate()
   const [room, setRoom] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -45,6 +46,7 @@ export default function Room({ user }) {
   const [contextDirty, setContextDirty] = useState(false)
   const [savingContext, setSavingContext] = useState(false)
   const [savingMode, setSavingMode] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [settingsFeedback, setSettingsFeedback] = useState(null)
 
   useEffect(() => {
@@ -176,6 +178,80 @@ export default function Room({ user }) {
     } finally {
       setSavingMode(false)
     }
+  }
+
+  const generatePlaylist = async () => {
+    if (!isHost || generating || room.status === 'generating') return
+    if (contextDirty) {
+      setSettingsFeedback({ type: 'error', message: 'Salve o contexto antes de gerar a playlist.' })
+      return
+    }
+
+    setGenerating(true)
+    setSettingsFeedback(null)
+    try {
+      const response = await api.generatePlaylist(code)
+      if (!response.ok) {
+        const detail = response.body?.detail
+        const message = typeof detail === 'object'
+          ? detail?.message
+          : detail
+        setSettingsFeedback({
+          type: 'error',
+          message: message || 'Não foi possível gerar a playlist.',
+        })
+        setGenerating(false)
+        return
+      }
+      navigate(`/rooms/${code}/result`)
+    } catch {
+      setSettingsFeedback({ type: 'error', message: 'Conexão perdida durante a geração.' })
+      setGenerating(false)
+    }
+  }
+
+  if (room && generating) {
+    const memberLabel = room.members.length === 1
+      ? 'Coletando top tracks e artistas do host…'
+      : `Coletando top tracks e artistas dos ${room.members.length} membros…`
+    return (
+      <main className="room-shell">
+        <header className="product-header">
+          <div className="product-brand">
+            <EqualizerMark />
+            <div>
+              <strong>VIBE CHECK</strong>
+              <span>NEGOCIE. VOTE. CURTA JUNTO.</span>
+            </div>
+          </div>
+          <span className="room-header-code pill">
+            <i aria-hidden="true" /> SALA <strong>{room.code}</strong>
+          </span>
+          <span className="eyebrow">VC-01 · GROUP PLAYLIST SYSTEM</span>
+        </header>
+        <section className="generation-screen" aria-live="polite">
+          <p className="eyebrow">[ VC-01 · NEGOTIATION ENGINE ]</p>
+          <div className="generation-panel">
+            <div className="generation-title-row">
+              <h1>Negociando a playlist…</h1>
+              <strong>EM CURSO</strong>
+            </div>
+            <div className="generation-progress" aria-label="Geração em andamento">
+              <span />
+            </div>
+            <div className="generation-log">
+              <p><span>$</span> {memberLabel}</p>
+              <p><span>$</span> Montando e pontuando o conjunto de candidatas…</p>
+              <p><span>$</span> Aplicando consenso, rejeição e justiça…</p>
+              <p><span>$</span> Correspondendo faixas disponíveis no Spotify…</p>
+              <p><span>$</span> Criando playlist privada na conta do host…</p>
+              <i aria-hidden="true" />
+            </div>
+            <small>Você pode gerar sozinho ou com o grupo. Esta etapa pode levar alguns instantes.</small>
+          </div>
+        </section>
+      </main>
+    )
   }
 
   return (
@@ -351,6 +427,18 @@ export default function Room({ user }) {
                   </small>
                 </div>
               </div>
+
+              {isHost && (
+                <button
+                  className="generate-playlist-button"
+                  type="button"
+                  disabled={generating || room.status === 'generating' || savingContext || savingMode}
+                  onClick={generatePlaylist}
+                >
+                  <span>{room.status === 'generating' ? 'GERAÇÃO EM ANDAMENTO' : 'GERAR PLAYLIST'}</span>
+                  <span aria-hidden="true">▶▶</span>
+                </button>
+              )}
             </div>
           </div>
         )}

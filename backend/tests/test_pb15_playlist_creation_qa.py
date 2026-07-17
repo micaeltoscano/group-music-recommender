@@ -49,14 +49,21 @@ def mock_db(run_id):
 @patch("app.clients.spotify_client.add_items_to_playlist", new_callable=AsyncMock)
 def test_pb15_01_cap_per_artist(mock_add_items, mock_create, mock_db, run_id):
     """CT-PB15-01: Garante que no máximo 2 faixas do mesmo artista são incluídas."""
-    # Criar 5 faixas do Artista A e 1 do Artista B
+    # 5 faixas do Artista A + 18 artistas distintos: sobram 20 faixas válidas após o cap.
     tracks = [
         PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista A", spotify_uri="uri:1"),
         PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista A", spotify_uri="uri:2"),
         PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista A", spotify_uri="uri:3"),
         PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista A", spotify_uri="uri:4"),
         PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista A", spotify_uri="uri:5"),
-        PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista B", spotify_uri="uri:6"),
+    ] + [
+        PlaylistRunTrack(
+            id=uuid.uuid4(),
+            run_id=run_id,
+            artist=f"Artista {i}",
+            spotify_uri=f"uri:{i + 5}",
+        )
+        for i in range(1, 19)
     ]
     mock_db.query_tracks_mock.all.return_value = tracks
     
@@ -69,12 +76,11 @@ def test_pb15_01_cap_per_artist(mock_add_items, mock_create, mock_db, run_id):
     mock_create.assert_called_once()
     mock_add_items.assert_called_once()
     
-    # Os URIs enviados devem ser apenas uri:1, uri:2, e uri:6
+    # Apenas duas faixas do Artista A podem chegar à API.
     called_uris = mock_add_items.call_args[1]["uris"]
-    assert len(called_uris) == 3
+    assert len(called_uris) == 20
     assert "uri:1" in called_uris
     assert "uri:2" in called_uris
-    assert "uri:6" in called_uris
     assert "uri:3" not in called_uris
 
 
@@ -95,6 +101,8 @@ def test_pb15_02_max_30_tracks(mock_add_items, mock_create, mock_db, run_id):
     
     called_uris = mock_add_items.call_args[1]["uris"]
     assert len(called_uris) == 30
+    assert all(track.status == "discarded" for track in tracks[30:])
+    assert all(track.discard_reason == "playlist_limit" for track in tracks[30:])
 
 
 @patch("app.clients.spotify_client.create_playlist", new_callable=AsyncMock)
@@ -102,7 +110,13 @@ def test_pb15_02_max_30_tracks(mock_add_items, mock_create, mock_db, run_id):
 def test_pb15_04_partial_failure_persists_playlist_id(mock_add_items, mock_create, mock_db, run_id):
     """CT-PB15-04: Garante que se add_items falhar, o id da playlist já foi salvo."""
     tracks = [
-        PlaylistRunTrack(id=uuid.uuid4(), run_id=run_id, artist="Artista 1", spotify_uri="uri:1"),
+        PlaylistRunTrack(
+            id=uuid.uuid4(),
+            run_id=run_id,
+            artist=f"Artista {i}",
+            spotify_uri=f"uri:{i}",
+        )
+        for i in range(20)
     ]
     mock_db.query_tracks_mock.all.return_value = tracks
     

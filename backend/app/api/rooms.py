@@ -9,13 +9,13 @@ from app.api.auth import get_current_user
 from app.db.models import MusicSession
 from app.db.session import get_db
 from app.schemas.rooms import (
+    MemberRepresentation,
     PlaylistRunResponse,
     RoomContextUpdate,
     RoomMemberResponse,
     RoomModeUpdate,
     RoomResponse,
     RoomResultResponse,
-    MemberRepresentation,
     TrackResultResponse,
 )
 from app.services.room_service import (
@@ -162,16 +162,20 @@ def set_music_room_mode(
 
 from app.services.generation_service import (
     GenerationConflictError,
+    GenerationExecutor,
+    PlaylistGenerationError,
+    get_generation_executor,
     start_generation,
 )
 
 @router.post("/{code}/generate", response_model=PlaylistRunResponse, status_code=status.HTTP_202_ACCEPTED)
-def request_playlist_generation(
+async def request_playlist_generation(
     code: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    executor: GenerationExecutor = Depends(get_generation_executor),
 ) -> PlaylistRunResponse:
-    """Solicita a geração da playlist para a sala."""
+    """Inicia e executa o pipeline básico até criar a playlist privada no Spotify."""
     try:
         run = start_generation(db, code, current_user["id"])
     except RoomNotFoundError as exc:
@@ -180,8 +184,20 @@ def request_playlist_generation(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except GenerationConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    
-    return run
+
+    try:
+        return await executor(db, run.id, current_user["id"])
+    except PlaylistGenerationError as exc:
+        if exc.reason == "reauth_required":
+            response_status = status.HTTP_401_UNAUTHORIZED
+        elif exc.reason == "insufficient_tracks":
+            response_status = status.HTTP_422_UNPROCESSABLE_ENTITY
+        else:
+            response_status = status.HTTP_502_BAD_GATEWAY
+        raise HTTPException(
+            status_code=response_status,
+            detail={"message": str(exc), "run_id": str(exc.run_id)},
+        ) from exc
 
 
 @router.get("/{code}/result", response_model=RoomResultResponse)
@@ -297,5 +313,3 @@ def get_room_result(
         tracks=track_results,
         why_items=why_items
     )
-
-

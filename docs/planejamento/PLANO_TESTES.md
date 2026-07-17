@@ -959,6 +959,13 @@ Músicas correspondidas (PB-14); `SpotifyClient` mockado para unit e conta real 
   antes de salvar todas as faixas. · **Resultado esperado:** estado coerente (run reflete o real; sem
   faixas órfãs). · **Automatizável:** Parcialmente · **Status:** Não executado
 
+##### CT-PB15-05 — Host sozinho gera a playlist
+- **Tipo:** integração/regressão · **Prioridade:** Alta · **Cenário:** sala com um único integrante,
+  sendo ele o host, e snapshot com candidatas suficientes.
+- **Resultado esperado:** `POST /rooms/{code}/generate` conclui sem exigir segundo membro, cria playlist
+  privada com 20–30 faixas, persiste ID/URL e libera a sala para nova geração.
+- **Automatizável:** Sim (Spotify mockado) · **Status:** Não executado
+
 ### PB-16 — Resultado e explicabilidade
 
 #### Objetivo da validação
