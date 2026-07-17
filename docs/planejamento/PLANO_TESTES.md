@@ -720,20 +720,20 @@ Faixa com afinidades conhecidas por usuário; grupo com scores {10,10,1} para te
 #### Casos de teste
 ##### CT-PB11-01 — Score individual com valor esperado
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** `user_track_score` igual ao
-  cálculo manual pela fórmula ponderada. · **Automatizável:** Sim · **Status:** Não executado
+  cálculo manual pela fórmula ponderada. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB11-02 — Score de grupo considera média, mínimo, cobertura, contexto, diversidade
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** componentes refletidos no valor;
-  `min_user_score` presente. · **Automatizável:** Sim · **Status:** Não executado
+  `min_user_score` presente. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB11-03 — Pesos centralizados e ajustáveis
 - **Tipo:** unitário/configuração · **Prioridade:** Média · **Cenário:** alterar um peso muda o score de
   forma previsível. · **Resultado esperado:** mudança proporcional; pesos vêm de `weights.py`.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB11-04 — Determinismo
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** mesma entrada/config → mesmo
-  resultado. · **Automatizável:** Sim · **Status:** Não executado
+  resultado. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ### PB-12 — Rejeição, justiça e modos de consenso
 

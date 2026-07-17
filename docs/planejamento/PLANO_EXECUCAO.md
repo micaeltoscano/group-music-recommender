@@ -708,7 +708,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-11 — Pontuação individual e coletiva
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — implementação de pesos centrais e cálculo de pontuação (individual e de grupo) concluída; 4 testes passados.
 - **Objetivo:** fórmulas configuráveis de score individual e de grupo, com pesos centralizados e
   resultados determinísticos e testados.
 - **Dependências:** PB-09 e PB-10.
@@ -726,9 +726,9 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 - **Evidências necessárias:** testes verdes com números esperados; pesos centralizados.
 - **Riscos:** popularity bias; divergência de fórmula vs README.
 - **Bloqueios:** depende de PB-09/PB-10.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `scoring.py` e `weights.py` com testes de valores esperados.
+- **Resultado da implementação:** Criação de `DEFAULT_INDIVIDUAL_WEIGHTS` e `DEFAULT_GROUP_WEIGHTS` no `weights.py`. Criação das fórmulas no `scoring.py`.
+- **Resultado dos testes:** 4 testes criados no `test_pb11_scoring.py` cobrindo determinismo e valores esperados (`4 passed`).
+- **Próxima ação exata:** Avançar para a PB-12 (Rejeição, justiça e modos de consenso).
 
 #### PB-12 — Rejeição, justiça e modos de consenso
 
