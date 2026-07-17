@@ -321,14 +321,25 @@ No PB-08, `GET /me/top` reutiliza o snapshot fresco e
 `short_term`, `medium_term` (padrão) ou `long_term`. Em rate limit, o último snapshot disponível é
 reutilizado; sem cache, a API devolve 429 com `Retry-After`.
 
-### 2. Banco de dados (PostgreSQL)
+### 2. Aplicação completa com Docker Compose
 
 ```bash
-docker compose up -d db          # sobe o Postgres 16 em localhost:5432
-docker compose ps                # confere o status "healthy"
+docker compose up --build        # sobe banco, backend e frontend
+docker compose ps                # os três serviços devem ficar "healthy"
 ```
 
-### 3. Backend (FastAPI)
+- Frontend: <http://localhost:5173>
+- API: <http://localhost:8000>
+- Docs (Swagger): <http://localhost:8000/docs>
+
+O backend espera o PostgreSQL ficar saudável e aplica `alembic upgrade head` antes de iniciar. O
+frontend, por sua vez, espera a API responder. Os diretórios de código são montados nos containers,
+portanto Vite e Uvicorn recarregam alterações durante o desenvolvimento.
+
+Para subir somente a infraestrutura e executar as aplicações diretamente no host, use
+`docker compose up -d db` e siga as seções abaixo.
+
+### 3. Backend no host (opcional)
 
 ```bash
 cd backend
@@ -341,7 +352,7 @@ uvicorn app.main:app --reload --port 8000
 
 - API: <http://localhost:8000> · Docs (Swagger): <http://localhost:8000/docs>
 
-### 4. Frontend (React + Vite)
+### 4. Frontend no host (opcional)
 
 ```bash
 cd frontend
@@ -371,6 +382,6 @@ pytest
 
 ```bash
 # backend/frontend: Ctrl+C nos respectivos terminais
-docker compose down       # para o Postgres (mantém o volume/dados)
-docker compose down -v    # para e APAGA os dados do Postgres
+docker compose down       # para os serviços (mantém banco e node_modules nos volumes)
+docker compose down -v    # para os serviços e APAGA os volumes locais
 ```

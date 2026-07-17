@@ -54,7 +54,16 @@ ela lê sozinha (o seu é o **`GEMINI.md`**). Não precisa decorar nada — as r
 
 ## 5. Rodar a aplicação (pra ver funcionando)
 
-Em 3 terminais (detalhes no `README.md`):
+Com Docker Compose (detalhes no `README.md`):
+
+```bash
+docker compose up --build
+```
+
+Isso sobe PostgreSQL, backend e frontend. Acesse o frontend em <http://localhost:5173> e a
+documentação da API em <http://localhost:8000/docs>.
+
+Se preferir executar backend e frontend diretamente no host, use 3 terminais:
 
 ```bash
 # Terminal 1 — banco de dados
