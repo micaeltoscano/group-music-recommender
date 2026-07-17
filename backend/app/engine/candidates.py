@@ -39,7 +39,7 @@ def generate_candidate_pool(
     discarded: List[DiscardedTrack] = []
 
     for user_id, top_tracks_json in snapshots:
-        items = top_tracks_json.get("items", [])
+        items = top_tracks_json.get("items") or []
         
         for item in items:
             track_id = item.get("id")
