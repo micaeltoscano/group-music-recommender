@@ -646,25 +646,25 @@ Perfis com interseção total, parcial e nula; um usuário; usuário com listas 
 - **Tipo:** unitário · **Prioridade:** Alta · **Cenário:** duas listas com interseção conhecida.
 - **Resultado esperado:** valor de similaridade igual ao calculado à mão (ex.: Jaccard), em [0,1].
 - **Critério de aprovação:** igualdade com o valor esperado.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB09-02 — Grupo de um integrante
 - **Tipo:** limites · **Prioridade:** Alta · **Cenário:** só um usuário.
 - **Resultado esperado:** compatibilidade definida (ex.: 1.0 ou convenção documentada), sem erro.
 - **Critério de aprovação:** caso unitário tratado.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB09-03 — Listas vazias / sem interseção
 - **Tipo:** ausência de dados · **Prioridade:** Alta · **Cenário:** um perfil vazio ou grupos disjuntos.
 - **Resultado esperado:** 0% sem crash; sem divisão por zero.
 - **Critério de aprovação:** robustez a vazio.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB09-04 — Determinismo e ausência de rede
 - **Tipo:** unitário/segurança · **Prioridade:** Alta · **Cenário:** mesma entrada → mesma saída, sem I/O.
 - **Resultado esperado:** repetições idênticas; nenhuma chamada de rede/banco.
 - **Critério de aprovação:** determinístico e puro.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ### PB-10 — Geração do conjunto de candidatas
 

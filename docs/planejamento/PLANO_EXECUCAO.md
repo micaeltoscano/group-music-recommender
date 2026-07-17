@@ -662,7 +662,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-09 — Modelagem de gosto e compatibilidade
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — motor puro implementado com similaridade de Jaccard e ponderação de componentes; 6 testes passados.
 - **Objetivo:** perfis individuais (faixas, artistas, gêneros) e compatibilidade normalizada e
   reprodutível, tratando listas vazias e grupo de 1.
 - **Dependências:** PB-05 e PB-08.
@@ -679,9 +679,9 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 - **Evidências necessárias:** testes unitários verdes com valores esperados.
 - **Riscos:** R-13 (integrante sem dados).
 - **Bloqueios:** precisa de snapshots (PB-08).
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `engine/taste.py` com testes de compatibilidade.
+- **Resultado da implementação:** Criação de `UserTasteProfile`, `jaccard_similarity`, e cálculo de compatibilidade no `engine/taste.py`.
+- **Resultado dos testes:** 6 testes criados em `test_pb09_taste.py` e validados com sucesso (`6 passed`).
+- **Próxima ação exata:** Avançar para a PB-10 (Geração do conjunto de candidatas).ompatibilidade.
 
 #### PB-10 — Geração do conjunto de candidatas
 
