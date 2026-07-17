@@ -240,5 +240,61 @@ async def search_track(
     items = tracks_data.get("items")
     if not isinstance(items, list):
         raise SpotifyInvalidResponse("Spotify retornou um payload de busca inválido.")
-    
     return items
+
+
+async def create_playlist(
+    access_token: str,
+    user_spotify_id: str,
+    name: str,
+    description: str = "",
+    public: bool = False,
+) -> dict:
+    """Cria uma nova playlist para o usuário no Spotify."""
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "name": name,
+        "description": description,
+        "public": public,
+    }
+    async with AsyncClient() as client:
+        response = await client.post(
+            f"{SPOTIFY_API_BASE}/users/{user_spotify_id}/playlists",
+            headers=headers,
+            json=payload,
+        )
+        if response.status_code == 429:
+            raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))
+        response.raise_for_status()
+        return response.json()
+
+
+async def add_items_to_playlist(
+    access_token: str,
+    playlist_id: str,
+    uris: list[str],
+) -> dict:
+    """Adiciona itens a uma playlist existente."""
+    if not uris:
+        return {}
+        
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "uris": uris,
+    }
+    async with AsyncClient() as client:
+        response = await client.post(
+            f"{SPOTIFY_API_BASE}/playlists/{playlist_id}/tracks",
+            headers=headers,
+            json=payload,
+        )
+        if response.status_code == 429:
+            raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))
+        response.raise_for_status()
+        return response.json()

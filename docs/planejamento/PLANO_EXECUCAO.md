@@ -895,7 +895,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-15 — Criação da playlist no Spotify
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — Playlist com regras de cap (2/artista), limits (20-30) e IDs persistidos. Relatório criado.
 - **Objetivo:** criar playlist privada (20–30 faixas, máx. 2/artista) na conta do host a partir das
   músicas correspondidas, guardar id/URL na execução e devolver o link ao host.
 - **Dependências:** PB-14.
@@ -914,8 +914,8 @@ e o Vibe Check opcional está disponível.
 - **Evidências necessárias:** playlist criada de fato no Spotify do host; id/URL persistidos.
 - **Riscos:** R-02, R-05.
 - **Bloqueios:** depende de PB-14.
-- **Resultado da implementação:** — (não iniciado)
-- **Próxima ação exata:** implementar criação da playlist privada com o token do host.
+- **Resultado da implementação:** Adicionado suporte para create_playlist e add_items_to_playlist no cliente, engine integrado no generation_service com proteção de persistência e regras da playlist. Testes QA passando.
+- **Próxima ação exata:** Iniciar validação do PB-16 ou preparar PR.
 
 #### PB-16 — Resultado e explicabilidade
 

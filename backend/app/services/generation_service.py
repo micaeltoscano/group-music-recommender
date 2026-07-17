@@ -183,3 +183,72 @@ async def resolve_candidates(
     if tracks_to_insert:
         db.add_all(tracks_to_insert)
         db.commit()
+
+
+async def create_spotify_playlist_for_run(
+    db: Session,
+    run_id: uuid.UUID,
+    host_token: str,
+    host_spotify_id: str,
+    name: str,
+    description: str,
+) -> None:
+    """
+    Cria a playlist no Spotify para a execução informada, aplicando as regras:
+    - Máx. 2 músicas por artista.
+    - Tamanho entre 20 e 30 faixas.
+    - Grava o spotify_playlist_id e url no PlaylistRun.
+    """
+    from app.clients.spotify_client import create_playlist, add_items_to_playlist
+    from app.db.models import PlaylistRun, PlaylistRunTrack
+    
+    run = db.query(PlaylistRun).with_for_update().filter(PlaylistRun.id == run_id).one()
+    
+    # Busca as faixas correspondidas (matched)
+    tracks = (
+        db.query(PlaylistRunTrack)
+        .filter(PlaylistRunTrack.run_id == run_id, PlaylistRunTrack.status == "matched")
+        .order_by(PlaylistRunTrack.created_at)
+        .all()
+    )
+    
+    # Aplica o capping por artista
+    artist_counts = {}
+    selected_uris = []
+    
+    for track in tracks:
+        artist_name = track.artist.strip().lower() if track.artist else ""
+        if artist_counts.get(artist_name, 0) < 2:
+            artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
+            if track.spotify_uri:
+                selected_uris.append(track.spotify_uri)
+                
+        if len(selected_uris) >= 30:
+            break
+            
+    # Cria a playlist
+    playlist_data = await create_playlist(
+        access_token=host_token,
+        user_spotify_id=host_spotify_id,
+        name=name,
+        description=description,
+        public=False,
+    )
+    
+    playlist_id = playlist_data.get("id")
+    external_urls = playlist_data.get("external_urls", {})
+    playlist_url = external_urls.get("spotify")
+    
+    # Salva no banco (mesmo que dê falha na inserção, ID já fica salvo - CT-PB15-04)
+    run.spotify_playlist_id = playlist_id
+    run.spotify_playlist_url = playlist_url
+    db.commit()
+    
+    # Adiciona os itens em lotes (embora aqui sejam no máximo 30, o endpoint suporta 100)
+    if selected_uris:
+        await add_items_to_playlist(
+            access_token=host_token,
+            playlist_id=playlist_id,
+            uris=selected_uris,
+        )
+

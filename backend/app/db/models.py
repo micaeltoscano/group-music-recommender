@@ -231,6 +231,8 @@ class PlaylistRun(Base):
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    spotify_playlist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    spotify_playlist_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
