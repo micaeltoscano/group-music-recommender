@@ -1063,28 +1063,28 @@ Conjunto de 3–5 perguntas; respostas do usuário; segunda resposta do mesmo us
 #### Casos de teste
 ##### CT-PB07-01 — Quantidade de perguntas dentro do limite
 - **Tipo:** regra de negócio · **Prioridade:** Média · **Resultado esperado:** entre 3 e 5 perguntas. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado
 
 ##### CT-PB07-02 — Pular não bloqueia a geração
 - **Tipo:** e2e · **Prioridade:** Alta · **Cenário:** usuário pula o Vibe Check.
-- **Resultado esperado:** geração prossegue normalmente. · **Automatizável:** Sim · **Status:** Não executado
+- **Resultado esperado:** geração prossegue normalmente. · **Automatizável:** Sim · **Status:** Aprovado
 
 ##### CT-PB07-03 — Respostas por usuário e sala
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** `vibe_check_answers` associado a
-  usuário+sala. · **Automatizável:** Sim · **Status:** Não executado
+  usuário+sala. · **Automatizável:** Sim · **Status:** Aprovado
 
 ##### CT-PB07-04 — Preferências derivadas em [0,1]
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** todos os valores normalizados. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado
 
 ##### CT-PB07-05 — Nova resposta atualiza a participação
 - **Tipo:** idempotência/atualização · **Prioridade:** Média · **Cenário:** usuário responde de novo.
 - **Resultado esperado:** derivadas atualizadas para a próxima geração; sem duplicar histórico
-  indevidamente. · **Automatizável:** Sim · **Status:** Não executado
+  indevidamente. · **Automatizável:** Sim · **Status:** Aprovado
 
 ##### CT-PB07-06 — Não-membro não responde
 - **Tipo:** autorização · **Prioridade:** Média · **Resultado esperado:** 403 ao responder em sala alheia.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado
 
 ### Testes integrados da Sprint 3
 

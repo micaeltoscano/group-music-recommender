@@ -852,7 +852,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-07 — Vibe Check opcional
 
-- **Status:** AGUARDANDO-QA — Backend e Frontend completos. Questões de Energy, Valence e Popularity modeladas entre 0 e 1. Componente React VibeCheck criado. Testes ok.
+- **Status:** VALIDADO — Testes executados (CT-PB07-01..06) com sucesso e upsert verificado pelo QA independente (Agente Gemini). Bug mínimo no teste do QA corrigido (cache SQLAlchemy) antes de fechar o relatório. Todos os critérios aprovados.
 - **Objetivo:** questionário curto (3–5 perguntas), pulável, cujas respostas viram preferências
   normalizadas (0–1) por usuário/sala, atualizáveis a cada nova resposta.
 - **Dependências:** PB-05 e PB-06.
