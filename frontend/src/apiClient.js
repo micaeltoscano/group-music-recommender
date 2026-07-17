@@ -36,5 +36,6 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(answers),
   }),
+  generatePlaylist: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/generate`, { method: 'POST' }),
+  getRoomResult: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/result`),
 }
-

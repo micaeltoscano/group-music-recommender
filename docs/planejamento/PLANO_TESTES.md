@@ -978,29 +978,29 @@ privacidade da explicação).
 #### Casos de teste
 ##### CT-PB16-01 — Link da playlist presente
 - **Tipo:** API/frontend · **Prioridade:** Alta · **Resultado esperado:** resultado traz a URL da
-  playlist. · **Automatizável:** Sim · **Status:** Não executado
+  playlist. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-17)
 
 ##### CT-PB16-02 — Compatibilidade e fairness exibidos
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** compatibility e fairness da
-  execução apresentados. · **Automatizável:** Sim · **Status:** Não executado
+  execução apresentados. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-17)
 
 ##### CT-PB16-03 — Representação por integrante
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** percentual/indicador por membro
-  compreensível. · **Automatizável:** Sim · **Status:** Não executado
+  compreensível. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-17)
 
 ##### CT-PB16-04 — Justificativa por música
 - **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** cada faixa tem `reason`
-  resumido. · **Automatizável:** Sim · **Status:** Não executado
+  resumido. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-17)
 
 ##### CT-PB16-05 — Privacidade: não expor rejeições de terceiros
 - **Tipo:** privacidade · **Prioridade:** Alta · **Cenário:** explicação de faixa afetada por veto.
 - **Resultado esperado:** texto agregado ("alguns membros indicaram baixa tolerância a X"), **sem**
   nomear quem rejeitou. · **Critério de aprovação:** nenhuma exposição individual. · **Automatizável:**
-  Sim · **Status:** Não executado
+  Sim · **Status:** Aprovado (2026-07-17)
 
 ##### CT-PB16-06 — Acesso restrito a membros
 - **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** não-membro recebe 403 em
-  `GET /rooms/{code}/result`. · **Automatizável:** Sim · **Status:** Não executado
+  `GET /rooms/{code}/result`. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-17)
 
 ### PB-17 — Interpretação estruturada do contexto
 
