@@ -59,7 +59,7 @@ def elevate_least_represented(
     Tenta elevar o integrante menos representado trocando a música que ele menos gosta
     por outra que aumente a satisfação dele, sem derrubar a qualidade geral excessivamente.
     """
-    if not scored_candidates or target_size >= len(scored_candidates):
+    if not scored_candidates or target_size >= len(scored_candidates) or num_users <= 0:
         return scored_candidates
         
     # Primeiro ordena pelo score final penalizado
