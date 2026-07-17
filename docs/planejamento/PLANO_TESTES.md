@@ -755,30 +755,30 @@ Faixa popular com veto forte de um membro; grupo com scores {10,10,1}; entradas 
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Cenário:** faixa agrada à maioria mas tem
   rejeição forte de um membro. · **Resultado esperado:** score final penalizado abaixo do limiar de
   seleção. · **Critério de aprovação:** rejeição prevalece sobre a média. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-02 — Least misery vs média simples
 - **Tipo:** unitário · **Prioridade:** Alta · **Cenário:** {10,10,1} — média esconde a insatisfação de C.
 - **Resultado esperado:** métrica de menor satisfação capturada; seleção evita esmagar C. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-03 — Métricas de justiça calculadas
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** satisfação média, menor
-  satisfação, cobertura e fairness score presentes e coerentes. · **Automatizável:** Sim · **Status:** Não executado
+  satisfação, cobertura e fairness score presentes e coerentes. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-04 — Modo Democrático (pesos iguais)
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** todos os integrantes com o mesmo
-  peso. · **Automatizável:** Sim · **Status:** Não executado
+  peso. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-05 — Modo Festa Segura (familiaridade/baixa rejeição)
 - **Tipo:** unitário · **Prioridade:** Alta · **Cenário:** comparar seleção nos dois modos para a mesma
   entrada. · **Resultado esperado:** Festa Segura favorece faixas conhecidas e de baixa rejeição. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-06 — Elevação do integrante menos representado
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Cenário:** um membro ficaria muito abaixo.
 - **Resultado esperado:** troca marginal eleva o mínimo sem derrubar demais o grupo. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB12-07 — Vibe Check como entrada opcional (não bloqueante)
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** com e sem `derived_preferences_json`.

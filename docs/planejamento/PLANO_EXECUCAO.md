@@ -732,7 +732,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-12 — Rejeição, justiça e modos de consenso
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — implementação da penalidade de rejeição, least misery e representação mínima concluída; 6 testes passados.
 - **Objetivo:** aplicar penalidade de rejeição, least misery, cobertura, representação mínima e os
   perfis de peso dos modos Democrático e Festa Segura.
 - **Dependências:** PB-11. Opcional: PB-07 (respostas do Vibe Check como entrada, não bloqueante).
@@ -750,9 +750,9 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 - **Evidências necessárias:** testes com grupos divergentes e vetos fortes.
 - **Riscos:** R-12 (maioria domina), R-13 (dados ausentes).
 - **Bloqueios:** depende de PB-11.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `fairness.py` com penalidade de rejeição e representação mínima.
+- **Resultado da implementação:** Criação de `fairness.py` implementando cálculo de justiça, penalidade de rejeição e o balanço do integrante menos representado. Adicionado perfis de modo no `weights.py`.
+- **Resultado dos testes:** 6 testes criados no `test_pb12_fairness.py` cobrindo modos e penalidades (`6 passed`).
+- **Próxima ação exata:** Avançar para a PB-13 (Controle e histórico da geração).
 
 #### PB-13 — Controle e histórico da geração
 
