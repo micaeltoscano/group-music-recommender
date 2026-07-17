@@ -9,6 +9,7 @@ from app.api.auth import get_current_user
 from app.db.models import MusicSession
 from app.db.session import get_db
 from app.schemas.rooms import (
+    PlaylistRunResponse,
     RoomContextUpdate,
     RoomMemberResponse,
     RoomModeUpdate,
@@ -154,3 +155,28 @@ def set_music_room_mode(
     except (RoomNotFoundError, RoomAccessDeniedError, RoomHostRequiredError) as exc:
         _raise_room_update_error(exc)
     return _room_response(db, room)
+
+
+from app.services.generation_service import (
+    GenerationConflictError,
+    start_generation,
+)
+
+@router.post("/{code}/generate", response_model=PlaylistRunResponse, status_code=status.HTTP_202_ACCEPTED)
+def request_playlist_generation(
+    code: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaylistRunResponse:
+    """Solicita a geração da playlist para a sala."""
+    try:
+        run = start_generation(db, code, current_user["id"])
+    except RoomNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RoomHostRequiredError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except GenerationConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    
+    return run
+

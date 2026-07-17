@@ -76,7 +76,7 @@ class RoomResponse(BaseModel):
 
     id: UUID
     code: str
-    status: Literal["open"]
+    status: Literal["open", "generating"]
     occasion: str | None
     description: str | None
     mode: ConsensusMode | None
@@ -90,3 +90,24 @@ class RoomResponse(BaseModel):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
+
+
+class PlaylistRunResponse(BaseModel):
+    """Resposta de uma execução de geração de playlist."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    session_id: UUID
+    status: Literal["running", "completed", "failed"]
+    error_message: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    @field_validator("created_at", "updated_at")
+    @classmethod
+    def dates_are_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+

@@ -142,6 +142,10 @@ class MusicSession(Base):
         back_populates="music_session",
         cascade="all, delete-orphan",
     )
+    playlist_runs: Mapped[list["PlaylistRun"]] = relationship(
+        back_populates="music_session",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
         return f"<MusicSession id={self.id} code={self.code!r}>"
@@ -211,3 +215,33 @@ class UserMusicSnapshot(Base):
             f"<UserMusicSnapshot id={self.id} user_id={self.user_id} "
             f"time_range={self.time_range!r}>"
         )
+
+
+class PlaylistRun(Base):
+    """Registro de uma execução de geração de playlist (PB-13)."""
+
+    __tablename__ = "playlist_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    music_session: Mapped["MusicSession"] = relationship(back_populates="playlist_runs")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<PlaylistRun id={self.id} session_id={self.session_id} status={self.status!r}>"
+

@@ -803,21 +803,21 @@ Sala com host; duas solicitações concorrentes; execução forçada a falhar.
 #### Casos de teste
 ##### CT-PB13-01 — Primeira geração cria execução running
 - **Tipo:** API · **Prioridade:** Alta · **Resultado esperado:** `playlist_run` com `status=running` e
-  `session.status=generating`. · **Automatizável:** Sim · **Status:** Não executado
+  `session.status=generating`. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB13-02 — Geração concorrente retorna 409
 - **Tipo:** concorrência/idempotência · **Prioridade:** Alta · **Cenário:** segunda solicitação enquanto
   a primeira está em andamento. · **Resultado esperado:** 409; nenhuma segunda execução criada. ·
-  **Evidência esperada:** apenas 1 run ativo. · **Automatizável:** Sim · **Status:** Não executado
+  **Evidência esperada:** apenas 1 run ativo. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB13-03 — Conclusão e falha atualizam estado
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** sucesso → `completed`; erro →
-  `failed` com `error_message`. · **Automatizável:** Sim · **Status:** Não executado
+  `failed` com `error_message`. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB13-04 — Retry controlado após falha
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** após `failed`, host solicita nova geração.
 - **Resultado esperado:** nova execução permitida; registro independente. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB13-05 — Só host dispara geração
 - **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** membro comum recebe 403. ·

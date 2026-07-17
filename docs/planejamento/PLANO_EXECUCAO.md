@@ -756,7 +756,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-13 — Controle e histórico da geração
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — endpoint de controle (lock, estados transicionais, retry pós-falha) concluído; testes unitários passando.
 - **Objetivo:** uma execução (`playlist_run`) por solicitação, com estados e Generation Lock que impede
   concorrência (409) na mesma sala.
 - **Dependências:** PB-05, PB-06 e PB-11.
@@ -775,9 +775,9 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 - **Evidências necessárias:** resposta 409 sob concorrência; estados persistidos.
 - **Riscos:** R-09 (gerações duplicadas).
 - **Bloqueios:** depende de PB-11 e das rotas de sala.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar Generation Lock e o modelo `playlist_runs`.
+- **Resultado da implementação:** Endpoint de controle em `generation_service.py` injetado no router de `/rooms/{code}/generate`. Implementado Lock pessimista para controle concorrente, criando nova migration e modelo `PlaylistRun` no db.
+- **Resultado dos testes:** 4 testes unitários e de integração concluídos sem falhas para verificação de 409 e controle de Lock.
+- **Próxima ação exata:** Iniciar a Sprint 3 com a PB-14 (Correspondência das músicas no Spotify).
 
 ### Testes integrados da Sprint 2
 
