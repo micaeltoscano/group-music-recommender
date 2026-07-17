@@ -939,7 +939,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-16 — Resultado e explicabilidade
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — QA independente 2026-07-17, rodada 3 (ver `../relatorios-testes/PB-16.md`). Os 5 critérios de aceitação e os 6 casos obrigatórios `CT-PB16-01..06` estão atendidos com evidência real. Defeitos DEF-PB16-01/02/03/04 encontrados nas rodadas anteriores foram todos confirmados corrigidos, sem novos defeitos nesta rodada.
 - **Objetivo:** tela de resultado com link da playlist, compatibilidade, fairness, representação por
   integrante e justificativas legíveis, sem expor dados sensíveis de terceiros.
 - **Dependências:** PB-13, PB-14 e PB-15.
@@ -957,8 +957,40 @@ e o Vibe Check opcional está disponível.
 - **Evidências necessárias:** payload de resultado; verificação de que nenhuma rejeição individual é exposta.
 - **Riscos:** R-08 (privacidade nas explicações).
 - **Bloqueios:** depende de PB-14 e PB-15.
-- **Resultado da implementação:** — (não iniciado)
-- **Próxima ação exata:** implementar `GET /rooms/{code}/result` e a tela Result.
+- **Resultado da implementação:** endpoint `GET /rooms/{code}/result` + tela Result implementados.
+  Correções desta sessão:
+  - DEF-PB16-01: `compatibility_score`/`fairness_score`/`explanation_json` agora são calculados na
+    conclusão do run (`complete_generation` → `result_service.finalize_run_metrics`) e persistidos em
+    `playlist_runs` (colunas novas, migração `0010_pb16_run_metrics`); o endpoint só lê o que a execução
+    calculou. Compatibilidade = % de faixas com 2+ contribuintes; fairness = índice de Jain sobre as
+    contribuições por integrante — semânticas documentadas em `backend/app/services/result_service.py`.
+  - DEF-PB16-02: `why_items` deixou de ser estático; é derivado das métricas reais da execução.
+  - DEF-PB16-03: `reason` por faixa não nomeia mais integrantes individuais (texto agregado);
+    `contributed_by` mantém o crédito positivo por integrante, por decisão de produto.
+  Migração validada com upgrade/downgrade/upgrade em Postgres real (docker-compose). Suíte backend:
+  172 passed, 6 skipped (11 específicos de PB-16, incluindo novo teste de persistência das métricas).
+  Build do frontend OK.
+- **Resultado da revalidação de QA (2026-07-17, rodada 2):** DEF-PB16-01/02/03 confirmados
+  corrigidos de forma independente. Novo defeito: DEF-PB16-04 (Média) — `build_room_result` usa o
+  snapshot de representação persistido na conclusão do run sem reconciliar com os membros atuais da
+  sala; um integrante que entra depois do run concluído não aparece na própria representação.
+  Evidência: `backend/tests/test_pb16_qa_revalidacao.py` (1 failed na suíte completa: 172 passed,
+  6 skipped, 1 failed).
+- **Correção de DEF-PB16-04 (2026-07-17):** `build_room_result` agora complementa a representação
+  persistida com membros atuais da sala ausentes do snapshot (percentage 0), quando a leitura vem
+  dos dados persistidos pela execução. Teste do QA que reproduzia o defeito
+  (`test_pb16_qa_revalidacao.py`) passa. Suíte backend: 173 passed, 6 skipped (nenhuma regressão).
+  Build do frontend OK.
+- **Resultado da revalidação de QA (2026-07-17, rodada 3 — final):** DEF-PB16-04
+  confirmado corrigido; testes adicionais do QA (`test_pb16_qa_revalidacao_r3.py`)
+  provam ausência de duplicidade na representação e integridade do caminho legado
+  (runs concluídos sem métricas persistidas). Nenhum novo defeito encontrado.
+  Suíte completa: 175 passed, 6 skipped, 0 failed. Migração confirmada no head
+  (`0010_pb16_run_metrics`) em Postgres real. Build do frontend OK.
+- **Próxima ação exata:** nenhuma pendente para este PB; liberado para prosseguir com os
+  próximos PBs da Sprint 3 (PB-07, PB-17) conforme `PROTOCOLO.md`.
+
+**PB-16 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM**
 
 #### PB-17 — Interpretação estruturada do contexto
 

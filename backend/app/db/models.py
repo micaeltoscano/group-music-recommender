@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -233,6 +233,11 @@ class PlaylistRun(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     spotify_playlist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     spotify_playlist_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    # Métricas agregadas da execução (PB-16). Calculadas na conclusão do run a
+    # partir das faixas correspondidas e persistidas para exibição no resultado.
+    compatibility_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fairness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    explanation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

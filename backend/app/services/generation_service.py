@@ -75,9 +75,15 @@ def start_generation(db: Session, code: str, host_id: int) -> PlaylistRun:
 
 
 def complete_generation(db: Session, run_id: uuid.UUID) -> None:
-    """Marca a execução como completed e libera a sala."""
+    """Marca a execução como completed, calcula as métricas do resultado e libera a sala."""
+    from app.services.result_service import finalize_run_metrics
+
     run = db.query(PlaylistRun).with_for_update().filter(PlaylistRun.id == run_id).one()
     run.status = "completed"
+
+    # Calcula compatibilidade/fairness/explicações a partir das faixas correspondidas
+    # e persiste no próprio run, para o endpoint de resultado apenas ler (PB-16).
+    finalize_run_metrics(db, run)
 
     room = db.query(MusicSession).with_for_update().filter(MusicSession.id == run.session_id).one()
     room.status = "open"

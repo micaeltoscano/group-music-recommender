@@ -9,14 +9,12 @@ from app.api.auth import get_current_user
 from app.db.models import MusicSession
 from app.db.session import get_db
 from app.schemas.rooms import (
-    MemberRepresentation,
     PlaylistRunResponse,
     RoomContextUpdate,
     RoomMemberResponse,
     RoomModeUpdate,
     RoomResponse,
     RoomResultResponse,
-    TrackResultResponse,
 )
 from app.services.room_service import (
     RoomAccessDeniedError,
@@ -206,110 +204,29 @@ def get_room_result(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RoomResultResponse:
-    """Busca o resultado e calcula as representações e justificativas on-the-fly."""
-    import json
-    from app.db.models import PlaylistRun, PlaylistRunTrack
-    
+    """Retorna o resultado explicável da última execução concluída da sala.
+
+    As métricas (compatibilidade/fairness) e explicações são as calculadas pela
+    própria execução e persistidas no run (ver `result_service`); aqui apenas lê.
+    """
+    from app.db.models import PlaylistRun
+    from app.services.result_service import build_room_result
+
     try:
         room = get_room_for_member(db, code, current_user["id"])
     except RoomNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except RoomAccessDeniedError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
-        
+
     run = (
         db.query(PlaylistRun)
         .filter(PlaylistRun.session_id == room.id)
         .order_by(PlaylistRun.created_at.desc())
         .first()
     )
-    
+
     if not run or run.status != "completed":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nenhuma playlist concluída encontrada.")
-        
-    tracks = (
-        db.query(PlaylistRunTrack)
-        .filter(PlaylistRunTrack.run_id == run.id, PlaylistRunTrack.status == "matched")
-        .order_by(PlaylistRunTrack.created_at)
-        .all()
-    )
-    
-    members_data = list_room_members(db, room.id)
-    members_map = {user.id: user.display_name or f"Membro {user.id}" for _, user in members_data}
-    
-    user_counts = {u_id: 0 for u_id in members_map.keys()}
-    total_tracks = len(tracks)
-    
-    track_results = []
-    
-    for track in tracks:
-        # Analisa a source
-        source_users = []
-        if track.source:
-            try:
-                source_users = json.loads(track.source)
-            except Exception:
-                pass
-                
-        # Atualiza a contagem do usuário
-        for uid in source_users:
-            if uid in user_counts:
-                user_counts[uid] += 1
-                
-        names = [members_map.get(uid, f"User {uid}") for uid in source_users]
-        if len(names) > 1:
-            reason = f"Combina com as preferências de {len(names)} membros"
-        elif len(names) == 1:
-            reason = f"Inspirada nas escolhas de {names[0]}"
-        else:
-            reason = "Incluída para melhoria do consenso do grupo"
-            
-        track_results.append(
-            TrackResultResponse(
-                name=track.name,
-                artist=track.artist,
-                spotify_url=track.spotify_url if hasattr(track, 'spotify_url') else track.spotify_uri,
-                reason=reason,
-                contributed_by=names
-            )
-        )
-        
-    representation = []
-    for uid, count in user_counts.items():
-        pct = int((count / total_tracks * 100)) if total_tracks > 0 else 0
-        representation.append(
-            MemberRepresentation(
-                user_id=uid,
-                display_name=members_map[uid],
-                percentage=pct
-            )
-        )
-        
-    # Calculando compatibility e fairness de forma simplificada por enquanto
-    # Como não armazenamos o log de fallback de forma densa
-    avg_pct = sum(r.percentage for r in representation) / len(representation) if representation else 0
-    min_pct = min((r.percentage for r in representation), default=0)
-    
-    # Harmônica pseudo fairness (só visual para demonstrar PB-16)
-    if avg_pct + min_pct > 0:
-        fairness_score = int(2 * (avg_pct * min_pct) / (avg_pct + min_pct))
-    else:
-        fairness_score = 0
-        
-    compatibility_score = int(avg_pct)
-    
-    why_items = [
-        "Seleção balanceada evitando exclusões absolutas.",
-        "Músicas escolhidas maximizam o consenso geral.",
-        "Nenhum membro possui representação zerada.",
-        "Limitação de faixas por artista aplicada com sucesso."
-    ]
 
-    return RoomResultResponse(
-        playlist_url=run.spotify_playlist_url,
-        compatibility_score=compatibility_score,
-        fairness_score=fairness_score,
-        representation=representation,
-        tracks=track_results,
-        why_items=why_items
-    )
+    return build_room_result(db, room, run)
