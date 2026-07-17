@@ -5,8 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base import Base
 
@@ -244,4 +245,34 @@ class PlaylistRun(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<PlaylistRun id={self.id} session_id={self.session_id} status={self.status!r}>"
+
+
+class VibeCheckAnswer(Base):
+    """Armazena as preferências derivadas de um usuário em uma sessão, extraídas do Vibe Check."""
+    __tablename__ = "vibe_check_answers"
+    __table_args__ = (
+        UniqueConstraint("session_id", "user_id", name="uq_vibe_check_session_user"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    
+    energy: Mapped[float] = mapped_column(Float, nullable=False)
+    valence: Mapped[float] = mapped_column(Float, nullable=False)
+    popularity: Mapped[float] = mapped_column(Float, nullable=False)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+    
+    music_session: Mapped["MusicSession"] = relationship()
+    user: Mapped["User"] = relationship()
 

@@ -30,4 +30,11 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode }),
   }),
+  getVibeCheck: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/vibe-check`),
+  submitVibeCheck: (code, answers) => requestJson(`/rooms/${encodeURIComponent(code)}/vibe-check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(answers),
+  }),
 }
+

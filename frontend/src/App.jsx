@@ -4,6 +4,7 @@ import { api } from './apiClient'
 import Home from './Home'
 import Login from './Login'
 import Room from './Room'
+import { VibeCheck } from './VibeCheck'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -40,6 +41,10 @@ export default function App() {
         <Route
           path="/rooms/:code"
           element={user ? <Room user={user} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/rooms/:code/vibe-check"
+          element={user ? <VibeCheck /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </BrowserRouter>

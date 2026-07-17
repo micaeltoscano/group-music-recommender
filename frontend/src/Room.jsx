@@ -225,6 +225,14 @@ export default function Room({ user }) {
                 </button>
               </section>
 
+              <section className="room-code-card" style={{ padding: '24px', textAlign: 'center', borderColor: 'var(--success)' }}>
+                <p style={{ fontSize: '12px', letterSpacing: '0.1em', color: 'var(--success)', marginBottom: '8px' }}>[ ALINHAMENTO ]</p>
+                <h3 style={{ margin: '0 0 16px', fontFamily: '"Chakra Petch", sans-serif', fontSize: '20px' }}>Qual a Vibe?</h3>
+                <Link to={`/rooms/${code}/vibe-check`} className="btn btn-primary" style={{ width: '100%', background: 'var(--success)' }}>
+                  RESPONDER VIBE CHECK
+                </Link>
+              </section>
+
               <section className="members-card" aria-live="polite">
                 <div className="members-card-header">
                   <span>MEMBROS ATIVOS</span>

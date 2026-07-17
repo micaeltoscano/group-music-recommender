@@ -852,7 +852,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-07 — Vibe Check opcional
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — Backend e Frontend completos. Questões de Energy, Valence e Popularity modeladas entre 0 e 1. Componente React VibeCheck criado. Testes ok.
 - **Objetivo:** questionário curto (3–5 perguntas), pulável, cujas respostas viram preferências
   normalizadas (0–1) por usuário/sala, atualizáveis a cada nova resposta.
 - **Dependências:** PB-05 e PB-06.
@@ -866,8 +866,8 @@ e o Vibe Check opcional está disponível.
 - **Arquivos ou módulos previstos:** `backend/app/api/vibe_check.py`, `backend/app/db/models.py`,
   `frontend/` (Room — Vibe Check), migração.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-07).
-- **Bloqueios:** depende de PB-05/PB-06.
-- **Resultado da implementação:** — (não iniciado)
+- **Bloqueios:** nenhum.
+- **Resultado da implementação:** Backend via FastAPI/SQLAlchemy (upsert no VibeCheckAnswer) com testes passando; Frontend React construído conforme design system, permitindo salvar os inputs numéricos de cada questão e pular fluxo.
 - **Próxima ação exata:** implementar rotas do Vibe Check e derivação de preferências.
 
 #### PB-14 — Correspondência das músicas no Spotify
