@@ -895,7 +895,8 @@ e o Vibe Check opcional está disponível.
 
 #### PB-15 — Criação da playlist no Spotify
 
-- **Status:** VALIDADO — Playlist com regras de cap (2/artista), limits (20-30) e IDs persistidos. Relatório criado.
+- **Status:** AGUARDANDO-QA — correção de integração concluída: o endpoint agora executa o pipeline
+  completo e permite geração com apenas o host; migração PostgreSQL corrigida e aplicada.
 - **Objetivo:** criar playlist privada (20–30 faixas, máx. 2/artista) na conta do host a partir das
   músicas correspondidas, guardar id/URL na execução e devolver o link ao host.
 - **Dependências:** PB-14.
@@ -908,14 +909,33 @@ e o Vibe Check opcional está disponível.
 - **Plano de implementação:** criação de playlist + add items via `SpotifyClient`; aplicar cap de
   2/artista e faixa 20–30; persistir id/URL em `playlist_runs`.
 - **Arquivos ou módulos previstos:** `backend/app/clients/spotify_client.py`,
-  `backend/app/services/generation_service.py`, `backend/app/db/models.py`, migração.
+  `backend/app/services/generation_service.py`, `backend/app/api/rooms.py`, `backend/app/schemas/rooms.py`,
+  `frontend/src/Room.jsx`, `frontend/src/index.css`, migração.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-15) — cap de 2/artista, faixa 20–30,
   privada por padrão, id/URL persistidos, link retornado.
 - **Evidências necessárias:** playlist criada de fato no Spotify do host; id/URL persistidos.
 - **Riscos:** R-02, R-05.
-- **Bloqueios:** depende de PB-14.
-- **Resultado da implementação:** Adicionado suporte para create_playlist e add_items_to_playlist no cliente, engine integrado no generation_service com proteção de persistência e regras da playlist. Testes QA passando.
-- **Próxima ação exata:** Iniciar validação do PB-16 ou preparar PR.
+- **Bloqueios:** integração real exige uma conta Spotify autorizada da demo; validação automatizada usa
+  respostas mockadas, sem tokens reais.
+- **Correção Dev (2026-07-17):** ligado o fluxo `POST /rooms/{code}/generate` a snapshots → pool →
+  scoring/fairness → matching → criação privada → persistência → `completed`; sala com somente o host
+  é válida; falha fica `failed` e libera retry; resposta traz ID/URL; frontend recebeu botão e estado
+  `05-gerando.png`. O mínimo de 20, máximo de 30 e cap de 2/artista são aplicados antes do envio.
+- **Migração corrigida:** o revision id original tinha 33 caracteres e não cabia em
+  `alembic_version.version_num varchar(32)`; alterado para `0009_pb15_playlist`. Upgrade real no banco
+  principal confirmado e ciclo `upgrade → downgrade 0008 → upgrade` validado em base temporária.
+- **Arquivos alterados na correção:** `backend/alembic/versions/0009_pb15_playlist_run_spotify_id.py`,
+  `backend/app/{api/rooms.py,schemas/rooms.py,services/generation_service.py}`,
+  `backend/tests/{test_pb13_generation.py,test_pb15_playlist_creation_qa.py,test_pb15_generation_flow.py}`,
+  `frontend/src/{Room.jsx,index.css}`, este plano, `PLANO_TESTES.md` e `README.md`.
+- **Testes técnicos da correção:** PB-13/PB-15 **10 passed**; suíte completa **164 passed / 6 skipped**
+  (os seis opt-in PostgreSQL); build Vite **45 módulos**; `compileall`, `pip check`, Compose e schema
+  PostgreSQL verificados. Teste integrado mockado comprova host sozinho, 25 faixas, playlist privada,
+  ID/URL persistidos e sala liberada.
+- **Limitação:** CT-PB15-03 com Spotify real continua pendente de QA; mocks não provam a criação na
+  conta real.
+- **Próxima ação exata:** QA reexecuta CT-PB15-01..05, incluindo o fluxo solo, e executa
+  CT-PB15-03 com conta de demo antes de devolver `VALIDADO`.
 
 #### PB-16 — Resultado e explicabilidade
 
@@ -1220,35 +1240,37 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-16.
-- **Sprint ativa:** Sprint 1.
-- **PB em andamento:** PB-08 — implementação concluída e marcada `AGUARDANDO-QA`.
-- **Último resultado concluído:** coleta/cache de top tracks/artists com migração reversível
-  `0005_pb08_music_snapshots`; **16/16 testes PB-08** e suíte completa **90/90** no PostgreSQL.
-- **Onde parou:** código, testes, documentação e migração real do PB-08 prontos; aguarda QA.
-- **Próxima ação exata:** Claude/QA executa CT-PB08-01..06; após `VALIDADO`, inicia a validação
-  integrada da Sprint 1. Dev não inicia PB-09 antes do fechamento formal da Sprint.
+- **Data da última sessão:** 2026-07-17.
+- **Sprint/branch de trabalho:** Sprint 3, `feat/SPRINT-03/PB16`.
+- **PB em andamento:** correção do PB-15 concluída e marcada `AGUARDANDO-QA`.
+- **Último resultado concluído:** integração real do endpoint de geração ao pipeline PB-08..PB-15,
+  incluindo host sozinho; migração `0009_pb15_playlist` aplicada no PostgreSQL do Compose.
+- **Onde parou:** código, testes mockados, frontend, documentação e banco local prontos; aguarda QA
+  independente e CT-PB15-03 com conta Spotify real.
+- **Próxima ação exata:** QA executa CT-PB15-01..05. PB-16 foi auditado, mas suas pendências não devem
+  ser corrigidas antes do novo veredito do PB-15.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb08_music_snapshots.py -q
+  .venv/bin/pytest tests/test_pb15_playlist_creation_qa.py tests/test_pb15_generation_flow.py -q
   .venv/bin/pytest tests -q
-  TEST_DATABASE_URL=<postgres-de-teste> .venv/bin/pytest tests -q
   .venv/bin/alembic current
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum para QA mockado do PB-08; fluxo Spotify real depende das contas de demo.
+- **Bloqueios:** nenhum para QA mockado; CT-PB15-03 depende de conta Spotify autorizada da demo.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — PB-08 16/16; suíte completa 90/90 no PostgreSQL.
-- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos tecnicamente; QA pendente.
-- [x] Atualizei checkboxes e status sem declarar validação independente. — `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — cache por faixa temporal, fallback 429 e spike real pendente.
+- [x] Rodei os testes e verificações relevantes. — PB-13/PB-15 10/10; suíte 164 passed/6 skipped;
+  build Vite, Compose, schema e ciclo da migração verificados.
+- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos tecnicamente com mocks;
+  criação real no Spotify permanece para QA.
+- [x] Atualizei status sem declarar validação independente. — PB-15 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — integração real depende da conta Spotify da demo.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — este plano, README e `.env.example`; PLANO_TESTES inalterado.
-- [x] Confirmei que nenhum segredo ou token foi adicionado. — diff revisado; somente dados fictícios.
-- [x] Preparei um commit pequeno e relacionado à história. — `feat(PB-08): implementar snapshots musicais`.
+- [x] Atualizei a documentação afetada. — plano, plano de testes e README.
+- [x] Confirmei que nenhum segredo ou token foi adicionado. — somente tokens fictícios nos testes.
+- [x] Preparei um commit pequeno e relacionado à história. — mensagem: `fix(PB-15): integrar geração de playlist ponta a ponta`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

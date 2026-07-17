@@ -321,6 +321,11 @@ No PB-08, `GET /me/top` reutiliza o snapshot fresco e
 `short_term`, `medium_term` (padrão) ou `long_term`. Em rate limit, o último snapshot disponível é
 reutilizado; sem cache, a API devolve 429 com `Retry-After`.
 
+No PB-15, o host pode gerar com **uma ou mais pessoas** na sala. `POST /rooms/{code}/generate` executa
+o pipeline básico até criar a playlist privada; a requisição pode levar alguns instantes enquanto o
+Spotify é consultado. São exigidas ao menos 20 correspondências válidas, com máximo de 30 faixas e
+duas por artista. Falhas ficam registradas e liberam uma nova tentativa.
+
 ### 2. Banco de dados (PostgreSQL)
 
 ```bash

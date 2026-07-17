@@ -101,6 +101,8 @@ class PlaylistRunResponse(BaseModel):
     session_id: UUID
     status: Literal["running", "completed", "failed"]
     error_message: str | None
+    spotify_playlist_id: str | None
+    spotify_playlist_url: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -111,3 +113,31 @@ class PlaylistRunResponse(BaseModel):
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
 
+
+class TrackResultResponse(BaseModel):
+    """Metadados e justificativas por faixa."""
+    
+    name: str
+    artist: str
+    spotify_url: str | None
+    reason: str
+    contributed_by: list[str]
+
+
+class MemberRepresentation(BaseModel):
+    """Representação de um integrante na playlist final."""
+    
+    user_id: int
+    display_name: str | None
+    percentage: int
+
+
+class RoomResultResponse(BaseModel):
+    """Payload de resultado com métricas agregadas e sem vazar rejeições."""
+    
+    playlist_url: str | None
+    compatibility_score: int
+    fairness_score: int
+    representation: list[MemberRepresentation]
+    tracks: list[TrackResultResponse]
+    why_items: list[str]

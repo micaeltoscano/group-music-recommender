@@ -1,16 +1,45 @@
-"""Serviço para controle da execução de geração de playlist (PB-13)."""
+"""Controle e execução do pipeline de geração de playlist (PB-13/PB-15)."""
 
 import uuid
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from app.db.models import MusicSession, PlaylistRun
+from app.clients import spotify_client
+from app.db.models import MusicSession, MusicSessionMember, PlaylistRun, PlaylistRunTrack, User
+from app.engine.candidates import CandidateTrack, generate_candidate_pool
+from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
+from app.engine.scoring import calculate_group_score
+from app.engine.taste import UserTasteProfile
+from app.engine.weights import CONSENSUS_MODES
+from app.services.music_service import get_or_refresh_snapshot
 from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
+
+MIN_PLAYLIST_TRACKS = 20
+MAX_PLAYLIST_TRACKS = 30
+MAX_TRACKS_PER_ARTIST = 2
 
 
 class GenerationConflictError(Exception):
     """Lançada quando já há uma geração em andamento."""
+
+
+class InsufficientTracksError(RuntimeError):
+    """Indica que não há faixas válidas suficientes para criar a playlist."""
+
+
+class PlaylistGenerationError(RuntimeError):
+    """Falha controlada do pipeline, sem expor detalhes externos ou tokens."""
+
+    def __init__(self, message: str, *, run_id: uuid.UUID, reason: str = "unavailable") -> None:
+        self.run_id = run_id
+        self.reason = reason
+        super().__init__(message)
+
+
+GenerationExecutor = Callable[[Session, uuid.UUID, int], Awaitable[PlaylistRun]]
 
 
 def start_generation(db: Session, code: str, host_id: int) -> PlaylistRun:
@@ -112,8 +141,6 @@ async def resolve_candidates(
         try:
             results = await search_track(host_token, query, market=market, limit=3)
         except Exception as exc:
-            # Ignora falha de rede temporária ou rate limit e marca como descartada?
-            # Por segurança, vamos marcar como indisponível/erro
             tracks_to_insert.append(PlaylistRunTrack(
                 run_id=run_id,
                 candidate_id=candidate.id,
@@ -155,7 +182,7 @@ async def resolve_candidates(
                 best_confidence = conf
                 best_match = item
                 
-        if best_match and best_confidence >= 0.8:
+        if best_match and best_confidence >= 0.8 and best_match.get("uri"):
             tracks_to_insert.append(PlaylistRunTrack(
                 run_id=run_id,
                 candidate_id=candidate.id,
@@ -168,7 +195,12 @@ async def resolve_candidates(
                 source=json.dumps(list(candidate.source_user_ids)),
             ))
         else:
-            reason = "Confidence below threshold (0.8)" if best_match else "All results unplayable"
+            if best_match and best_confidence >= 0.8:
+                reason = "no_uri"
+            elif best_match:
+                reason = "Confidence below threshold (0.8)"
+            else:
+                reason = "All results unplayable"
             tracks_to_insert.append(PlaylistRunTrack(
                 run_id=run_id,
                 candidate_id=candidate.id,
@@ -192,16 +224,13 @@ async def create_spotify_playlist_for_run(
     host_spotify_id: str,
     name: str,
     description: str,
-) -> None:
+) -> PlaylistRun:
     """
     Cria a playlist no Spotify para a execução informada, aplicando as regras:
     - Máx. 2 músicas por artista.
     - Tamanho entre 20 e 30 faixas.
     - Grava o spotify_playlist_id e url no PlaylistRun.
     """
-    from app.clients.spotify_client import create_playlist, add_items_to_playlist
-    from app.db.models import PlaylistRun, PlaylistRunTrack
-    
     run = db.query(PlaylistRun).with_for_update().filter(PlaylistRun.id == run_id).one()
     
     # Busca as faixas correspondidas (matched)
@@ -213,21 +242,35 @@ async def create_spotify_playlist_for_run(
     )
     
     # Aplica o capping por artista
-    artist_counts = {}
-    selected_uris = []
+    artist_counts: dict[str, int] = {}
+    selected_uris: list[str] = []
     
     for track in tracks:
+        if len(selected_uris) >= MAX_PLAYLIST_TRACKS:
+            track.status = "discarded"
+            track.discard_reason = "playlist_limit"
+            continue
+
         artist_name = track.artist.strip().lower() if track.artist else ""
-        if artist_counts.get(artist_name, 0) < 2:
+        if not track.spotify_uri:
+            track.status = "discarded"
+            track.discard_reason = "no_uri"
+            continue
+        if artist_counts.get(artist_name, 0) < MAX_TRACKS_PER_ARTIST:
             artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
-            if track.spotify_uri:
-                selected_uris.append(track.spotify_uri)
-                
-        if len(selected_uris) >= 30:
-            break
+            selected_uris.append(track.spotify_uri)
+        else:
+            track.status = "discarded"
+            track.discard_reason = "artist_cap"
+
+    if len(selected_uris) < MIN_PLAYLIST_TRACKS:
+        raise InsufficientTracksError(
+            f"São necessárias ao menos {MIN_PLAYLIST_TRACKS} faixas válidas; "
+            f"foram encontradas {len(selected_uris)}."
+        )
             
     # Cria a playlist
-    playlist_data = await create_playlist(
+    playlist_data = await spotify_client.create_playlist(
         access_token=host_token,
         user_spotify_id=host_spotify_id,
         name=name,
@@ -238,6 +281,11 @@ async def create_spotify_playlist_for_run(
     playlist_id = playlist_data.get("id")
     external_urls = playlist_data.get("external_urls", {})
     playlist_url = external_urls.get("spotify")
+
+    if not playlist_id or not playlist_url:
+        raise spotify_client.SpotifyInvalidResponse(
+            "Spotify não retornou o identificador e o link da playlist."
+        )
     
     # Salva no banco (mesmo que dê falha na inserção, ID já fica salvo - CT-PB15-04)
     run.spotify_playlist_id = playlist_id
@@ -246,9 +294,117 @@ async def create_spotify_playlist_for_run(
     
     # Adiciona os itens em lotes (embora aqui sejam no máximo 30, o endpoint suporta 100)
     if selected_uris:
-        await add_items_to_playlist(
+        await spotify_client.add_items_to_playlist(
             access_token=host_token,
             playlist_id=playlist_id,
             uris=selected_uris,
         )
 
+    return run
+
+
+def _rank_candidates(
+    candidates: list[CandidateTrack],
+    profiles: list[UserTasteProfile],
+    room_mode: str | None,
+) -> list[CandidateTrack]:
+    """Ordena candidatas usando apenas o motor puro já entregue nos PB-11/PB-12."""
+    mode_key = "safe_party" if room_mode == "Festa Segura" else "democratic"
+    mode_config = CONSENSUS_MODES[mode_key]
+    scored: list[dict[str, Any]] = []
+
+    for candidate in candidates:
+        group_data = calculate_group_score(
+            candidate,
+            profiles,
+            mode_config["individual"],
+            mode_config["group"],
+        )
+        evaluation = evaluate_candidate_fairness(group_data, mode_config)
+        evaluation["candidate"] = candidate
+        scored.append(evaluation)
+
+    scored.sort(key=lambda item: item["penalized_score"], reverse=True)
+    target_size = min(50, len(scored))
+    selected = elevate_least_represented(scored, target_size, len(profiles))
+    return [item["candidate"] for item in selected]
+
+
+async def execute_generation(
+    db: Session,
+    run_id: uuid.UUID,
+    host_id: int,
+) -> PlaylistRun:
+    """Executa snapshots → motor → matching → playlist e fecha a execução."""
+    try:
+        run = db.query(PlaylistRun).filter(PlaylistRun.id == run_id).one()
+        room = db.query(MusicSession).filter(MusicSession.id == run.session_id).one()
+        member_ids = [
+            row.user_id
+            for row in (
+                db.query(MusicSessionMember)
+                .filter(MusicSessionMember.session_id == room.id)
+                .order_by(MusicSessionMember.joined_at, MusicSessionMember.user_id)
+                .all()
+            )
+        ]
+        if not member_ids:
+            raise RuntimeError("A sala não possui integrantes.")
+
+        profiles: list[UserTasteProfile] = []
+        track_snapshots: list[tuple[int, dict[str, Any]]] = []
+        for member_id in member_ids:
+            snapshot_result = await get_or_refresh_snapshot(
+                db,
+                member_id,
+                time_range="medium_term",
+            )
+            snapshot = snapshot_result.snapshot
+            tracks_payload = {"items": snapshot.top_tracks_json}
+            artists_payload = {"items": snapshot.top_artists_json}
+            profiles.append(UserTasteProfile(member_id, tracks_payload, artists_payload))
+            track_snapshots.append((member_id, tracks_payload))
+
+        candidates, _ = generate_candidate_pool(track_snapshots)
+        if not candidates:
+            raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
+        ranked_candidates = _rank_candidates(candidates, profiles, room.mode)
+
+        host = db.get(User, host_id)
+        if host is None:
+            raise RuntimeError("Host da sala não encontrado.")
+        host_token = await spotify_client.get_valid_access_token(db, host_id)
+        await resolve_candidates(db, run_id, ranked_candidates, host_token)
+
+        playlist_name = f"Vibe Check — {room.occasion or room.code}"[:100]
+        member_label = "1 integrante" if len(member_ids) == 1 else f"{len(member_ids)} integrantes"
+        await create_spotify_playlist_for_run(
+            db,
+            run_id,
+            host_token,
+            host.spotify_id,
+            playlist_name,
+            f"Playlist privada criada pelo Vibe Check para {member_label}.",
+        )
+        complete_generation(db, run_id)
+        db.refresh(run)
+        return run
+    except Exception as exc:
+        db.rollback()
+        if isinstance(exc, spotify_client.ReauthenticationRequired):
+            reason = "reauth_required"
+            message = "Autorize novamente sua conta Spotify antes de gerar a playlist."
+        elif isinstance(exc, InsufficientTracksError):
+            reason = "insufficient_tracks"
+            message = str(exc)
+        else:
+            reason = "unavailable"
+            message = "Não foi possível gerar a playlist agora. Tente novamente."
+
+        fail_generation(db, run_id, message)
+        raise PlaylistGenerationError(message, run_id=run_id, reason=reason) from exc
+
+
+def get_generation_executor() -> GenerationExecutor:
+    """Dependência substituível para isolar os testes históricos do lock do PB-13."""
+    return execute_generation

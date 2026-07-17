@@ -1,6 +1,6 @@
 """Add spotify_playlist_id and url to playlist_runs (PB-15).
 
-Revision ID: 0009_pb15_playlist_run_spotify_id
+Revision ID: 0009_pb15_playlist
 Revises: 0008_pb14_playlist_run_tracks
 Create Date: 2026-07-17
 """
@@ -12,7 +12,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0009_pb15_playlist_run_spotify_id"
+revision: str = "0009_pb15_playlist"
 down_revision: Union[str, None] = "0008_pb14_playlist_run_tracks"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
