@@ -685,7 +685,7 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
 
 #### PB-10 — Geração do conjunto de candidatas
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — implementação da extração e deduplicação do pool de candidatas a partir dos snapshots; 3 testes passados.
 - **Objetivo:** montar pool de candidatas com contribuição de vários integrantes, deduplicado, com
   origem registrada e descarte motivado de candidatas sem identificação.
 - **Dependências:** PB-06 e PB-09.
@@ -696,15 +696,15 @@ e Festa Segura — **sem chamadas de rede** — e a geração é controlada por 
   4. Candidatas sem identificação suficiente descartadas com motivo.
 - **Plano de implementação:** montagem do pool a partir de top tracks/artistas fortes; deduplicação por
   identidade de faixa; registro de `source` e `discard_reason`.
-- **Arquivos ou módulos previstos:** `backend/app/engine/` (candidate pool), `backend/app/services/generation_service.py`.
+- **Arquivos ou módulos previstos:** `backend/app/engine/candidates.py`, testes em `backend/tests/`.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-10) — dedupe, cobertura de integrantes,
   registro de origem, descarte motivado.
 - **Evidências necessárias:** pool sem duplicatas com origem e descartes registrados.
 - **Riscos:** viés para a maioria na montagem (mitigado no PB-12).
 - **Bloqueios:** depende de PB-09.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar montagem/deduplicação do pool com origem e descarte.
+- **Resultado da implementação:** Criação de `generate_candidate_pool`, `CandidateTrack` e `DiscardedTrack` no `engine/candidates.py`.
+- **Resultado dos testes:** 3 testes criados no `test_pb10_candidates.py` e validados com sucesso (`3 passed`).
+- **Próxima ação exata:** Avançar para a PB-11 (Pontuação individual e coletiva).
 
 #### PB-11 — Pontuação individual e coletiva
 

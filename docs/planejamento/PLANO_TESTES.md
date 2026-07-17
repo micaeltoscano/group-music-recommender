@@ -684,23 +684,23 @@ Membros com faixas sobrepostas (para testar dedupe); candidata sem id suficiente
 #### Casos de teste
 ##### CT-PB10-01 — Contribuição de diferentes integrantes
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** pool inclui faixas de mais de um
-  membro quando há dados. · **Automatizável:** Sim · **Status:** Não executado
+  membro quando há dados. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB10-02 — Sem duplicatas
 - **Tipo:** duplicidade · **Prioridade:** Alta · **Cenário:** faixas repetidas entre membros.
-- **Resultado esperado:** cada faixa aparece uma única vez. · **Automatizável:** Sim · **Status:** Não executado
+- **Resultado esperado:** cada faixa aparece uma única vez. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB10-03 — Origem registrada
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** cada candidata tem `source`.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB10-04 — Descarte motivado de candidata sem identificação
 - **Tipo:** entrada inválida · **Prioridade:** Alta · **Cenário:** faixa sem dados p/ busca posterior.
-- **Resultado esperado:** descartada com `discard_reason`. · **Automatizável:** Sim · **Status:** Não executado
+- **Resultado esperado:** descartada com `discard_reason`. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ##### CT-PB10-05 — Membro sem dados não quebra o pool
 - **Tipo:** ausência de dados · **Prioridade:** Média · **Resultado esperado:** pool montado com os
-  demais; limitação registrada. · **Automatizável:** Sim · **Status:** Não executado
+  demais; limitação registrada. · **Automatizável:** Sim · **Status:** Aprovado (2026-07-16)
 
 ### PB-11 — Pontuação individual e coletiva
 
