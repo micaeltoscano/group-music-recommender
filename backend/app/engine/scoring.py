@@ -33,10 +33,16 @@ def calculate_individual_score(
         genre_affinity = artist_affinity * 0.5
         
     # 4. Popularidade
-    popularity = candidate.raw_data.get("popularity", 50) / 100.0
+    pop_raw = candidate.raw_data.get("popularity")
+    if pop_raw is None:
+        pop_raw = 50
+    try:
+        popularity = float(pop_raw) / 100.0
+    except (ValueError, TypeError):
+        popularity = 0.5
     
     # 5. Novidade
-    album = candidate.raw_data.get("album", {})
+    album = candidate.raw_data.get("album") or {}
     release_date = str(album.get("release_date", ""))
     novelty = 1.0 if release_date.startswith("202") else 0.5
     
