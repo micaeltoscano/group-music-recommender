@@ -16,7 +16,7 @@ Repositório greenfield (só `README.md` e `development_guide.md`). Prazo ~1 mê
 - **Saída:** playlist real criada no Spotify do host.
 - **Spotify:** usar só OAuth, top tracks/artists, Search, criar playlist, add items. **Não** depender de `Recommendations`, `Audio Features`, `Audio Analysis` (descontinuados p/ apps novos).
 - **Tokens:** ficam só no backend, criptografados; o frontend **nunca** recebe access/refresh token do Spotify.
-- **LLM (Claude, `claude-sonnet-5`):** interpreta **intenção/contexto** e produz JSON estruturado. **Não** é juiz final da playlist. O **motor próprio** decide, ranqueia e explica.
+- **LLM (Ollama local, `llama3.1:8b`):** interpreta **intenção/contexto** e produz JSON estruturado. **Não** é juiz final da playlist. O **motor próprio** decide, ranqueia e explica. Roda localmente via API HTTP do Ollama (`http://localhost:11434`), sem dependência de chave de API paga.
 - **Stack:** FastAPI + React (Vite) + Postgres + SQLAlchemy/Alembic.
 - **Spotify Development Mode:** limite de **5 usuários autorizados no app inteiro** (não por sala). MVP planejado p/ ≤ 5 usuários totais; contas Premium pré-cadastradas na demo. Extended Quota Mode fica no radar desde o início (aprovação depende do Spotify).
 
@@ -81,7 +81,7 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 React (Vite) ──HTTP (cookie httpOnly)──> FastAPI ──> Postgres (SQLAlchemy/Alembic)
                                             │
                                             ├─ SpotifyClient (OAuth, top, search, create playlist) + refresh central
-                                            ├─ LLMClient (Claude claude-sonnet-5, JSON estruturado)
+                                            ├─ LLMClient (Ollama local, llama3.1:8b, JSON estruturado)
                                             ├─ LastFmClient (track/artist tags) + cache
                                             └─ Preference Negotiation Engine (scoring, fairness, sequencer)
 ```
@@ -275,7 +275,7 @@ backend/
   pyproject.toml
 frontend/                # Vite React: Login, Home, Room (contexto+VibeCheck), Result; apiClient
 docker-compose.yml       # Postgres
-.env.example             # SPOTIFY_CLIENT_ID/SECRET, REDIRECT_URI, DATABASE_URL, ANTHROPIC_API_KEY, LASTFM_API_KEY, FERNET_KEY
+.env.example             # SPOTIFY_CLIENT_ID/SECRET, REDIRECT_URI, DATABASE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, LASTFM_API_KEY, FERNET_KEY
 README.md                # atualizar
 ```
 
@@ -312,8 +312,10 @@ cp .env.example .env
 ```
 
 O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e cache
-(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7` e `SPOTIFY_TOP_ITEMS_LIMIT=50`). As chaves de Spotify /
-Anthropic / Last.fm ficam **vazias no exemplo** e só devem ser preenchidas no `.env` local quando a
+(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7` e `SPOTIFY_TOP_ITEMS_LIMIT=50`) e para o LLM local
+(`OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=llama3.1:8b` — requer o Ollama instalado e
+o modelo baixado com `ollama pull llama3.1:8b`; sem ele, o fallback determinístico assume). As chaves
+de Spotify / Last.fm ficam **vazias no exemplo** e só devem ser preenchidas no `.env` local quando a
 integração correspondente for exercitada. Nunca comite segredos.
 
 No PB-08, `GET /me/top` reutiliza o snapshot fresco e

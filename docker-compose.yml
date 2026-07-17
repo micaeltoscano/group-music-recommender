@@ -35,13 +35,19 @@ services:
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
       SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI:-http://localhost:8000/auth/callback}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LASTFM_API_KEY: ${LASTFM_API_KEY:-}
       FERNET_KEY: ${FERNET_KEY:-}
+      # Ollama roda no host, não no container: host.docker.internal aponta para
+      # fora do container Docker. Sem o serviço disponível, o LLMClient cai no
+      # fallback determinístico (PB-17) — não bloqueia o backend.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy

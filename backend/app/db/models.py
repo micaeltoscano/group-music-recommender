@@ -238,6 +238,9 @@ class PlaylistRun(Base):
     compatibility_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fairness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     explanation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Contexto estruturado interpretado do host (PB-17): ocasião, humor, energia,
+    # tags +/- e itens a evitar. Cacheado por run para não reprocessar no LLM.
+    llm_context_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

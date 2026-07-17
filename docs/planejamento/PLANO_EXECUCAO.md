@@ -838,7 +838,9 @@ e o Vibe Check opcional está disponível.
   PB-06 e PB-10 para PB-17.
 - **Entre PBs:** PB-15 depende de PB-14; PB-16 depende de PB-13, PB-14 e PB-15. PB-07 e PB-17 são
   independentes do caminho da playlist dentro da Sprint.
-- **Externas:** `ANTHROPIC_API_KEY` (LLM) para PB-17 — com fallback determinístico obrigatório.
+- **Externas:** nenhuma chave paga — PB-17 usa Ollama local (`llama3.1:8b`); requer o Ollama
+  instalado e o modelo baixado na máquina de desenvolvimento/demo, com fallback determinístico
+  obrigatório caso o serviço local não esteja disponível.
 
 ### Ordem de implementação
 
@@ -994,7 +996,7 @@ e o Vibe Check opcional está disponível.
 
 #### PB-17 — Interpretação estruturada do contexto
 
-- **Status:** A-FAZER
+- **Status:** VALIDADO — QA independente 2026-07-17, rodada 2 (ver `../relatorios-testes/PB-17.md`). Os 5 critérios de aceitação estão atendidos com evidência real. DEF-PB17-01 (encontrado na rodada 1) confirmado corrigido, sem novos defeitos acionáveis pelo pipeline real nesta rodada.
 - **Objetivo:** LLM interpreta a descrição livre do host em um schema JSON validado, com fallback
   determinístico e sem enviar dados brutos de tops ao LLM.
 - **Dependências:** PB-06 e PB-10.
@@ -1004,18 +1006,76 @@ e o Vibe Check opcional está disponível.
   3. Sem LLM, segue com consenso/afinidade/popularidade.
   4. Dados brutos de tops não vão ao LLM.
   5. LLM não decide diretamente as músicas.
-- **Plano de implementação:** `LLMClient` (Claude, JSON estruturado) + validação de schema + fallback;
-  cache de contexto em `playlist_runs.llm_context_json`.
+- **Plano de implementação:** `LLMClient` (Ollama local, modelo `llama3.1:8b`, via API HTTP
+  `POST /api/generate` com `format=json` em `OLLAMA_BASE_URL`, padrão `http://localhost:11434`) +
+  validação de schema + fallback; cache de contexto em `playlist_runs.llm_context_json`.
 - **Arquivos ou módulos previstos:** `backend/app/clients/llm_client.py`, `backend/app/schemas/` (context),
   `backend/app/services/generation_service.py`.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-16) — JSON inválido → fallback,
   LLM ausente → fallback, privacidade (sem dados brutos), schema válido.
 - **Evidências necessárias:** logs sem dados brutos; fallback exercido; schema validado.
-- **Riscos:** R-06 (LLM inválido/indisponível).
-- **Bloqueios:** `ANTHROPIC_API_KEY` para o caminho com IA (fallback não depende).
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `LLMClient` com validação de schema e fallback determinístico.
+- **Riscos:** R-06 (LLM inválido/indisponível — inclui Ollama não instalado/rodando localmente ou
+  modelo não baixado; fallback determinístico cobre todos esses casos).
+- **Bloqueios:** nenhum bloqueio externo — requer apenas Ollama instalado localmente e o modelo
+  `llama3.1:8b` baixado (`ollama pull llama3.1:8b`); sem Ollama disponível, o fallback determinístico
+  assume automaticamente (não bloqueia o desenvolvimento nem a geração da playlist).
+- **Resultado da implementação:** `LLMClient` implementado em
+  [backend/app/clients/llm_client.py](../../backend/app/clients/llm_client.py) — chama
+  `POST /api/generate` do Ollama local (`OLLAMA_BASE_URL`, `OLLAMA_MODEL=llama3.1:8b`) com
+  `format=json`, valida a resposta contra o schema `LLMContext`
+  ([backend/app/schemas/context.py](../../backend/app/schemas/context.py): ocasião, humor, energia,
+  tags +/-, avoid) e cai no fallback determinístico (`fallback_context`, heurística por palavras-chave
+  na ocasião/descrição) em qualquer falha — Ollama indisponível, timeout, HTTP de erro, JSON malformado
+  ou fora do schema. Integrado em `execute_generation`
+  ([backend/app/services/generation_service.py](../../backend/app/services/generation_service.py)):
+  interpreta o contexto logo após confirmar os membros da sala (só `room.occasion`/`room.description`
+  vão ao LLM — nunca snapshots/tops) e persiste em `playlist_runs.llm_context_json` (migração
+  `0011_pb17_llm_context`, aplicada e revertida com sucesso em Postgres real). O motor de scoring já
+  aceitava `context_score` desde o PB-11 (peso 0.05, neutro por padrão) — o LLM não decide músicas,
+  só produz os critérios (critério 5).
+- **Resultado dos testes:** `backend/tests/test_pb17_llm_context.py` (8 testes: schema válido, JSON
+  malformado, JSON fora do schema, timeout, erro de conexão, erro HTTP, privacidade do payload
+  enviado ao Ollama, e confirmação de que o peso de contexto no motor é baixo/neutro) +
+  `backend/tests/test_pb17_generation_integration.py` (1 teste: pipeline completo persiste
+  `llm_context_json` mesmo sem Ollama real disponível no ambiente). Ollama real não estava instalado
+  neste ambiente — todos os testes usam `httpx.AsyncClient.post` mockado; o teste de integração roda
+  contra o fallback real (sem mock do LLMClient), confirmando que a ausência do Ollama não trava nem
+  atrasa a geração. Suíte completa: 184 passed, 6 skipped, 0 failed. Build do frontend OK (sem
+  mudanças de frontend neste PB).
+- **Resultado da revalidação de QA (2026-07-17, rodada 1):** critérios 1, 3, 4 e 5 confirmados
+  atendidos de forma independente (incluindo inspeção direta do payload enviado ao Ollama para
+  privacidade — CT-PB17-04). Defeito novo: DEF-PB17-01 (Alta) — em `_call_ollama()`
+  ([backend/app/clients/llm_client.py:64-71](../../backend/app/clients/llm_client.py#L64-L71)),
+  `body.get("response")` assume que o envelope JSON decodificado é um `dict`, sem checar. Se o Ollama
+  responder HTTP 200 com um corpo JSON válido mas de outro tipo (lista, string, número), `.get(...)`
+  levanta `AttributeError`, não capturada por `interpret_context` (só trata
+  `LLMUnavailableError`/`LLMInvalidResponseError`), e propaga até `execute_generation`, que retorna
+  **502 Bad Gateway** — quebrando a geração real da playlist. Confirmado de ponta a ponta via API
+  (não só no `llm_client` isolado). Evidência: `backend/tests/test_pb17_qa_revalidacao.py` (4 failed
+  na suíte completa: 184 passed, 6 skipped, 4 failed).
+- **Correção de DEF-PB17-01 (2026-07-17):** aplicadas as duas correções sugeridas pelo QA, em camadas:
+  (1) `_call_ollama` agora valida `isinstance(body, dict)` antes de `.get("response")`, levantando
+  `LLMUnavailableError` (não `AttributeError`) para qualquer envelope de tipo inesperado; (2)
+  `interpret_context` ganhou um `except Exception` de último recurso, logando e caindo no fallback
+  determinístico para qualquer falha não prevista relacionada ao LLM — reforço estrutural para que o
+  critério 2 ("sem interromper a geração") seja garantido mesmo que uma classe de erro futura e não
+  antecipada apareça. Os 4 testes do QA que reproduziam o defeito
+  (`test_pb17_qa_revalidacao.py`, incluindo o teste fim a fim via API) agora passam. Suíte backend:
+  188 passed, 6 skipped, 0 failed (nenhuma regressão). Build do frontend OK.
+- **Resultado da revalidação de QA (2026-07-17, rodada 2 — final):** DEF-PB17-01
+  confirmado corrigido; sondagem adicional em variações do conteúdo de `response`
+  (vazio, nulo, não-string, JSON de lista) e em chamadas concorrentes não
+  encontrou novos defeitos. Verificado que `fallback_context` roda fora do
+  `try/except` de `interpret_context`, mas o único ponto de chamada real
+  (`execute_generation`) sempre passa `str | None` (colunas SQLAlchemy) — não é
+  um risco acionável em produção. Suíte completa: 188 passed, 6 skipped, 0
+  failed. Migração confirmada no head (`0011_pb17_llm_context`) em Postgres
+  real. Build do frontend OK. Os 5 critérios de aceitação atendidos.
+- **Próxima ação exata:** nenhuma pendente para este PB — Sprint 3 concluída
+  (PB-07, PB-14, PB-15, PB-16 e PB-17 todos VALIDADOS). Prosseguir para a
+  consolidação da Sprint 3 e planejamento da Sprint 4.
+
+**PB-17 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM**
 
 ### Testes integrados da Sprint 3
 

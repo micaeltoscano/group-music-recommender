@@ -5,8 +5,9 @@ arquivo `.env` na raiz do repositório, que NÃO é versionado). Nada de segredo
 embutido no código. Veja `.env.example` para a lista de variáveis.
 
 Escopo PB-01: apenas `DATABASE_URL` e as configurações básicas do app são
-necessárias para a fundação técnica. As chaves de Spotify / Anthropic / Last.fm
-são declaradas como opcionais para histórias futuras e NÃO são exigidas aqui.
+necessárias para a fundação técnica. As chaves de Spotify / Last.fm são
+declaradas como opcionais para histórias futuras e NÃO são exigidas aqui. O
+LLM (PB-17) roda localmente via Ollama e não precisa de chave.
 """
 
 from __future__ import annotations
@@ -57,9 +58,15 @@ class Settings(BaseSettings):
     spotify_client_id: str | None = None
     spotify_client_secret: str | None = None
     spotify_redirect_uri: str | None = None
-    anthropic_api_key: str | None = None
     lastfm_api_key: str | None = None
     fernet_key: str | None = None
+
+    # --- LLM local (PB-17) ----------------------------------------------------
+    # Ollama rodando localmente; sem chave de API. Se indisponível, o pipeline
+    # usa o fallback determinístico automaticamente (ver `llm_client.py`).
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
+    ollama_timeout_seconds: float = Field(default=8.0, gt=0)
 
     @property
     def secure_cookies(self) -> bool:

@@ -1,5 +1,6 @@
-"""Controle e execução do pipeline de geração de playlist (PB-13/PB-15)."""
+"""Controle e execução do pipeline de geração de playlist (PB-13/PB-15/PB-17)."""
 
+import json
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -7,7 +8,7 @@ from typing import Any
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from app.clients import spotify_client
+from app.clients import llm_client, spotify_client
 from app.db.models import MusicSession, MusicSessionMember, PlaylistRun, PlaylistRunTrack, User
 from app.engine.candidates import CandidateTrack, generate_candidate_pool
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
@@ -356,6 +357,14 @@ async def execute_generation(
         ]
         if not member_ids:
             raise RuntimeError("A sala não possui integrantes.")
+
+        # PB-17: interpreta só o contexto do host (nunca dados de tops/artists
+        # dos membros) e persiste no run. Cai em fallback determinístico se o
+        # LLM estiver indisponível ou responder fora do schema; nunca interrompe
+        # a geração (critérios 2 e 3 do PB-17).
+        llm_context = await llm_client.interpret_context(room.occasion, room.description)
+        run.llm_context_json = json.dumps(llm_context.model_dump())
+        db.commit()
 
         profiles: list[UserTasteProfile] = []
         track_snapshots: list[tuple[int, dict[str, Any]]] = []
