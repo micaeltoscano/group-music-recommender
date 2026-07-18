@@ -1586,6 +1586,40 @@ PB-12, PB-16, PB-22 e PB-23 validados; agrupamento `clustered`; flags controláv
   insuficiente ou único mantém a ordem; tamanho/limite inválidos são rejeitados; mesma entrada produz
   mesma saída e metadados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
+### Testes integrados da Sprint 5
+
+#### Objetivo do incremento
+Os quatro recursos pós-MVP (Modo Descoberta, agrupamento, faixas-ponte e balanceamento) são opt-in por
+feature flag. A validação integrada comprova que **compõem** numa geração real quando ligados e ficam
+**inertes** quando desligados, sem regredir o MVP. Casos definidos pelo QA no fechamento da Sprint 5.
+
+#### PBs cobertos
+PB-21, PB-22, PB-23, PB-24.
+
+##### CT-S5-INT-01 — Recursos pós-MVP compõem com todas as flags ligadas
+- **Tipo:** integração/e2e · **Prioridade:** Alta · **Cenário:** dois subgrupos reais (pop/rock), modo
+  Descoberta e as três flags ligadas. · **Resultado esperado:** geração conclui; a candidata comum a
+  todos os subgrupos é marcada `is_bridge`; `subgroup_balancing_applied` persistido; o resultado traz
+  as explicações de Descoberta e de faixa-ponte. · **Automatizável:** Parcialmente (Spotify mockado;
+  e2e real diferido) · **Status:** Aprovado (QA 2026-07-18)
+
+##### CT-S5-INT-02 — Flags desligadas preservam o comportamento do MVP
+- **Tipo:** configuração/regressão · **Prioridade:** Alta · **Resultado esperado:** com as flags no
+  padrão (off), nenhuma faixa é marcada como ponte, `subgroup_balancing_applied=false` e nenhuma
+  explicação pós-MVP aparece; a geração conclui normalmente. · **Automatizável:** Sim ·
+  **Status:** Aprovado (QA 2026-07-18)
+
+##### CT-S5-INT-03 — Regressão completa das Sprints 1–4
+- **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** toda a suíte continua verde. ·
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18 — 381 passed / 6 skipped / 0 failed)
+
+#### Resultado da Sprint
+**EM VALIDAÇÃO — parte automatizável aprovada (QA 2026-07-18).** Os quatro PBs (PB-21..24) estão
+`VALIDADO` e o ciclo integrado automatizável passou (CT-S5-INT-01..03). Como recurso pós-MVP e opt-in,
+não há demonstração e2e real obrigatória distinta das já diferidas nas Sprints 3–4; a assinatura formal
+`SPRINT 5 CONCLUÍDA` fica condicionada às demonstrações reais pendentes do incremento. Relatório:
+[`docs/relatorios-testes/SPRINT-05-INTEGRADO.md`](../relatorios-testes/SPRINT-05-INTEGRADO.md).
+
 ---
 
 ## Apêndice — Rastreabilidade PB × critérios × casos
