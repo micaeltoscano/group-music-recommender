@@ -26,10 +26,10 @@ CONSENSUS_MODES = {
             "novelty": 0.05,
         },
         "group": {
-            "average_score": 0.5,
-            "min_score": 0.3,
-            "coverage": 0.2,
-            "context": 0.0,
+            "average_score": 0.45,
+            "min_score": 0.25,
+            "coverage": 0.15,
+            "context": 0.15,
             "diversity": 0.0,
         },
         "rejection_penalty": 0.5,  # Reduz a pontuação da música em 50% caso tenha veto
@@ -43,10 +43,10 @@ CONSENSUS_MODES = {
             "novelty": 0.0,      # Não arrisca em novidades
         },
         "group": {
-            "average_score": 0.3,
-            "min_score": 0.5,    # Fortemente focado no "least misery" (ninguém odiar)
-            "coverage": 0.2,
-            "context": 0.0,
+            "average_score": 0.25,
+            "min_score": 0.45,   # Fortemente focado no "least misery" (ninguém odiar)
+            "coverage": 0.15,
+            "context": 0.15,
             "diversity": 0.0,
         },
         "rejection_penalty": 1.0,  # Veto derruba a música totalmente (penalidade de 100%)

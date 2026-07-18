@@ -180,6 +180,13 @@ O LLM transforma o pedido humano em **critérios estruturados** — não decide 
 ```
 Fontes (ordem): Last.fm tags da faixa → tags do artista → gêneros/artistas Spotify → Vibe Check → letras (opcional) → regras simples → fallback por consenso do grupo. Cada faixa recebe `context_score` + `confidence` + `source`.
 
+> **Estado operacional (2026-07-17): PB-17 corrigido e aguardando novo QA na Sprint 3.** O contexto
+> estruturado agora gera `context_score` determinístico por candidata, usando ocasião, humor,
+> energia, tags e gêneros Spotify dos artistas. Os modos reservam 15% do score coletivo para esse
+> sinal; consenso e afinidade continuam predominantes. A regressão do Dev comprovou “festa” versus
+> “estudo” com rankings distintos (`CT-PB17-05`/`CT-S3-INT-02`). PB-18 continuará responsável apenas
+> pelo enriquecimento posterior via Last.fm.
+
 ## 11. Last.fm Tag Layer
 
 Fonte **auxiliar**, não dependência absoluta. Cascata: (1) tags da faixa (artist+track) → (2) tags do artista → (3) gêneros Spotify + outros sinais → (4) consenso+afinidade+popularidade. Positivas p/ festa: party, dance, happy, upbeat, pop, funk, summer, electronic. Negativas: sad, acoustic, melancholic, ambient, sleep, depressive, slow. Cache obrigatório em `track_context_cache` com `confidence` (`lastfm_track_tags` > `lastfm_artist_tags_fallback` > `spotify_genres`).

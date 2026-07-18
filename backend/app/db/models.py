@@ -281,6 +281,9 @@ class PlaylistRunTrack(Base):
     discard_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="matched")
     source: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON ou lista em string
+    # Ordem explícita do ranking. `created_at` empata para inserts na mesma
+    # transação do PostgreSQL e não pode preservar sozinho a seleção do motor.
+    selection_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -320,4 +323,3 @@ class VibeCheckAnswer(Base):
     
     music_session: Mapped["MusicSession"] = relationship()
     user: Mapped["User"] = relationship()
-

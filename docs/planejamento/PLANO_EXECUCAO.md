@@ -141,15 +141,19 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 
 | Sprint | Objetivo | PBs | Pontos | Status |
 |---|---|---|---:|---|
-| Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | **Em andamento** |
-| Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | A fazer |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | A fazer |
+| Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
+| Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Em andamento** — reaberta |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
-- **Sprint ativa:** Sprint 1. **Próximo PB acionável:** definido automaticamente pelo campo `Status`
+- **Sprint ativa:** Sprint 3 (reaberta em 2026-07-17). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
   de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
+- **Dívida processual preservada:** Sprints 1 e 2 têm PBs individuais validados, mas ainda carecem das
+  assinaturas de validação integrada. A reabertura corretiva da Sprint 3 não autoriza iniciar a
+  Sprint 4; antes do encerramento do incremento, os ciclos integrados pendentes também devem ser
+  executados e registrados.
 
 > **Convenção de Status (legível por máquina).** A **primeira palavra** do campo `- **Status:**` de
 > cada PB é um *token* de um vocabulário fechado; o texto após ` — ` é detalhe humano livre. O
@@ -611,7 +615,7 @@ A Sprint 1 só é concluída quando:
 
 ### Status da Sprint 1
 
-**Em andamento** — PB-01, PB-02, PB-04, PB-05, PB-06 e PB-08 VALIDADOS: todos os PBs da Sprint 1
+**Validação integrada pendente** — PB-01, PB-02, PB-04, PB-05, PB-06 e PB-08 VALIDADOS: todos os PBs da Sprint 1
 passaram na validação independente (QA 2026-07-16). O próximo passo é a **validação integrada da
 Sprint 1** (`CT-S1-INT-*` + regressão), ainda **não** executada — é um ciclo próprio e anunciado, que
 o QA não iniciou junto com o PB-08.
@@ -811,7 +815,8 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 2". Cobrem, no mínimo:
 
 ### Status da Sprint 2
 
-**A fazer.**
+**Validação integrada pendente** — os PBs individuais estão `VALIDADO`, mas os casos
+`CT-S2-INT-*` e a assinatura de encerramento da Sprint ainda não foram registrados.
 
 ---
 
@@ -897,8 +902,8 @@ e o Vibe Check opcional está disponível.
 
 #### PB-15 — Criação da playlist no Spotify
 
-- **Status:** AGUARDANDO-QA — correção de integração concluída: o endpoint agora executa o pipeline
-  completo e permite geração com apenas o host; migração PostgreSQL corrigida e aplicada.
+- **Status:** VALIDADO — sincronizado com o veredito de QA já registrado em
+  `../relatorios-testes/PB-15.md`: `PB-15 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM`.
 - **Objetivo:** criar playlist privada (20–30 faixas, máx. 2/artista) na conta do host a partir das
   músicas correspondidas, guardar id/URL na execução e devolver o link ao host.
 - **Dependências:** PB-14.
@@ -936,8 +941,8 @@ e o Vibe Check opcional está disponível.
   ID/URL persistidos e sala liberada.
 - **Limitação:** CT-PB15-03 com Spotify real continua pendente de QA; mocks não provam a criação na
   conta real.
-- **Próxima ação exata:** QA reexecuta CT-PB15-01..05, incluindo o fluxo solo, e executa
-  CT-PB15-03 com conta de demo antes de devolver `VALIDADO`.
+- **Próxima ação exata:** nenhuma no PB-15; a evidência real ponta a ponta integra a validação da
+  Sprint 3, sem alterar o veredito histórico do PB.
 
 #### PB-16 — Resultado e explicabilidade
 
@@ -996,7 +1001,9 @@ e o Vibe Check opcional está disponível.
 
 #### PB-17 — Interpretação estruturada do contexto
 
-- **Status:** VALIDADO — QA independente 2026-07-17, rodada 2 (ver `../relatorios-testes/PB-17.md`). Os 5 critérios de aceitação estão atendidos com evidência real. DEF-PB17-01 (encontrado na rodada 1) confirmado corrigido, sem novos defeitos acionáveis pelo pipeline real nesta rodada.
+- **Status:** AGUARDANDO-QA — correção de `INC-PB17-CTX-01` implementada em 2026-07-17. Contexto
+  agora influencia o ranqueamento nos dois modos; testes do Dev e regressão estão verdes. A
+  validação histórica permanece registrada, mas a reabertura ainda exige novo veredito independente.
 - **Objetivo:** LLM interpreta a descrição livre do host em um schema JSON validado, com fallback
   determinístico e sem enviar dados brutos de tops ao LLM.
 - **Dependências:** PB-06 e PB-10.
@@ -1011,8 +1018,9 @@ e o Vibe Check opcional está disponível.
   validação de schema + fallback; cache de contexto em `playlist_runs.llm_context_json`.
 - **Arquivos ou módulos previstos:** `backend/app/clients/llm_client.py`, `backend/app/schemas/` (context),
   `backend/app/services/generation_service.py`.
-- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-16) — JSON inválido → fallback,
-  LLM ausente → fallback, privacidade (sem dados brutos), schema válido.
+- **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-17) — JSON inválido → fallback,
+  LLM ausente → fallback, privacidade (sem dados brutos), schema válido e, obrigatoriamente,
+  `CT-PB17-05` comprovando que contextos distintos alteram coerentemente scores/seleção.
 - **Evidências necessárias:** logs sem dados brutos; fallback exercido; schema validado.
 - **Riscos:** R-06 (LLM inválido/indisponível — inclui Ollama não instalado/rodando localmente ou
   modelo não baixado; fallback determinístico cobre todos esses casos).
@@ -1071,11 +1079,47 @@ e o Vibe Check opcional está disponível.
   um risco acionável em produção. Suíte completa: 188 passed, 6 skipped, 0
   failed. Migração confirmada no head (`0011_pb17_llm_context`) em Postgres
   real. Build do frontend OK. Os 5 critérios de aceitação atendidos.
-- **Próxima ação exata:** nenhuma pendente para este PB — Sprint 3 concluída
-  (PB-07, PB-14, PB-15, PB-16 e PB-17 todos VALIDADOS). Prosseguir para a
-  consolidação da Sprint 3 e planejamento da Sprint 4.
 
-**PB-17 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM**
+##### Reabertura por lacuna de integração — INC-PB17-CTX-01
+
+- **Evidência funcional:** em teste real com mais de um usuário, alterar ocasião/descrição não
+  alterou materialmente a playlist; o conjunto final continuou derivado dos mesmos top tracks.
+- **Causa confirmada por inspeção:** `execute_generation` persiste `llm_context_json`, porém
+  `_rank_candidates` não recebe o contexto interpretado; `calculate_group_score` usa
+  `context_score=1.0` neutro por padrão e os dois modos ativos configuram peso de contexto `0.0`.
+- **Contradição que motivou a reabertura:** `CT-PB17-05` e `CT-S3-INT-02` exigem que o contexto
+  influencie candidatas/scores, mas a rodada histórica tratou `CT-PB17-05` como “não aplicável”.
+- **Escopo da correção:** conectar critérios estruturados ao motor determinístico, sem permitir que
+  o LLM escolha músicas diretamente; oferecer fallback contextual determinístico sem Last.fm.
+- **Fora do escopo:** PB-18 permanece na Sprint 4 para enriquecer tags/confiança via Last.fm;
+  PB-11 e PB-12 permanecem `VALIDADO` e entram apenas na regressão da correção.
+- **Portão:** a Sprint 3 não pode ser encerrada até `CT-PB17-05` e `CT-S3-INT-02` passarem, além da
+  regressão dos casos anteriormente aprovados do PB-17.
+- **Próxima ação exata:** Dev implementa somente a correção do PB-17 com testes; ao concluir, marca
+  `AGUARDANDO-QA` e emite o handoff oficial para uma nova validação independente.
+
+##### Implementação da correção — handoff do Dev em 2026-07-17
+
+- `engine/context_scoring.py` transforma o schema validado em um `context_score` puro e
+  determinístico por candidata. Ocasião/humor/tags definem afinidade temática, energia é comparada
+  com sinais conservadores de gênero e `tags_negative`/`avoid` aplicam penalidades.
+- Os gêneros dos top artistas já existentes nos snapshots enriquecem cópias das candidatas; nenhum
+  dado adicional é enviado ao LLM e não há rede/banco dentro do motor.
+- `_rank_candidates` recebe os critérios e entrega o score ao cálculo coletivo. “Democrático” e
+  “Festa Segura” reservam 15% ao contexto, mantendo 85% para afinidade, consenso e cobertura.
+- A migração `0012_pb17_context_rank` adiciona `selection_rank` às faixas da execução. Isso preserva
+  a ordem contextual ao reler as correspondências no PostgreSQL, onde `created_at` empata para
+  inserções feitas na mesma transação.
+- `backend/tests/test_pb17_context_scoring.py` cobre score, `avoid`, enriquecimento sem mutação e
+  mudança material das 30 primeiras faixas entre “festa” e “estudo” nos dois modos.
+- Evidências do Dev: 30 testes focados passaram; suíte backend completa com `APP_ENV=test` passou
+  com 193 testes e 6 skips; build Vite passou; `git diff --check` passou. O backend em execução
+  recarregou os módulos e permaneceu saudável.
+- **Portão atual:** `AGUARDANDO-QA`. O QA deve reexecutar `CT-PB17-05`, `CT-S3-INT-02` e a regressão,
+  emitindo o novo `VALIDADO` ou `REPROVADO`; o Dev não encerra a Sprint antecipadamente.
+
+> Assinatura histórica da rodada 2, preservada para rastreabilidade:
+> `PB-17 VALIDADO — TODOS OS TESTES OBRIGATÓRIOS PASSARAM`.
 
 ### Testes integrados da Sprint 3
 
@@ -1105,7 +1149,9 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ### Status da Sprint 3
 
-**A fazer.**
+**Em andamento — reaberta em 2026-07-17.** A correção de `INC-PB17-CTX-01` foi implementada e a
+regressão do Dev comprova que o contexto altera o ranking. PB-17 está `AGUARDANDO-QA`;
+`CT-PB17-05` e `CT-S3-INT-02` continuam bloqueadores até o novo veredito independente.
 
 ---
 
@@ -1318,6 +1364,7 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 | 2026-07-12 | Stack do backend: FastAPI + SQLAlchemy 2.0 + Alembic + `psycopg2-binary`; config via `pydantic-settings`. | Base estável em Python 3.11; segredos só em variáveis de ambiente. |
 | 2026-07-12 | Migração inicial cria somente a tabela `users`. | Validar upgrade/downgrade real sem antecipar tabelas de histórias futuras. |
 | 2026-07-13 | Reorganizar a execução por Sprint (mantendo M0–M5 como referência) e criar `PLANO_TESTES.md`. | Alinhar o processo ao fluxo obrigatório Sprint → PB → testes → validação. |
+| 2026-07-17 | Reabrir PB-17 dentro da Sprint 3 sem reabrir PB-11/PB-12. | Teste real em grupo mostrou que o contexto é persistido, mas não consumido pelo motor; CT-PB17-05 e CT-S3-INT-02 contradizem o “não aplicável” da validação histórica. |
 
 ## 14. Riscos e bloqueios atuais
 
@@ -1327,42 +1374,45 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 - **PB-01:** bloqueio de Node removido; frontend nativo iniciou e respondeu HTTP 200. Falta apenas o
   QA reexecutar CT-PB01-06 e registrar seu veredito formal.
 - A capacidade real da equipe (velocidade) ainda precisa ser medida na Sprint 1.
+- **INC-PB17-CTX-01 (bloqueador da Sprint 3):** correção implementada e regressão do Dev verde;
+  falta a nova validação independente antes de encerrar o incidente e a Sprint.
 
 ## 15. Diário de retomada
 
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-17.
-- **Sprint/branch de trabalho:** Sprint 3, `feat/SPRINT-03/PB16`.
-- **PB em andamento:** correção do PB-15 concluída e marcada `AGUARDANDO-QA`.
-- **Último resultado concluído:** integração real do endpoint de geração ao pipeline PB-08..PB-15,
-  incluindo host sozinho; migração `0009_pb15_playlist` aplicada no PostgreSQL do Compose.
-- **Onde parou:** código, testes mockados, frontend, documentação e banco local prontos; aguarda QA
-  independente e CT-PB15-03 com conta Spotify real.
-- **Próxima ação exata:** QA executa CT-PB15-01..05. PB-16 foi auditado, mas suas pendências não devem
-  ser corrigidas antes do novo veredito do PB-15.
+- **Sprint/branch de trabalho:** Sprint 3 reaberta, branch atual preservada.
+- **PB em andamento:** PB-17 (`AGUARDANDO-QA`) — integração contexto → motor implementada.
+- **Último resultado concluído:** o motor contextual passou nos dois modos; “festa” priorizou as 30
+  candidatas dançantes e “estudo” as 30 instrumentais/acústicas com os mesmos perfis e candidatas.
+- **Onde parou:** implementação e regressão do Dev concluídas; nenhum novo veredito de QA emitido.
+- **Próxima ação exata:** QA reexecuta `CT-PB17-05`, `CT-S3-INT-02` e regressão do PB-17, registrando
+  `VALIDADO` ou `REPROVADO` sem apagar o histórico das rodadas anteriores.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb15_playlist_creation_qa.py tests/test_pb15_generation_flow.py -q
+  .venv/bin/pytest tests/test_pb17_llm_context.py tests/test_pb17_generation_integration.py \
+    tests/test_pb17_qa_revalidacao.py -q
   .venv/bin/pytest tests -q
   .venv/bin/alembic current
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum para QA mockado; CT-PB15-03 depende de conta Spotify autorizada da demo.
+- **Bloqueios:** nenhum externo; o portão processual é a nova validação independente do PB-17.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei os testes e verificações relevantes. — PB-13/PB-15 10/10; suíte 164 passed/6 skipped;
-  build Vite, Compose, schema e ciclo da migração verificados.
-- [x] Comparei o resultado com os critérios da história. — 5/5 cobertos tecnicamente com mocks;
-  criação real no Spotify permanece para QA.
-- [x] Atualizei status sem declarar validação independente. — PB-15 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — integração real depende da conta Spotify da demo.
+- [x] Rodei as verificações relevantes. — 30 testes focados, suíte backend completa (193 testes e
+  6 skips), build Vite, `git diff --check` e listagem do orquestrador.
+- [x] Comparei o comportamento real com os critérios existentes. — regressão do Dev cobre
+  `CT-PB17-05` e a parte automatizável de `CT-S3-INT-02` nos dois modos.
+- [x] Atualizei status sem declarar validação independente. — PB-17 `AGUARDANDO-QA`; o veredito
+  histórico foi preservado e nenhum novo `REPROVADO`/`VALIDADO` foi emitido pelo Dev.
+- [x] Registrei decisões ou bloqueios novos. — resta apenas o portão de QA para o incidente.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — plano, plano de testes e README.
-- [x] Confirmei que nenhum segredo ou token foi adicionado. — somente tokens fictícios nos testes.
-- [x] Preparei um commit pequeno e relacionado à história. — mensagem: `fix(PB-15): integrar geração de playlist ponta a ponta`.
+- [x] Atualizei a documentação afetada. — plano, plano de testes, relatório histórico do PB-17 e README.
+- [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
+- [x] Commit do PB-17 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

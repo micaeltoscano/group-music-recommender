@@ -104,7 +104,11 @@ def _top_tracks(total: int = 25) -> list[dict]:
 
 def _top_artists(total: int = 25) -> list[dict]:
     return [
-        {"id": f"artist{i:02d}", "name": f"Artist{i:02d}", "genres": ["pop"]}
+        {
+            "id": f"artist{i:02d}",
+            "name": f"Artist{i:02d}",
+            "genres": ["dance pop" if i < 30 else "acoustic instrumental"],
+        }
         for i in range(total)
     ]
 
@@ -151,7 +155,7 @@ def test_geracao_persiste_contexto_mesmo_sem_llm_real_disponivel(
     """CT-PB17-03 (integração): sem Ollama real no ambiente de teste, a geração
     conclui normalmente (fallback determinístico) e persiste o contexto no run.
     """
-    mock_snapshot.return_value = _snapshot_result()
+    mock_snapshot.return_value = _snapshot_result(40)
     mock_get_token.return_value = "host-access-token"
     mock_search.side_effect = _search_exact_track
     mock_create_playlist.return_value = {
@@ -165,6 +169,9 @@ def test_geracao_persiste_contexto_mesmo_sem_llm_real_disponivel(
 
     assert response.status_code == 202
     assert response.json()["status"] == "completed"
+    assert mock_add_items.await_args.kwargs["uris"] == [
+        f"spotify:track:{index:02d}" for index in range(30)
+    ]
 
     db = session_factory()
     try:
@@ -176,5 +183,6 @@ def test_geracao_persiste_contexto_mesmo_sem_llm_real_disponivel(
         # Fallback determinístico reconhece "animado" -> energy alta (via
         # heurística de palavras da descrição).
         assert context["energy"] in ("media", "alta")
+        assert sorted(track.selection_rank for track in run.tracks) == list(range(1, 41))
     finally:
         db.close()

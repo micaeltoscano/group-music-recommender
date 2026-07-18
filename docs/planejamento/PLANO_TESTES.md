@@ -1013,10 +1013,12 @@ privacidade da explicação).
 
 #### Objetivo da validação
 Comprovar que o LLM retorna JSON válido conforme schema, que respostas inválidas/ausentes acionam
-fallback determinístico e que dados brutos não são enviados ao LLM.
+fallback determinístico, que dados brutos não são enviados ao LLM e que os critérios estruturados
+são efetivamente consumidos pelo motor sem permitir que o LLM escolha músicas diretamente.
 
 #### Requisitos e critérios cobertos
-Critérios 1–5 do PB-17.
+Critérios 1–5 do PB-17, integração com o componente de contexto do score coletivo do PB-11 e
+Definition of Done (funcionalidade integrada ao incremento principal).
 
 #### Pré-condições
 `LLMClient` mockável; schema de contexto definido.
@@ -1024,33 +1026,50 @@ Critérios 1–5 do PB-17.
 #### Dados de teste
 Descrição "festa muito alegre" e "estudo relaxante"; resposta do LLM válida, JSON inválido e timeout.
 
+#### Reabertura de 2026-07-17
+
+`INC-PB17-CTX-01` foi observado em teste real em grupo: ocasião/descrição diferentes produziram a
+mesma base prática de seleção. A rodada histórica aprovou schema/fallback/privacidade, mas declarou
+`CT-PB17-05` “não aplicável”. Essa decisão foi superada pela expectativa já escrita neste plano e
+por `CT-S3-INT-02`. Os casos antes aprovados entram como regressão; `CT-PB17-05` volta a ser portão.
+
 #### Casos de teste
 ##### CT-PB17-01 — Saída válida segue o schema
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** JSON com ocasião, humor,
-  energia, tags +/-, avoid. · **Automatizável:** Sim · **Status:** Não executado
+  energia, tags +/-, avoid. · **Automatizável:** Sim · **Status:** Aprovado na rodada histórica;
+  regressão obrigatória na reabertura
 
 ##### CT-PB17-02 — JSON inválido aciona fallback sem interromper
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** LLM devolve JSON malformado.
 - **Resultado esperado:** rejeitado; geração segue com consenso/afinidade/popularidade. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado na rodada histórica; regressão obrigatória na reabertura
 
 ##### CT-PB17-03 — LLM indisponível → fallback determinístico
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** timeout/erro do LLM.
-- **Resultado esperado:** pipeline continua sem IA. · **Automatizável:** Sim · **Status:** Não executado
+- **Resultado esperado:** pipeline continua sem IA. · **Automatizável:** Sim · **Status:** Aprovado
+  na rodada histórica; regressão obrigatória na reabertura
 
 ##### CT-PB17-04 — Privacidade: dados brutos não vão ao LLM
 - **Tipo:** privacidade · **Prioridade:** Alta · **Cenário:** inspecionar o payload enviado.
 - **Resultado esperado:** só contexto do host / dados agregados; **sem** top tracks/artists brutos. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado na rodada histórica; regressão obrigatória na reabertura
 
 ##### CT-PB17-05 — Contexto muda candidatas/tags
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** "festa" vs "estudo".
-- **Resultado esperado:** tags positivas/negativas e candidatas contextuais diferem coerentemente. ·
-  **Automatizável:** Sim · **Status:** Não executado
+- **Passos:** manter os mesmos perfis, snapshots, modo e candidatas; variar apenas ocasião/descrição;
+  executar interpretação, scoring, seleção e criação do conjunto final.
+- **Resultado esperado:** tags positivas/negativas diferem; cada candidata recebe `context_score`
+  derivado dos critérios; ranking ou seleção final muda de forma coerente e reproduzível. Não basta
+  persistir JSON diferente se as mesmas músicas mantiverem os mesmos scores contextuais.
+- **Critério de aprovação:** pelo menos uma diferença material de score/ordem/seleção explicada pelo
+  contexto, preservando determinismo e sem decisão direta do LLM.
+- **Automatizável:** Sim · **Status:** Passou na regressão do Dev em 2026-07-17 nos modos
+  Democrático e Festa Segura; aguarda reprodução e veredito formal do QA
 
 ##### CT-PB17-06 — LLM não decide a playlist
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** seleção final vem do
-  motor; LLM só fornece critérios. · **Automatizável:** Sim · **Status:** Não executado
+  motor; LLM só fornece critérios. · **Automatizável:** Sim · **Status:** Aprovado na rodada histórica;
+  regressão obrigatória na reabertura
 
 ### PB-07 — Vibe Check opcional
 
@@ -1113,7 +1132,8 @@ criação de playlist real (PB-14) → resultado explicável (PB-16).
 
 ##### CT-S3-INT-02 — Contexto do LLM consumido pelo motor e pela busca
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** tags do contexto influenciam
-  candidatas/scores; playlist reflete a ocasião. · **Automatizável:** Parcialmente · **Status:** Não executado
+  candidatas/scores; playlist reflete a ocasião. · **Automatizável:** Parcialmente · **Status:** Parte
+  automatizável passou na regressão do Dev em 2026-07-17; aguarda QA independente e demonstração real
 
 ##### CT-S3-INT-03 — Vibe Check influencia o ranking
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** baixa `sadness_tolerance`.
@@ -1148,7 +1168,9 @@ PBs 07, 14, 15, 16, 17 aprovados; CT-S3-INT-01..05 aprovados; regressão das Spr
 URL da playlist criada; payload de resultado; logs sanitizados; `pytest` verde; capturas das telas.
 
 #### Resultado da Sprint
-Pendente.
+**Pendente — Sprint 3 reaberta por `INC-PB17-CTX-01`.** A regressão do Dev está verde e contém
+evidência positiva automatizada de `CT-PB17-05`/`CT-S3-INT-02`, mas a Sprint não pode ser aprovada
+antes da reprodução independente pelo QA e da demonstração real aplicável.
 
 ---
 

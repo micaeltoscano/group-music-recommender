@@ -11,6 +11,11 @@ from sqlalchemy.orm import Session
 from app.clients import llm_client, spotify_client
 from app.db.models import MusicSession, MusicSessionMember, PlaylistRun, PlaylistRunTrack, User
 from app.engine.candidates import CandidateTrack, generate_candidate_pool
+from app.engine.context_scoring import (
+    ContextCriteria,
+    calculate_context_score,
+    enrich_candidate_genres,
+)
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
 from app.engine.scoring import calculate_group_score
 from app.engine.taste import UserTasteProfile
@@ -122,7 +127,7 @@ async def resolve_candidates(
 
     tracks_to_insert = []
 
-    for candidate in candidates:
+    for selection_rank, candidate in enumerate(candidates, start=1):
         original_name = candidate.raw_data.get("name", "")
         # O Spotify retorna 'artists' como uma lista de objetos
         original_artist = ""
@@ -140,6 +145,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason="Missing name or artist",
                 source=json.dumps(list(candidate.source_user_ids)),
+                selection_rank=selection_rank,
             ))
             continue
             
@@ -156,6 +162,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason=f"Spotify search error: {exc}",
                 source=json.dumps(list(candidate.source_user_ids)),
+                selection_rank=selection_rank,
             ))
             continue
             
@@ -168,6 +175,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason="No results found",
                 source=json.dumps(list(candidate.source_user_ids)),
+                selection_rank=selection_rank,
             ))
             continue
             
@@ -200,6 +208,7 @@ async def resolve_candidates(
                 match_confidence=best_confidence,
                 status="matched",
                 source=json.dumps(list(candidate.source_user_ids)),
+                selection_rank=selection_rank,
             ))
         else:
             if best_match and best_confidence >= 0.8:
@@ -217,6 +226,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason=reason,
                 source=json.dumps(list(candidate.source_user_ids)),
+                selection_rank=selection_rank,
             ))
             
     if tracks_to_insert:
@@ -244,7 +254,11 @@ async def create_spotify_playlist_for_run(
     tracks = (
         db.query(PlaylistRunTrack)
         .filter(PlaylistRunTrack.run_id == run_id, PlaylistRunTrack.status == "matched")
-        .order_by(PlaylistRunTrack.created_at)
+        .order_by(
+            PlaylistRunTrack.selection_rank.is_(None),
+            PlaylistRunTrack.selection_rank,
+            PlaylistRunTrack.created_at,
+        )
         .all()
     )
     
@@ -314,18 +328,21 @@ def _rank_candidates(
     candidates: list[CandidateTrack],
     profiles: list[UserTasteProfile],
     room_mode: str | None,
+    context: ContextCriteria,
 ) -> list[CandidateTrack]:
-    """Ordena candidatas usando apenas o motor puro já entregue nos PB-11/PB-12."""
+    """Ordena candidatas pelo consenso do grupo e pela adequação contextual."""
     mode_key = "safe_party" if room_mode == "Festa Segura" else "democratic"
     mode_config = CONSENSUS_MODES[mode_key]
     scored: list[dict[str, Any]] = []
 
     for candidate in candidates:
+        context_score = calculate_context_score(candidate, context)
         group_data = calculate_group_score(
             candidate,
             profiles,
             mode_config["individual"],
             mode_config["group"],
+            context_score=context_score,
         )
         evaluation = evaluate_candidate_fairness(group_data, mode_config)
         evaluation["candidate"] = candidate
@@ -368,6 +385,7 @@ async def execute_generation(
 
         profiles: list[UserTasteProfile] = []
         track_snapshots: list[tuple[int, dict[str, Any]]] = []
+        artist_genres: dict[str, set[str]] = {}
         for member_id in member_ids:
             snapshot_result = await get_or_refresh_snapshot(
                 db,
@@ -379,11 +397,33 @@ async def execute_generation(
             artists_payload = {"items": snapshot.top_artists_json}
             profiles.append(UserTasteProfile(member_id, tracks_payload, artists_payload))
             track_snapshots.append((member_id, tracks_payload))
+            for artist in snapshot.top_artists_json:
+                if not isinstance(artist, dict) or not artist.get("id"):
+                    continue
+                artist_genres.setdefault(str(artist["id"]), set()).update(
+                    genre.strip().lower()
+                    for genre in artist.get("genres", [])
+                    if isinstance(genre, str) and genre.strip()
+                )
 
         candidates, _ = generate_candidate_pool(track_snapshots)
         if not candidates:
             raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
-        ranked_candidates = _rank_candidates(candidates, profiles, room.mode)
+        candidates = enrich_candidate_genres(candidates, artist_genres)
+        context_criteria = ContextCriteria(
+            occasion=llm_context.occasion,
+            mood=llm_context.mood,
+            energy=llm_context.energy,
+            tags_positive=tuple(llm_context.tags_positive),
+            tags_negative=tuple(llm_context.tags_negative),
+            avoid=tuple(llm_context.avoid),
+        )
+        ranked_candidates = _rank_candidates(
+            candidates,
+            profiles,
+            room.mode,
+            context_criteria,
+        )
 
         host = db.get(User, host_id)
         if host is None:
