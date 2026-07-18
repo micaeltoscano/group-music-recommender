@@ -143,17 +143,18 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 |---|---|---|---:|---|
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **EM VALIDAÇÃO — e2e real diferida (limitação de API); automatizável VALIDADO** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — abertura excepcional autorizada em 2026-07-18** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
-- **Sprint ativa:** Sprint 3 (reaberta em 2026-07-17). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
+- **Sprint ativa:** Sprint 4 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
+  evidência e2e real pendente da Sprint 3). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
   de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
-- **Dívida processual preservada:** Sprints 1 e 2 têm PBs individuais validados, mas ainda carecem das
-  assinaturas de validação integrada. A reabertura corretiva da Sprint 3 não autoriza iniciar a
-  Sprint 4; antes do encerramento do incremento, os ciclos integrados pendentes também devem ser
-  executados e registrados.
+- **Exceção processual explícita:** em 2026-07-18, o usuário autorizou avançar para a Sprint 4 sem a
+  demonstração e2e real da Sprint 3 e sem as assinaturas integradas das Sprints 1–2. A exceção libera
+  implementação, mas **não** transforma evidência pendente em aprovação de QA nem autoriza emitir as
+  assinaturas `SPRINT N CONCLUÍDA`. As dívidas de validação permanecem registradas.
 
 > **Convenção de Status (legível por máquina).** A **primeira palavra** do campo `- **Status:**` de
 > cada PB é um *token* de um vocabulário fechado; o texto após ` — ` é detalhe humano livre. O
@@ -1205,6 +1206,10 @@ permanece:
 Ao retomar, executar `CT-S3-INT-01` real e só então emitir `SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO`.
 Nenhum trabalho de código está pendente; a pendência é puramente de evidência/ambiente.
 
+**Exceção de avanço (usuário, 2026-07-18):** o usuário autorizou explicitamente passar por cima do
+portão de validação e iniciar a Sprint 4. A Sprint 3 fica encerrada apenas para fins operacionais, com
+`CT-S3-INT-01` real ainda pendente e sem assinatura de conclusão do QA.
+
 ---
 
 ## Sprint 4 — Complementos da experiência
@@ -1239,7 +1244,8 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-03 — Logout e remoção de dados
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — logout e remoção/anonimização implementados em 2026-07-18 após exceção
+  explícita de abertura da Sprint 4; testes técnicos verdes, falta validação independente.
 - **Objetivo:** encerrar sessão (invalidando-a no backend) e excluir/anonimizar dados pessoais sem
   expor tokens ou dados de terceiros.
 - **Dependências:** PB-02.
@@ -1248,16 +1254,31 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
   2. Após logout, rotas autenticadas respondem como não autorizadas.
   3. Remoção exclui/anonimiza os dados pessoais previstos.
   4. Operação não expõe tokens nem dados de outros integrantes.
-- **Plano de implementação:** `POST /auth/logout` (invalida `app_sessions`); rotina de remoção/anonimização.
-- **Arquivos ou módulos previstos:** `backend/app/api/auth.py`, `backend/app/services/`.
+- **Plano de implementação:** `POST /auth/logout` invalida somente a sessão atual e remove o cookie;
+  `DELETE /auth/me` exige autenticação, apaga tokens Spotify, todas as sessões do usuário, snapshots
+  musicais e respostas do Vibe Check, e anonimiza a identidade.
+- **Arquivos criados:** `backend/app/services/privacy_service.py`,
+  `backend/tests/test_pb03_privacy.py`.
+- **Arquivos alterados:** `backend/app/api/auth.py`, `README.md`, este plano.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-03) — sessão invalidada, 401 pós-logout,
   remoção efetiva, não exposição de terceiros.
 - **Evidências necessárias:** rota autenticada retornando não autorizada após logout; dados removidos.
-- **Riscos:** R-08.
-- **Bloqueios:** depende de PB-02.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar logout com invalidação de sessão e fluxo de remoção.
+- **Riscos:** R-08. Excluir fisicamente `users` acionaria `ON DELETE CASCADE` nas salas hospedadas e
+  apagaria artefatos de terceiros; por isso a linha é preservada como sujeito anônimo.
+- **Decisões:** `spotify_id` recebe identificador aleatório irreversível, `display_name` vira
+  `Usuário removido` e `image_url` é apagada. Salas, memberships e runs compartilhados permanecem
+  referenciando apenas a identidade anônima; um login futuro com o mesmo Spotify cria usuário novo.
+- **Migrações:** nenhuma; o modelo atual suporta a política.
+- **Bloqueios:** nenhum técnico; PB-02 validado. A Sprint 4 foi aberta pela exceção processual
+  autorizada pelo usuário, preservada na visão geral.
+- **Resultado da implementação:** logout idempotente; sessão atual invalidada no banco; cookie
+  removido; deleção autenticada e atômica dos dados pessoais; identidade anonimizada sem afetar o
+  outro integrante nem apagar a sala hospedada; respostas 204 vazias não expõem tokens.
+- **Resultado dos testes técnicos:** `test_pb03_privacy.py` + regressão PB-02 **21 passed / 0 failed**;
+  suíte backend completa **223 passed / 6 skipped / 0 failed**; build Vite **45 módulos**;
+  `compileall`, `pip check` e `git diff --check` aprovados. Migração não aplicável.
+- **Próxima ação exata:** QA executa `CT-PB03-01..04`, com atenção à preservação de salas/dados de
+  terceiros e à remoção de todas as sessões, tokens, snapshots e respostas pessoais.
 
 #### PB-18 — Enriquecimento de contexto com Last.fm
 
@@ -1417,6 +1438,8 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 | 2026-07-12 | Migração inicial cria somente a tabela `users`. | Validar upgrade/downgrade real sem antecipar tabelas de histórias futuras. |
 | 2026-07-13 | Reorganizar a execução por Sprint (mantendo M0–M5 como referência) e criar `PLANO_TESTES.md`. | Alinhar o processo ao fluxo obrigatório Sprint → PB → testes → validação. |
 | 2026-07-17 | Reabrir PB-17 dentro da Sprint 3 sem reabrir PB-11/PB-12. | Teste real em grupo mostrou que o contexto é persistido, mas não consumido pelo motor; CT-PB17-05 e CT-S3-INT-02 contradizem o “não aplicável” da validação histórica. |
+| 2026-07-18 | Abrir a Sprint 4 por exceção explícita do usuário, sem promover evidências pendentes a `VALIDADO`. | A autorização libera implementação, mas a dívida de QA continua rastreada. |
+| 2026-07-18 | No PB-03, anonimizar `users` em vez de excluir fisicamente a linha. | A FK do host usa `ON DELETE CASCADE`; exclusão apagaria salas e artefatos de terceiros. |
 
 ## 14. Riscos e bloqueios atuais
 
@@ -1437,45 +1460,39 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 3, branch `feat/SPRINT03/PB17`.
-- **PB em andamento:** nenhum — PB-07 `VALIDADO` (QA 2026-07-18). Todos os PBs da Sprint 3 validados.
-- **Último resultado concluído:** QA revalidou a correção `DEF-S3-INT-03-01` (commit `088597b`) de
-  forma independente: reprodutor QA intocado `tests/test_s3_integration_qa.py` → 5 passed;
-  sondagem adversarial `tests/test_s3_vibe_scoring_qa.py` → 6 passed; suíte completa **217 passed /
-  6 skipped / 0 failed**. Defeito fechado.
-- **Onde parou:** ciclo integrado aprovado na parte automatizável; resta só a demo e2e real. Sessão
-  interrompida por limite de requisições da API (retomar depois). Intenção do time: seguir para a
-  Sprint 4 na próxima sessão.
-- **Próxima ação exata (na retomada, nesta ordem):**
-  1. Conduzir a demonstração e2e **real** (`CT-S3-INT-01`) com conta Spotify Premium (criar playlist
-     variando a ocasião) e emitir `SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO`. Requer credenciais/
-     contas autorizadas (Development Mode, ≤5 usuários).
-  2. Resolver a **dívida processual** antes de abrir a Sprint 4: assinar as validações integradas
-     pendentes das Sprints 1 e 2 (`CT-S1-INT-*`, `CT-S2-INT-*` + regressão) — nunca executadas.
-     Só então a Sprint 4 (PB-03, PB-18, PB-19, PB-20) pode iniciar.
+- **Sprint/branch de trabalho:** Sprint 4, branch de entrega `feat/SPRINT04/PB03`.
+- **PB em andamento:** PB-03 `AGUARDANDO-QA` — logout e remoção/anonimização implementados.
+- **Último resultado concluído:** `POST /auth/logout` invalida a sessão atual; `DELETE /auth/me`
+  apaga tokens, todas as sessões, snapshots e respostas do Vibe Check e anonimiza a identidade sem
+  remover a sala hospedada nem dados do outro integrante. Suíte completa **223 passed / 6 skipped /
+  0 failed**; build Vite aprovado.
+- **Onde parou:** implementação e testes técnicos do PB-03 concluídos; handoff para QA.
+- **Próxima ação exata:** QA executa `CT-PB03-01..04`. Se `VALIDADO`, o Dev pode iniciar PB-18;
+  se `REPROVADO`, corrige somente PB-03. As validações integradas diferidas das Sprints 1–3 continuam
+  registradas pela exceção e não foram promovidas a concluídas.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py tests/test_s3_vibe_scoring_qa.py -q
-  APP_ENV=test .venv/bin/pytest -q   # regressão completa
+  APP_ENV=test .venv/bin/pytest tests/test_pb03_privacy.py \
+    tests/test_pb02_auth.py tests/test_pb02_auth_qa.py -q
+  APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
+  cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum de código. (a) Encerramento formal da Sprint 3 aguarda a demo e2e real
-  `CT-S3-INT-01`; (b) abertura da Sprint 4 aguarda as validações integradas das Sprints 1–3.
+- **Bloqueios:** nenhum técnico no PB-03. Aguarda QA. Dívidas integradas das Sprints 1–3 preservadas
+  pela exceção explícita do usuário.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 40 testes focados, suíte completa 211 passed / 6 skipped,
+- [x] Rodei as verificações relevantes. — 21 testes focados, suíte completa 223 passed / 6 skipped,
   build Vite, `compileall`, `pip check` e `git diff --check`.
-- [x] Comparei o comportamento real com os critérios existentes. — o reprodutor de
-  `CT-S3-INT-03` agora prova baixa tolerância a melancolia alterando a ordem; teste adversarial do Dev
-  confirma que o sinal não inverte afinidade forte.
-- [x] Atualizei status sem declarar validação independente. — PB-07 `AGUARDANDO-QA`; o caso no plano
-  de testes permanece `Reprovado` até o QA reexecutá-lo.
-- [x] Registrei decisões ou bloqueios novos. — sem migração; peso do Vibe Check centralizado em 20%.
+- [x] Comparei o comportamento real com os critérios existentes. — logout, 401 pós-logout, remoção
+  pessoal e preservação de terceiros cobertos com persistência inspecionada.
+- [x] Atualizei status sem declarar validação independente. — PB-03 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — anonimização preserva integridade; sem migração.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — plano de execução e diário de retomada.
+- [x] Atualizei a documentação afetada. — README, plano de execução e diário de retomada.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit da correção do PB-07 — incluído no handoff desta sessão.
+- [x] Commit do PB-03 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

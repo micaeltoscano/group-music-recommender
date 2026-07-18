@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.db.models import User, SpotifyToken, AppSession
 from app.clients import spotify_client, crypto
 from app.config import settings
+from app.services.privacy_service import invalidate_session, remove_personal_data
 
 router = APIRouter()
 
@@ -165,3 +166,36 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         "display_name": user.display_name,
         "image_url": user.image_url
     }
+
+
+def _clear_session_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=settings.secure_cookies,
+        samesite="lax",
+    )
+
+
+@router.post("/logout", status_code=204)
+def logout(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> None:
+    """Invalida a sessao atual no backend e remove o cookie do navegador."""
+
+    invalidate_session(db, request.cookies.get(SESSION_COOKIE_NAME))
+    _clear_session_cookie(response)
+
+
+@router.delete("/me", status_code=204)
+def delete_current_user(
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    """Remove dados pessoais e anonimiza a identidade sem apagar dados do grupo."""
+
+    remove_personal_data(db, current_user["id"])
+    _clear_session_cookie(response)

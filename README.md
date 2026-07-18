@@ -71,7 +71,9 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 ### 3.2 Segurança OAuth e privacidade
 
 - **OAuth:** parâmetro `state` contra CSRF; validar `redirect_uri`; cookie de sessão **httpOnly + Secure (prod) + SameSite** adequado; nunca expor nem **logar** access/refresh token; `logout` invalida `app_session`.
-- **Retenção:** salas efêmeras expiram; snapshots expiram; usuário pode fazer logout e apagar seus dados.
+- **Retenção:** salas efêmeras expiram; snapshots expiram; `POST /auth/logout` invalida a sessão
+  atual e `DELETE /auth/me` apaga tokens, sessões, snapshots e respostas pessoais. A identidade é
+  anonimizada para preservar salas/playlists compartilhadas sem manter vínculo com a conta Spotify.
 - **LLM e privacidade:** **não** enviar dados brutos do Spotify ao LLM. O LLM recebe só o **contexto do host** e critérios **agregados/anônimos** quando necessário.
 - **Explicabilidade com privacidade:** motivos legíveis **sem** expor dados sensíveis de outros membros. Evitar "Pedro odeia funk"; preferir agregado: "alguns membros indicaram baixa tolerância a músicas muito tristes".
 
@@ -110,7 +112,8 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 
 ## 6. Rotas
 
-**Auth:** `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` · `GET /auth/me`
+**Auth:** `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` · `GET /auth/me` ·
+`DELETE /auth/me`
 **Rooms:** `POST /rooms` · `POST /rooms/{code}/join` · `GET /rooms/{code}` · `PUT /rooms/{code}/context` · `PUT /rooms/{code}/mode` · `POST /rooms/{code}/generate` · `GET /rooms/{code}/result`
 **Vibe Check:** `GET /rooms/{code}/vibe-check` · `POST /rooms/{code}/vibe-check`
 **Music data:** `GET /me/top` · `POST /me/refresh-music-snapshot`
