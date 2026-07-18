@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — abertura excepcional autorizada em 2026-07-18** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 VALIDADO; PB-18/19/20 A-FAZER (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1244,8 +1244,13 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-03 — Logout e remoção de dados
 
-- **Status:** AGUARDANDO-QA — logout e remoção/anonimização implementados em 2026-07-18 após exceção
-  explícita de abertura da Sprint 4; testes técnicos verdes, falta validação independente.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB03-01..04 verificados independentemente. Logout
+  invalida só a sessão atual (outra sessão do mesmo usuário sobrevive); `DELETE /auth/me` exige
+  autenticação (401 sem sessão), apaga tokens/todas as sessões/snapshots/respostas de Vibe Check e
+  anonimiza a identidade; apagar o **host** preserva a sala e os dados do convidado (sem colateral de
+  `ON DELETE CASCADE`); respostas 204 sem token. Sondagem QA `backend/tests/test_pb03_privacy_qa.py`
+  (6 casos) + Dev (6) verdes; suíte completa 229 passed / 6 skipped / 0 failed. Sem defeitos.
+  Relatório: [`docs/relatorios-testes/PB-03.md`](../relatorios-testes/PB-03.md).
 - **Objetivo:** encerrar sessão (invalidando-a no backend) e excluir/anonimizar dados pessoais sem
   expor tokens ou dados de terceiros.
 - **Dependências:** PB-02.

@@ -1216,20 +1216,20 @@ Usuário autenticado com dados (sessão, tokens, participação em sala).
 #### Casos de teste
 ##### CT-PB03-01 — Logout invalida a sessão
 - **Tipo:** segurança · **Prioridade:** Alta · **Resultado esperado:** `POST /auth/logout` invalida
-  `app_session`. · **Automatizável:** Sim · **Status:** Não executado
+  `app_session`. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB03-02 — Rotas autenticadas negam acesso após logout
 - **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** `GET /auth/me` e rotas de sala
-  → 401/403 após logout. · **Automatizável:** Sim · **Status:** Não executado
+  → 401/403 após logout. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB03-03 — Remoção exclui/anonimiza dados pessoais
 - **Tipo:** privacidade · **Prioridade:** Alta · **Resultado esperado:** dados previstos removidos/
-  anonimizados; tokens apagados. · **Automatizável:** Sim · **Status:** Não executado
+  anonimizados; tokens apagados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB03-04 — Remoção não afeta terceiros
 - **Tipo:** privacidade/integridade · **Prioridade:** Alta · **Cenário:** usuário em sala com outros.
 - **Resultado esperado:** dados dos demais membros intactos; sem exposição de tokens. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ### PB-18 — Enriquecimento de contexto com Last.fm
 
