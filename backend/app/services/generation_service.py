@@ -9,7 +9,14 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from app.clients import llm_client, spotify_client
-from app.db.models import MusicSession, MusicSessionMember, PlaylistRun, PlaylistRunTrack, User
+from app.db.models import (
+    MusicSession,
+    MusicSessionMember,
+    PlaylistRun,
+    PlaylistRunTrack,
+    User,
+    VibeCheckAnswer,
+)
 from app.engine.candidates import CandidateTrack, generate_candidate_pool
 from app.engine.context_scoring import (
     ContextCriteria,
@@ -19,7 +26,12 @@ from app.engine.context_scoring import (
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
 from app.engine.scoring import calculate_group_score
 from app.engine.taste import UserTasteProfile
-from app.engine.weights import CONSENSUS_MODES
+from app.engine.vibe_scoring import (
+    VibePreferences,
+    aggregate_vibe_preferences,
+    calculate_vibe_score,
+)
+from app.engine.weights import CONSENSUS_MODES, VIBE_CHECK_INFLUENCE
 from app.services.music_service import get_or_refresh_snapshot
 from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
 
@@ -329,8 +341,9 @@ def _rank_candidates(
     profiles: list[UserTasteProfile],
     room_mode: str | None,
     context: ContextCriteria,
+    vibe_preferences: VibePreferences | None = None,
 ) -> list[CandidateTrack]:
-    """Ordena candidatas pelo consenso do grupo e pela adequação contextual."""
+    """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
     mode_key = "safe_party" if room_mode == "Festa Segura" else "democratic"
     mode_config = CONSENSUS_MODES[mode_key]
     scored: list[dict[str, Any]] = []
@@ -344,6 +357,14 @@ def _rank_candidates(
             mode_config["group"],
             context_score=context_score,
         )
+        if vibe_preferences is not None:
+            vibe_score = calculate_vibe_score(candidate, vibe_preferences)
+            group_data["group_score"] = round(
+                (group_data["group_score"] * (1.0 - VIBE_CHECK_INFLUENCE))
+                + (vibe_score * VIBE_CHECK_INFLUENCE),
+                4,
+            )
+            group_data["vibe_score"] = vibe_score
         evaluation = evaluate_candidate_fairness(group_data, mode_config)
         evaluation["candidate"] = candidate
         scored.append(evaluation)
@@ -410,6 +431,21 @@ async def execute_generation(
         if not candidates:
             raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
         candidates = enrich_candidate_genres(candidates, artist_genres)
+        vibe_answers = (
+            db.query(VibeCheckAnswer)
+            .filter(
+                VibeCheckAnswer.session_id == room.id,
+                VibeCheckAnswer.user_id.in_(member_ids),
+            )
+            .all()
+        )
+        vibe_preferences = aggregate_vibe_preferences(
+            (
+                (answer.energy, answer.valence, answer.popularity)
+                for answer in vibe_answers
+            ),
+            total_members=len(member_ids),
+        )
         context_criteria = ContextCriteria(
             occasion=llm_context.occasion,
             mood=llm_context.mood,
@@ -423,6 +459,7 @@ async def execute_generation(
             profiles,
             room.mode,
             context_criteria,
+            vibe_preferences,
         )
 
         host = db.get(User, host_id)

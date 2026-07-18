@@ -16,6 +16,10 @@ DEFAULT_GROUP_WEIGHTS = {
     "diversity": 0.05,
 }
 
+# O Vibe Check ajusta o resultado na margem, sem substituir os componentes
+# centrais de afinidade, consenso, justica e contexto.
+VIBE_CHECK_INFLUENCE = 0.20
+
 CONSENSUS_MODES = {
     "democratic": {
         "individual": {

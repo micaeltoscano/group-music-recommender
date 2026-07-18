@@ -29,11 +29,17 @@ QUESTIONS = [
     ),
     VibeCheckQuestion(
         id="valence",
-        text="Qual a vibe emocional?",
+        text="Quanto espaço a playlist pode dar para músicas melancólicas?",
         options=[
-            VibeCheckOption(id="A", letter="A", text="Melancólico e reflexivo", value=0.1),
-            VibeCheckOption(id="B", letter="B", text="Neutro / Equilibrado", value=0.5),
-            VibeCheckOption(id="C", letter="C", text="Pra cima e feliz", value=0.9),
+            VibeCheckOption(
+                id="A", letter="A", text="Quase nenhum, quero evitar tristeza", value=0.1
+            ),
+            VibeCheckOption(
+                id="B", letter="B", text="Um pouco, de forma equilibrada", value=0.5
+            ),
+            VibeCheckOption(
+                id="C", letter="C", text="Pode ter uma vibe bem reflexiva", value=0.9
+            ),
         ],
     ),
     VibeCheckQuestion(
