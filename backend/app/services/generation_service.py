@@ -19,6 +19,7 @@ from app.db.models import (
     VibeCheckAnswer,
 )
 from app.engine.candidates import CandidateTrack, generate_candidate_pool
+from app.engine.clustering import TasteClusteringResult, cluster_taste_profiles
 from app.engine.context_scoring import (
     ContextCriteria,
     calculate_context_score,
@@ -388,6 +389,7 @@ def _rank_candidates(
     room_mode: str | None,
     context: ContextCriteria,
     vibe_preferences: VibePreferences | None = None,
+    taste_clusters: TasteClusteringResult | None = None,
 ) -> list[CandidateTrack]:
     """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
     mode_key = ROOM_MODE_KEYS.get(room_mode or "Democrático", "democratic")
@@ -395,6 +397,11 @@ def _rank_candidates(
     scored: list[dict[str, Any]] = []
 
     for candidate in candidates:
+        candidate.source_cluster_ids = (
+            taste_clusters.cluster_ids_for_members(candidate.source_user_ids)
+            if taste_clusters is not None
+            else ()
+        )
         context_score = calculate_context_score(candidate, context)
         diversity_score = calculate_candidate_diversity_score(candidate, profiles)
         group_data = calculate_group_score(
@@ -475,6 +482,7 @@ async def execute_generation(
                     if isinstance(genre, str) and genre.strip()
                 )
 
+        taste_clusters = cluster_taste_profiles(profiles)
         candidates, _ = generate_candidate_pool(track_snapshots)
         if not candidates:
             raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
@@ -512,6 +520,7 @@ async def execute_generation(
             room.mode,
             context_criteria,
             vibe_preferences,
+            taste_clusters,
         )
 
         host = db.get(User, host_id)

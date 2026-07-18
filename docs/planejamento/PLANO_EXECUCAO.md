@@ -145,7 +145,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
-| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — PB-21 VALIDADO; PB-22/23/24 A-FAZER (Sprint não validada)** |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — primeiro item VALIDADO; segundo AGUARDANDO-QA; demais A-FAZER** |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
 - **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
@@ -1540,16 +1540,46 @@ as validações integradas pendentes das Sprints 1–4.
 - **Riscos/limitações:** o sinal de novidade preserva a heurística existente do PB-11 (datas iniciadas
   em `202` são novas); não estima idade relativa em anos. Diversidade sem gêneros usa o artista como
   fallback. O recurso permanece opt-in para permitir calibração antes de habilitação geral.
-- **Próxima ação exata:** QA executa `CT-PB21-01..06`, com atenção ao bloqueio server-side da flag,
-  à inversão verificável do ranking e à preservação de veto/representação. Não iniciar PB-22 antes do
-  veredito `VALIDADO`.
+- **Próxima ação exata:** encerrado pelo QA; o portão para PB-22 foi liberado.
 
 #### PB-22 — Agrupamento de perfis musicais
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; agrupamento puro e
+  determinístico integrado ao pipeline, com 10 testes técnicos focados e regressão verde.
 - **Objetivo:** identificar subgrupos de afinidade a partir de dados autorizados, deterministicamente.
-- **Dependências:** PB-09.
-- **Próxima ação exata:** aguardar PB-21 `VALIDADO`.
+- **Dependências:** PB-09 `VALIDADO`; portão anterior PB-21 `VALIDADO` pelo relatório de QA.
+- **Critérios de aceitação:**
+  1. O agrupamento consome somente `tracks`, `artists` e `genres` de `UserTasteProfile`, derivados dos
+     snapshots temporários já autorizados; o resultado não replica dados musicais brutos.
+  2. Menos de três perfis, perfil com menos de dois sinais ou nenhum par acima do limiar produz
+     `insufficient_evidence`; grupo homogêneo produz `single_group` sem divisão artificial.
+  3. Perfis são ordenados por `user_id`, pares e componentes têm ordem estável e os IDs
+     `cluster-XX` são reproduzíveis para a mesma coleção de entrada.
+  4. O resultado completo entra em `_rank_candidates` e cada candidata recebe os IDs transitórios
+     dos clusters de seus membros de origem, disponíveis ao motor sem mudar o score no PB-22.
+- **Plano implementado:** reutilizar a compatibilidade ponderada do PB-09; formar componentes conexos
+  com limiar 0,35; modelar resultados imutáveis com status/reason; integrar após a criação dos perfis
+  e antes do ranqueamento; não persistir clusters nem antecipar faixas-ponte.
+- **Arquivos criados:** `backend/app/engine/clustering.py` e
+  `backend/tests/test_pb22_taste_clustering.py`.
+- **Arquivos alterados:** `backend/app/engine/candidates.py`,
+  `backend/app/services/generation_service.py`, `README.md`, `PLANO_TESTES.md` e este plano.
+- **Migração/configuração:** não aplicável; resultado existe somente em memória durante a geração.
+- **Testes obrigatórios detalhados:** `CT-PB22-01..06` no `PLANO_TESTES.md`, deixados como
+  `Não executado` até a validação independente.
+- **Resultado dos testes técnicos:** foco PB-22 **10 passed / 0 failed**; regressão relacionada
+  PB-09/PB-10/PB-11/PB-12/PB-21/PB-22 **52 passed / 0 failed**; suíte backend completa
+  **312 passed / 6 skipped / 0 failed**; `compileall`, `pip check`, build Vite (**46 módulos**) e
+  `git diff --check` aprovados. `ruff` está configurado, mas o executável não está instalado no
+  ambiente virtual, portanto essa checagem não foi executada.
+- **Riscos/limitações:** o limiar 0,35 é uma heurística inicial; componentes conexos podem conter um
+  integrante isolado quando outro subgrupo válido existe. Clusters não alteram ranking, não são
+  persistidos e não são expostos ao frontend; marcação de faixas-ponte pertence exclusivamente ao
+  PB-23.
+- **Bloqueios:** nenhum técnico.
+- **Próxima ação exata:** QA executa `CT-PB22-01..06`, revisa especialmente estados sem evidência,
+  determinismo sob reordenação e disponibilidade transitória no motor. Não iniciar PB-23 antes do
+  veredito `VALIDADO`.
 
 #### PB-23 — Identificação de músicas-ponte
 
@@ -1625,37 +1655,37 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB21`.
-- **PB em andamento:** PB-21 `AGUARDANDO-QA` — Modo Descoberta opt-in implementado.
-- **Último resultado concluído:** feature flag e catálogo server-side de modos, pesos de
-  novidade/diversidade, veto/representação preservados, explicação persistida e seletor frontend
-  orientado pela API. Suíte completa **288 passed / 6 skipped / 0 failed**; build Vite aprovado.
-- **Onde parou:** implementação e testes técnicos do PB-21 concluídos; handoff para QA.
-- **Próxima ação exata:** QA executa `CT-PB21-01..06`. Se `REPROVADO`, o Dev corrige somente PB-21;
-  se `VALIDADO`, pode iniciar PB-22. As validações integradas das Sprints 1–4 permanecem pendentes e
+- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB22`.
+- **PB em andamento:** PB-22 `AGUARDANDO-QA` — agrupamento determinístico implementado.
+- **Último resultado concluído:** estados explícitos de evidência, clusters estáveis por similaridade
+  do PB-09 e IDs de origem disponíveis nas candidatas do pipeline. Suíte completa
+  **312 passed / 6 skipped / 0 failed**; build Vite aprovado.
+- **Onde parou:** implementação e testes técnicos do PB-22 concluídos; handoff para QA.
+- **Próxima ação exata:** QA executa `CT-PB22-01..06`. Se `REPROVADO`, o Dev corrige somente PB-22;
+  se `VALIDADO`, pode iniciar PB-23. As validações integradas das Sprints 1–4 permanecem pendentes e
   não foram promovidas a concluídas pela abertura operacional da Sprint 5.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb21_discovery_mode.py -o addopts='' -q
+  APP_ENV=test .venv/bin/pytest tests/test_pb22_taste_clustering.py -o addopts='' -q
   APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum técnico no PB-21. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
+- **Bloqueios:** nenhum técnico no PB-22. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
   pela exceção explícita do usuário.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 6 testes focados; suíte completa 288 passed / 6 skipped;
-  build Vite, `compileall`, `pip check`, Compose e `git diff --check`.
-- [x] Comparei o comportamento real com os critérios existentes. — flag, pesos, ranking,
-  rejeição/representação, explicação e UI cobertos.
-- [x] Atualizei status sem declarar validação independente. — PB-21 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — catálogo server-side e recurso opt-in.
+- [x] Rodei as verificações relevantes. — 10 testes focados; 52 relacionados; suíte completa
+  312 passed / 6 skipped; build Vite, `compileall`, `pip check` e `git diff --check`.
+- [x] Comparei o comportamento real com os critérios existentes. — dados temporários, estados sem
+  evidência, determinismo e disponibilidade no motor cobertos.
+- [x] Atualizei status sem declarar validação independente. — PB-22 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — limiar 0,35, clusters transitórios e `ruff` ausente.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — README, plano de execução e diário de retomada.
+- [x] Atualizei a documentação afetada. — README, planos de testes/execução e diário de retomada.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit do PB-21 — incluído no handoff desta sessão.
+- [x] Commit do PB-22 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

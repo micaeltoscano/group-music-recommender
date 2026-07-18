@@ -6,10 +6,17 @@ from typing import Any, Dict, List, Set, Tuple
 class CandidateTrack:
     """Uma música candidata agregada no pool."""
 
-    def __init__(self, track_id: str, raw_data: Dict[str, Any], source_user_ids: Set[int]):
+    def __init__(
+        self,
+        track_id: str,
+        raw_data: Dict[str, Any],
+        source_user_ids: Set[int],
+        source_cluster_ids: Tuple[str, ...] = (),
+    ):
         self.id = track_id
         self.raw_data = raw_data
         self.source_user_ids = source_user_ids
+        self.source_cluster_ids = source_cluster_ids
 
 
 class DiscardedTrack:

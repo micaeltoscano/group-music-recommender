@@ -57,7 +57,7 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 - Grupos persistentes.
 - Endpoints descontinuados do Spotify.
 - Lyrics Theme Classifier em produção (fica como extra acadêmico/offline/opcional).
-- Group Taste Clustering / Modo Ponte Musical (arquitetura prevista, impl. só se sobrar tempo).
+- Modo Ponte Musical e balanceamento entre subgrupos (arquitetura prevista no pós-MVP).
 - Aprendizado (Learning to Rank, bandits, perfis persistentes) — só roadmap.
 
 ### 3.1 Limites e restrições operacionais (fechados do MVP)
@@ -210,7 +210,12 @@ Se alguém ficou muito baixo → correção na seleção final (troca marginal p
 
 **Rejeições explícitas** (Vibe Check ou campo simples): evitar tristes/explícitas/lentas, gêneros/artistas específicos, muito desconhecidas → geram `blocked_genres`, `blocked_artists`, `negative_tags`, `veto_strength`, `rejection_penalty`. Regra: alta rejeição por alguém derruba muito a faixa mesmo agradando outros.
 
-**[FUT] Group Taste Clustering:** detectar subgrupos (pop/funk × rock/indie × eletrônico) e alternar consenso geral / faixas por subgrupo / faixas-ponte. Se sobrar tempo, versão simples por similaridade entre usuários.
+**[PB-22] Group Taste Clustering:** o motor puro calcula a similaridade já definida no PB-09 entre
+perfis temporários autorizados e forma componentes determinísticos com limiar 0,35. O resultado
+distingue evidência insuficiente, grupo único e subgrupos distintos; contém somente IDs de membros,
+IDs de cluster e similaridades, sem persistir ou replicar dados musicais brutos. Cada candidata fica
+associada transitoriamente aos clusters de seus membros de origem. Identificação de faixas-ponte e
+balanceamento permanecem nos PB-23/PB-24 e não alteram o ranking no PB-22.
 
 ## 14. Modos de consenso
 
