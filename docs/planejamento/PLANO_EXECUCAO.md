@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03/PB-18/PB-19 VALIDADOS; PB-20 AGUARDANDO-QA (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **PBs individuais VALIDADOS (PB-03/18/19/20); falta a validação integrada (`CT-S4-INT-*`)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1395,8 +1395,14 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-20 — Feedback pós-playlist
 
-- **Status:** AGUARDANDO-QA — implementação e testes técnicos concluídos em 2026-07-18; aguarda
-  validação independente de `CT-PB20-01..05`.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB20-01..05 verificados independentemente. Feedback por
+  faixa e geral persistidos; **isolamento de execução** confirmado (faixa de outro run → 404; membro
+  de outra sala → 403; não autenticado → 401, nada persiste); limites 0–5 e comentário validados
+  (422); upsert idempotente sem duplicar; `future_use_notice` na API. Interação com PB-03 verificada:
+  a remoção de conta também apaga os feedbacks pessoais sem afetar terceiros. Sondagem QA
+  `backend/tests/test_pb20_feedback_qa.py` (10 casos) + Dev (9) verdes; suíte completa 282 passed /
+  6 skipped / 0 failed. Migração `0014` reversível. Sem defeitos. Relatório:
+  [`docs/relatorios-testes/PB-20.md`](../relatorios-testes/PB-20.md).
 - **Objetivo:** coletar feedback por faixa (like/dislike/more_like_this/never_again) e geral
   (representação/satisfação), associado à execução correta, sem uso no ranking do MVP.
 - **Dependências:** PB-16.

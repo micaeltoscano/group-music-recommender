@@ -1314,23 +1314,23 @@ Execução concluída (PB-16); modelos de feedback migrados.
 #### Casos de teste
 ##### CT-PB20-01 — Feedback por faixa
 - **Tipo:** API · **Prioridade:** Média · **Resultado esperado:** like/dislike/more_like_this/never_again
-  registrados. · **Automatizável:** Sim · **Status:** Não executado
+  registrados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB20-02 — Feedback geral (representação/satisfação)
 - **Tipo:** API · **Prioridade:** Média · **Resultado esperado:** notas persistidas. · **Automatizável:**
-  Sim · **Status:** Não executado
+  Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB20-03 — Associação à execução correta
 - **Tipo:** integridade · **Prioridade:** Alta · **Resultado esperado:** feedback vinculado ao
-  `playlist_run` e usuário certos. · **Automatizável:** Sim · **Status:** Não executado
+  `playlist_run` e usuário certos. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB20-04 — Não-membro não registra feedback
 - **Tipo:** autorização · **Prioridade:** Alta · **Cenário:** usuário fora da sala da execução.
-- **Resultado esperado:** 403; nada registrado. · **Automatizável:** Sim · **Status:** Não executado
+- **Resultado esperado:** 403; nada registrado. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB20-05 — Aviso de uso futuro explícito
 - **Tipo:** usabilidade · **Prioridade:** Baixa · **Resultado esperado:** UI informa que o feedback é
-  para evoluções futuras. · **Automatizável:** Parcialmente · **Status:** Não executado
+  para evoluções futuras. · **Automatizável:** Parcialmente · **Status:** Aprovado (QA 2026-07-18)
 
 > **Qualidade, robustez e documentação (antigo PB-20)** deixou de ser um PB e virou a **Definition of
 > Done**, verificada em **todos** os PBs (não só na Sprint 4):
