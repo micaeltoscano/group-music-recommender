@@ -27,6 +27,7 @@ from app.engine.context_scoring import (
     calculate_context_score,
     enrich_candidate_genres,
 )
+from app.engine.contextual_pool import blend_contextual_candidates
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
 from app.engine.scoring import calculate_candidate_diversity_score, calculate_group_score
 from app.engine.sequencer import SequencerTrack, sequence_tracks
@@ -39,6 +40,7 @@ from app.engine.vibe_scoring import (
 )
 from app.engine.weights import CONSENSUS_MODES, VIBE_CHECK_INFLUENCE
 from app.services.context_enrichment_service import enrich_candidates_context
+from app.services.contextual_pool_service import discover_context_candidates
 from app.services.music_service import get_or_refresh_snapshot
 from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
 
@@ -448,6 +450,8 @@ def _rank_candidates(
     bridge_tracks_enabled: bool = False,
     subgroup_balancing_enabled: bool = False,
     subgroup_max_share: float = 0.60,
+    contextual_pool_enabled: bool = False,
+    contextual_pool_share: float = 0.50,
 ) -> list[CandidateTrack]:
     """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
     mode_key = ROOM_MODE_KEYS.get(room_mode or "Democrático", "democratic")
@@ -493,12 +497,28 @@ def _rank_candidates(
             )
             group_data["vibe_score"] = vibe_score
         evaluation = evaluate_candidate_fairness(group_data, mode_config)
+        evaluation["context_score"] = context_score
         evaluation["candidate"] = candidate
         scored.append(evaluation)
 
     scored.sort(key=lambda item: item["penalized_score"], reverse=True)
     target_size = min(50, len(scored))
     selected = elevate_least_represented(scored, target_size, len(profiles))
+    if contextual_pool_enabled:
+        selected_candidate_ids = {
+            id(item["candidate"])
+            for item in selected
+        }
+        prioritised = selected + [
+            item
+            for item in scored
+            if id(item["candidate"]) not in selected_candidate_ids
+        ]
+        selected = blend_contextual_candidates(
+            prioritised,
+            target_size=target_size,
+            contextual_share=contextual_pool_share,
+        )
     if subgroup_balancing_enabled:
         balance = balance_subgroup_candidates(
             selected,
@@ -584,6 +604,19 @@ async def execute_generation(
         # da faixa → artista e cai para os gêneros já anexados acima (ou
         # consenso), persistindo fonte/confiança e reutilizando cache válido.
         candidates = await enrich_candidates_context(db, candidates)
+        context_criteria = ContextCriteria(
+            occasion=llm_context.occasion,
+            mood=llm_context.mood,
+            energy=llm_context.energy,
+            tags_positive=tuple(llm_context.tags_positive),
+            tags_negative=tuple(llm_context.tags_negative),
+            avoid=tuple(llm_context.avoid),
+        )
+        contextual_candidates = await discover_context_candidates(
+            candidates,
+            context_criteria,
+        )
+        candidates.extend(contextual_candidates)
         vibe_answers = (
             db.query(VibeCheckAnswer)
             .filter(
@@ -599,14 +632,6 @@ async def execute_generation(
             ),
             total_members=len(member_ids),
         )
-        context_criteria = ContextCriteria(
-            occasion=llm_context.occasion,
-            mood=llm_context.mood,
-            energy=llm_context.energy,
-            tags_positive=tuple(llm_context.tags_positive),
-            tags_negative=tuple(llm_context.tags_negative),
-            avoid=tuple(llm_context.avoid),
-        )
         ranked_candidates = _rank_candidates(
             candidates,
             profiles,
@@ -617,6 +642,8 @@ async def execute_generation(
             bridge_tracks_enabled=settings.bridge_tracks_enabled,
             subgroup_balancing_enabled=settings.subgroup_balancing_enabled,
             subgroup_max_share=settings.subgroup_max_share,
+            contextual_pool_enabled=bool(contextual_candidates),
+            contextual_pool_share=settings.contextual_pool_share,
         )
         run.subgroup_balancing_applied = any(
             candidate.subgroup_balancing_applied for candidate in ranked_candidates

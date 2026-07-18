@@ -170,7 +170,12 @@ def _apply(candidate: CandidateTrack, result: ContextEnrichment) -> CandidateTra
     raw_data["context_tags"] = list(result.selected_tags)
     raw_data["context_source"] = result.source
     raw_data["context_confidence"] = result.confidence
-    return CandidateTrack(candidate.id, raw_data, set(candidate.source_user_ids))
+    return CandidateTrack(
+        candidate.id,
+        raw_data,
+        set(candidate.source_user_ids),
+        origin=candidate.origin,
+    )
 
 
 async def enrich_candidates_context(

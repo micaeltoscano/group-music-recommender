@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     lastfm_api_key: str | None = None
     lastfm_timeout_seconds: float = Field(default=5.0, gt=0)
     lastfm_cache_ttl_days: int = Field(default=30, ge=1)
+    contextual_pool_share: float = Field(default=0.50, ge=0.0, le=0.60)
+    contextual_pool_tag_count: int = Field(default=3, ge=1, le=5)
+    contextual_pool_seed_count: int = Field(default=5, ge=1, le=10)
+    contextual_pool_tracks_per_source: int = Field(default=4, ge=1, le=10)
+    contextual_pool_max_candidates: int = Field(default=32, ge=1, le=50)
     fernet_key: str | None = None
 
     # --- LLM local (PB-17) ----------------------------------------------------

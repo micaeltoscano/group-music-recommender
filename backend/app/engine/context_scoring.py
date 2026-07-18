@@ -294,6 +294,11 @@ def enrich_candidate_genres(
         raw_data = dict(candidate.raw_data)
         raw_data["genres"] = sorted(genres)
         enriched.append(
-            CandidateTrack(candidate.id, raw_data, set(candidate.source_user_ids))
+            CandidateTrack(
+                candidate.id,
+                raw_data,
+                set(candidate.source_user_ids),
+                origin=candidate.origin,
+            )
         )
     return enriched

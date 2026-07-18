@@ -17,6 +17,7 @@ class CandidateTrack:
         bridge_cluster_ids: Tuple[str, ...] = (),
         subgroup_balancing_applied: bool = False,
         balanced_cluster_id: str | None = None,
+        origin: str = "spotify_top",
     ):
         self.id = track_id
         self.raw_data = raw_data
@@ -27,6 +28,7 @@ class CandidateTrack:
         self.bridge_cluster_ids = bridge_cluster_ids
         self.subgroup_balancing_applied = subgroup_balancing_applied
         self.balanced_cluster_id = balanced_cluster_id
+        self.origin = origin
 
 
 class DiscardedTrack:

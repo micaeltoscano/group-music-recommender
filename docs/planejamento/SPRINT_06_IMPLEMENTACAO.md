@@ -27,8 +27,8 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 | Ordem | Item | Objetivo | Estado do implementador |
 |---:|---|---|---|
 | 1 | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
-| 2 | PB-26 | Pool contextual híbrido | EM IMPLEMENTAÇÃO |
-| 3 | PB-27 | Acompanhamento compartilhado da geração | A FAZER |
+| 2 | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
+| 3 | PB-27 | Acompanhamento compartilhado da geração | EM IMPLEMENTAÇÃO |
 | 4 | PB-28 | Conformidade visual do Login/Landing | A FAZER |
 | 5 | PB-29 | Estado compartilhado e privado do Vibe Check | A FAZER |
 
@@ -78,13 +78,28 @@ para candidatas contextuais sem apagar representação individual, vetos ou fall
 
 ### Evidências e execução
 
-A preencher ao concluir o PB.
+- A integração Last.fm passou a suportar `tag.getTopTracks` e `track.getSimilar`, com parsing
+  defensivo, deduplicação e falha aberta.
+- Até três tags estáveis são derivadas da ocasião; até cinco sementes pessoais cobrem integrantes
+  distintos antes de repetir uma origem. Os limites de fontes e candidatas são configuráveis.
+- A proveniência `spotify_top`, `lastfm_tag` ou `lastfm_similar` acompanha cada candidata. Similares
+  preservam a referência da semente e os integrantes de origem; dados privados não saem da API.
+- O motor puro intercala o prefixo em 50% de contexto e 50% de âncoras quando há material válido,
+  preserva ao menos 40% de Tops e nunca promove uma candidata que atinja o limiar de veto.
+- Se Last.fm estiver ausente, inválido ou indisponível, a ordem anterior baseada nos Tops permanece
+  como fallback. A busca textual no Spotify fica restrita às candidatas externas pelo PB-25.
+- Cenário adversarial automatizado: 50 Tops tristes para ocasião `Festa` resultaram em 15 Tops e 15
+  descobertas de festa no primeiro bloco de 30.
+- Testes: `41 passed` na suíte combinada de PB-17, PB-18, PB-25 e PB-26.
+- Migrações: nenhuma.
 
 ## 7. PB-27 — Acompanhamento compartilhado da geração
 
 ### Objetivo
 
-A preencher antes da implementação.
+Persistir estágios reais da execução e expô-los a todos os integrantes da sala por meio do polling
+já autenticado. Host e participantes devem compartilhar geração, sucesso e erro; somente o host
+mantém a capacidade de iniciar ou repetir.
 
 ### Evidências e execução
 
@@ -116,4 +131,5 @@ A preencher ao fim da implementação.
 
 ## 11. Commits
 
-- PB-25 — a registrar após o commit.
+- PB-25 — `5d38e83 feat(PB-25): tornar matching Spotify resiliente`.
+- PB-26 — a registrar após o commit.
