@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 e PB-18 VALIDADOS; PB-19/20 A-FAZER (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 e PB-18 VALIDADOS; PB-19 AGUARDANDO-QA; PB-20 A-FAZER (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1343,7 +1343,9 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-19 — Sequenciamento da experiência musical
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; seleção final sequenciada antes
+  do envio ao Spotify, com abertura forte, risco no meio, cap e não adjacência determinísticos.
+  Testes técnicos verdes; falta validação independente.
 - **Objetivo:** ordenar a seleção final com abertura de alta aceitação, faixas arriscadas no meio,
   sem 2 do mesmo artista consecutivas e respeitando o cap de 2/artista.
 - **Dependências:** PB-12, PB-14 e PB-15.
@@ -1352,16 +1354,39 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
   2. Começar por música de alta aceitação.
   3. Faixas de maior risco preferencialmente no meio.
   4. Respeitar o cap de 2 músicas por artista.
-- **Plano de implementação:** `engine/sequencer.py` (regras determinísticas sobre a seleção final).
-- **Arquivos ou módulos previstos:** `backend/app/engine/sequencer.py`, testes.
+- **Plano de implementação:** `engine/sequencer.py` puro sobre a seleção final; posição do ranking
+  como aceitação e seu inverso como risco; ordem final persistida em `selection_rank`.
+- **Arquivos criados:** `backend/app/engine/sequencer.py`,
+  `backend/tests/test_pb19_sequencer.py`.
+- **Arquivos alterados:** `backend/app/services/generation_service.py`,
+  `backend/app/services/result_service.py`, `backend/app/db/models.py`,
+  `backend/tests/test_pb17_generation_integration.py`, `README.md`, este plano.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-19) — sem repetição consecutiva,
   abertura forte, risco no meio, cap respeitado.
 - **Evidências necessárias:** ordem final validada por testes.
-- **Riscos:** conflito entre regras e cap (empates).
-- **Bloqueios:** depende de PB-14 (seleção final).
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `engine/sequencer.py` com as regras do README §15.
+- **Riscos:** conflito entre abertura, adjacência e risco; empates; entrada dominada por um artista.
+- **Decisões:** não adjacência tem prioridade; a abertura usa a maior aceitação entre as escolhas que
+  ainda permitem terminar sem repetição. Risco é aproximado da centralidade da playlist; faixas do
+  mesmo artista usam antecipação para não empurrar o maior risco à borda. Cap escolhe as duas faixas
+  de maior aceitação por artista. Todos os empates usam posição original/id, sem aleatoriedade.
+- **Migrações:** nenhuma; `selection_rank` já suporta a posição final. Para faixas selecionadas, o
+  valor deixa de ser apenas ranking e passa a ser a ordem efetivamente enviada ao Spotify.
+- **Bloqueios:** nenhum; PB-12, PB-14 e PB-15 validados.
+- **Resultado da implementação:** `sequence_tracks` seleciona/capa/ordena sem I/O; a criação da
+  playlist converte ranking em aceitação/risco, marca descartes `artist_cap`/`playlist_limit`, envia
+  as URIs sequenciadas, persiste a posição final e o endpoint de resultado lê a mesma ordem. Entrada
+  vazia, pequena ou impossível degrada por melhor esforço sem erro.
+- **Resultado dos testes técnicos:** `test_pb19_sequencer.py` **10 passed / 0 failed** cobrindo
+  `CT-PB19-01..05` e integração Spotify/persistência; sondagem combinatória adicional percorreu
+  **1.056 casos viáveis** (2–8 faixas, até 2/artista) sem adjacência indevida. Suíte backend completa
+  **256 passed / 6 skipped / 0 failed**. `compileall`, `pip check`, build Vite (**45 módulos**) e
+  `git diff --check` aprovados.
+- **Riscos/limitações:** risco usa o inverso da posição de ranking por não haver audio features nem
+  score de risco persistido no MVP. Quando não existe solução sem adjacência, o resultado mantém cap
+  e tamanho por melhor esforço.
+- **Próxima ação exata:** QA executa `CT-PB19-01..05`, incluindo contraexemplos de abertura
+  (`A,A,B`), empates, lista de artista único e confirmação de que a ordem persistida coincide com as
+  URIs enviadas ao Spotify.
 
 #### PB-20 — Feedback pós-playlist
 

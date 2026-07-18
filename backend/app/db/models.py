@@ -311,8 +311,8 @@ class PlaylistRunTrack(Base):
     discard_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="matched")
     source: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON ou lista em string
-    # Ordem explícita do ranking. `created_at` empata para inserts na mesma
-    # transação do PostgreSQL e não pode preservar sozinho a seleção do motor.
+    # Ordem explícita: nasce como ranking durante o matching e, para faixas
+    # selecionadas, recebe a posição final do sequenciador (PB-19).
     selection_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(

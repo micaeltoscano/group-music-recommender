@@ -183,7 +183,7 @@ O LLM transforma o pedido humano em **critérios estruturados** — não decide 
 ```
 Fontes (ordem): Last.fm tags da faixa → tags do artista → gêneros/artistas Spotify → Vibe Check → letras (opcional) → regras simples → fallback por consenso do grupo. Cada faixa recebe `context_score` + `confidence` + `source`.
 
-> **Estado operacional (2026-07-18): PB-18 implementado, aguardando QA.** O contexto estruturado
+> **Estado operacional (2026-07-18): PB-18 validado; PB-19 implementado, aguardando QA.** O contexto estruturado
 > gera `context_score` determinístico por candidata usando ocasião, humor, energia, gêneros Spotify
 > e tags selecionadas pela cascata Last.fm. Consenso e afinidade continuam predominantes; a fonte
 > externa apenas enriquece o sinal contextual e nunca bloqueia a geração.
@@ -225,6 +225,13 @@ Modo = perfil de pesos/restrições aplicado sobre o mesmo pipeline.
 ## 15. Playlist Experience Sequencer
 
 Não basta o top-N: precisa de fluxo. Festa: aquecimento → subida → pico → manutenção → respiro → fechamento. Regras MVP: sem 2 faixas do mesmo artista seguidas; começar por alta aceitação; faixas arriscadas no meio; alternar estilos próximos; populares nos picos; evitar blocos longos do mesmo gênero.
+
+O PB-19 aplica um sequenciador puro e determinístico sobre as faixas correspondidas: a posição do
+ranking representa aceitação e seu inverso representa risco; a abertura escolhe a faixa de maior
+aceitação que ainda permite concluir sem artistas adjacentes, os maiores riscos são aproximados do
+centro e o cap de duas faixas por artista é preservado. A ordem enviada ao Spotify é persistida em
+`playlist_run_tracks.selection_rank` e reutilizada na tela de resultado. Quando a entrada torna uma
+regra impossível (por exemplo, um único artista), o algoritmo faz o melhor esforço sem falhar.
 
 ## 16. Feedback e evolução futura
 

@@ -169,9 +169,12 @@ def test_geracao_persiste_contexto_mesmo_sem_llm_real_disponivel(
 
     assert response.status_code == 202
     assert response.json()["status"] == "completed"
-    assert mock_add_items.await_args.kwargs["uris"] == [
-        f"spotify:track:{index:02d}" for index in range(30)
-    ]
+    sent_uris = mock_add_items.await_args.kwargs["uris"]
+    # PB-19 passou a sequenciar a seleção final: preserva as 30 candidatas de
+    # maior ranking e a abertura forte, mas não a ordem linear antiga.
+    assert len(sent_uris) == 30
+    assert sent_uris[0] == "spotify:track:00"
+    assert set(sent_uris) == {f"spotify:track:{index:02d}" for index in range(30)}
 
     db = session_factory()
     try:

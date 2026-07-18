@@ -131,7 +131,11 @@ def _matched_tracks(db: Session, run_id) -> list[PlaylistRunTrack]:
     return (
         db.query(PlaylistRunTrack)
         .filter(PlaylistRunTrack.run_id == run_id, PlaylistRunTrack.status == "matched")
-        .order_by(PlaylistRunTrack.created_at)
+        .order_by(
+            PlaylistRunTrack.selection_rank.is_(None),
+            PlaylistRunTrack.selection_rank,
+            PlaylistRunTrack.created_at,
+        )
         .all()
     )
 

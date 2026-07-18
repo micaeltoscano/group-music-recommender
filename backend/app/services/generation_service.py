@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from collections import Counter
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -25,6 +26,7 @@ from app.engine.context_scoring import (
 )
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
 from app.engine.scoring import calculate_group_score
+from app.engine.sequencer import SequencerTrack, sequence_tracks
 from app.engine.taste import UserTasteProfile
 from app.engine.vibe_scoring import (
     VibePreferences,
@@ -275,27 +277,65 @@ async def create_spotify_playlist_for_run(
         .all()
     )
     
-    # Aplica o capping por artista
-    artist_counts: dict[str, int] = {}
-    selected_uris: list[str] = []
-    
-    for track in tracks:
-        if len(selected_uris) >= MAX_PLAYLIST_TRACKS:
-            track.status = "discarded"
-            track.discard_reason = "playlist_limit"
-            continue
-
-        artist_name = track.artist.strip().lower() if track.artist else ""
+    # PB-19: a posição do ranking representa aceitação; seu inverso representa
+    # risco. O motor puro aplica cap/limite e produz a ordem final enviada ao
+    # Spotify, evitando artistas adjacentes quando a seleção permite.
+    rank_by_track_id: dict[str, int] = {}
+    track_by_id: dict[str, PlaylistRunTrack] = {}
+    for fallback_rank, track in enumerate(tracks, start=1):
         if not track.spotify_uri:
             track.status = "discarded"
             track.discard_reason = "no_uri"
             continue
-        if artist_counts.get(artist_name, 0) < MAX_TRACKS_PER_ARTIST:
-            artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
-            selected_uris.append(track.spotify_uri)
-        else:
-            track.status = "discarded"
-            track.discard_reason = "artist_cap"
+        track_key = str(track.id or f"track-{fallback_rank}")
+        rank = (
+            track.selection_rank
+            if track.selection_rank and track.selection_rank > 0
+            else fallback_rank
+        )
+        rank_by_track_id[track_key] = rank
+        track_by_id[track_key] = track
+
+    max_rank = max(rank_by_track_id.values(), default=1)
+    min_rank = min(rank_by_track_id.values(), default=1)
+    rank_span = max(1, max_rank - min_rank)
+    sequence_input = []
+    for track_key, track in track_by_id.items():
+        acceptance = 1.0 - ((rank_by_track_id[track_key] - min_rank) / rank_span)
+        sequence_input.append(
+            SequencerTrack(
+                track_id=track_key,
+                artist=track.artist or "",
+                acceptance=acceptance,
+                risk=1.0 - acceptance,
+                original_position=rank_by_track_id[track_key],
+            )
+        )
+
+    sequenced = sequence_tracks(
+        sequence_input,
+        max_per_artist=MAX_TRACKS_PER_ARTIST,
+        limit=MAX_PLAYLIST_TRACKS,
+    )
+    selected_ids = {track.track_id for track in sequenced}
+    selected_artist_counts = Counter(track.artist.strip().casefold() for track in sequenced)
+
+    for track_key, track in track_by_id.items():
+        if track_key in selected_ids:
+            continue
+        artist_name = (track.artist or "").strip().casefold()
+        track.status = "discarded"
+        track.discard_reason = (
+            "artist_cap"
+            if selected_artist_counts[artist_name] >= MAX_TRACKS_PER_ARTIST
+            else "playlist_limit"
+        )
+
+    selected_uris: list[str] = []
+    for final_position, sequence_track in enumerate(sequenced, start=1):
+        track = track_by_id[sequence_track.track_id]
+        track.selection_rank = final_position
+        selected_uris.append(track.spotify_uri)
 
     if len(selected_uris) < MIN_PLAYLIST_TRACKS:
         raise InsufficientTracksError(
