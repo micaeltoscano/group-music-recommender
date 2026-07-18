@@ -1001,9 +1001,15 @@ e o Vibe Check opcional está disponível.
 
 #### PB-17 — Interpretação estruturada do contexto
 
-- **Status:** AGUARDANDO-QA — correção de `INC-PB17-CTX-01` implementada em 2026-07-17. Contexto
-  agora influencia o ranqueamento nos dois modos; testes do Dev e regressão estão verdes. A
-  validação histórica permanece registrada, mas a reabertura ainda exige novo veredito independente.
+- **Status:** VALIDADO (QA revalidação independente 2026-07-18, rodada 3) — reabertura
+  `INC-PB17-CTX-01` fechada. `CT-PB17-05` e `CT-S3-INT-02` reproduzidos pelo QA em pool misto realista
+  e prova por mutação (contexto neutro → rankings idênticos), nos dois modos; `CT-PB17-06` confirma
+  que o contexto (peso 0.15) não inverte consenso forte; `CT-PB17-01..04` verdes na regressão; suíte
+  completa **201 passed / 6 skipped / 0 failed** (8 testes novos de QA em
+  `backend/tests/test_pb17_qa_validador.py`). Sem defeitos abertos. Limitações registradas: Ollama
+  real e reversibilidade da migração em Postgres não reexecutados nesta rodada; demonstração e2e real
+  fica para o fechamento integrado da Sprint 3. Relatório:
+  [`docs/relatorios-testes/PB-17.md`](../relatorios-testes/PB-17.md).
 - **Objetivo:** LLM interpreta a descrição livre do host em um schema JSON validado, com fallback
   determinístico e sem enviar dados brutos de tops ao LLM.
 - **Dependências:** PB-06 e PB-10.
@@ -1149,9 +1155,12 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ### Status da Sprint 3
 
-**Em andamento — reaberta em 2026-07-17.** A correção de `INC-PB17-CTX-01` foi implementada e a
-regressão do Dev comprova que o contexto altera o ranking. PB-17 está `AGUARDANDO-QA`;
-`CT-PB17-05` e `CT-S3-INT-02` continuam bloqueadores até o novo veredito independente.
+**Em andamento — portão `INC-PB17-CTX-01` fechado (2026-07-18).** O QA revalidou o PB-17 de forma
+independente: `CT-PB17-05` e a parte automatizável de `CT-S3-INT-02` reproduzidas (pool misto +
+prova por mutação, nos dois modos), regressão dos casos antes aprovados verde e suíte completa
+201 passed / 6 skipped / 0 failed. **PB-17 VALIDADO.** Todos os PBs individuais da Sprint 3 estão
+validados. Falta apenas o **ciclo integrado da Sprint 3** (`CT-S3-INT-01..05` + regressão das
+Sprints 1–2 + demonstração e2e real com playlist), que é um ciclo próprio e ainda **não** executado.
 
 ---
 
@@ -1374,31 +1383,35 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 - **PB-01:** bloqueio de Node removido; frontend nativo iniciou e respondeu HTTP 200. Falta apenas o
   QA reexecutar CT-PB01-06 e registrar seu veredito formal.
 - A capacidade real da equipe (velocidade) ainda precisa ser medida na Sprint 1.
-- **INC-PB17-CTX-01 (bloqueador da Sprint 3):** correção implementada e regressão do Dev verde;
-  falta a nova validação independente antes de encerrar o incidente e a Sprint.
+- **INC-PB17-CTX-01:** **encerrado (QA 2026-07-18).** PB-17 `VALIDADO` na revalidação independente;
+  o portão da Sprint 3 agora é o ciclo integrado (`CT-S3-INT-*`), não mais este incidente.
 
 ## 15. Diário de retomada
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-17.
-- **Sprint/branch de trabalho:** Sprint 3 reaberta, branch atual preservada.
-- **PB em andamento:** PB-17 (`AGUARDANDO-QA`) — integração contexto → motor implementada.
-- **Último resultado concluído:** o motor contextual passou nos dois modos; “festa” priorizou as 30
-  candidatas dançantes e “estudo” as 30 instrumentais/acústicas com os mesmos perfis e candidatas.
-- **Onde parou:** implementação e regressão do Dev concluídas; nenhum novo veredito de QA emitido.
-- **Próxima ação exata:** QA reexecuta `CT-PB17-05`, `CT-S3-INT-02` e regressão do PB-17, registrando
-  `VALIDADO` ou `REPROVADO` sem apagar o histórico das rodadas anteriores.
+- **Data da última sessão:** 2026-07-18.
+- **Sprint/branch de trabalho:** Sprint 3, branch `feat/SPRINT03/PB17`.
+- **PB em andamento:** nenhum — PB-17 `VALIDADO` (QA independente 2026-07-18). Todos os PBs
+  individuais da Sprint 3 estão validados.
+- **Último resultado concluído:** QA reproduziu `CT-PB17-05`/`CT-S3-INT-02` (pool misto + prova por
+  mutação nos dois modos), regressão dos casos antes aprovados verde, suíte completa
+  201 passed / 6 skipped / 0 failed (8 testes novos em `tests/test_pb17_qa_validador.py`).
+- **Onde parou:** portão `INC-PB17-CTX-01` fechado; falta o ciclo integrado da Sprint 3.
+- **Próxima ação exata:** executar os testes integrados da Sprint 3 (`CT-S3-INT-01..05`) + regressão
+  das Sprints 1–2 + demonstração e2e real da playlist variando a ocasião, e então emitir
+  `SPRINT 3 CONCLUÍDA` ou `SPRINT 3 REPROVADA`.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  .venv/bin/pytest tests/test_pb17_llm_context.py tests/test_pb17_generation_integration.py \
-    tests/test_pb17_qa_revalidacao.py -q
-  .venv/bin/pytest tests -q
+  APP_ENV=test .venv/bin/pytest tests/test_pb17_qa_validador.py \
+    tests/test_pb17_llm_context.py tests/test_pb17_generation_integration.py \
+    tests/test_pb17_qa_revalidacao.py tests/test_pb17_context_scoring.py -q
+  APP_ENV=test .venv/bin/pytest tests -q
   .venv/bin/alembic current
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum externo; o portão processual é a nova validação independente do PB-17.
+- **Bloqueios:** nenhum externo; o portão restante é o ciclo integrado da Sprint 3.
 
 ## 16. Checklist de encerramento de sessão
 

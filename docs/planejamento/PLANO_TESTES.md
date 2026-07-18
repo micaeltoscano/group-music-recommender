@@ -1036,23 +1036,21 @@ por `CT-S3-INT-02`. Os casos antes aprovados entram como regressão; `CT-PB17-05
 #### Casos de teste
 ##### CT-PB17-01 — Saída válida segue o schema
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** JSON com ocasião, humor,
-  energia, tags +/-, avoid. · **Automatizável:** Sim · **Status:** Aprovado na rodada histórica;
-  regressão obrigatória na reabertura
+  energia, tags +/-, avoid. · **Automatizável:** Sim · **Status:** Aprovado (regressão QA 2026-07-18)
 
 ##### CT-PB17-02 — JSON inválido aciona fallback sem interromper
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** LLM devolve JSON malformado.
 - **Resultado esperado:** rejeitado; geração segue com consenso/afinidade/popularidade. ·
-  **Automatizável:** Sim · **Status:** Aprovado na rodada histórica; regressão obrigatória na reabertura
+  **Automatizável:** Sim · **Status:** Aprovado (regressão QA 2026-07-18)
 
 ##### CT-PB17-03 — LLM indisponível → fallback determinístico
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** timeout/erro do LLM.
-- **Resultado esperado:** pipeline continua sem IA. · **Automatizável:** Sim · **Status:** Aprovado
-  na rodada histórica; regressão obrigatória na reabertura
+- **Resultado esperado:** pipeline continua sem IA. · **Automatizável:** Sim · **Status:** Aprovado (regressão QA 2026-07-18)
 
 ##### CT-PB17-04 — Privacidade: dados brutos não vão ao LLM
 - **Tipo:** privacidade · **Prioridade:** Alta · **Cenário:** inspecionar o payload enviado.
 - **Resultado esperado:** só contexto do host / dados agregados; **sem** top tracks/artists brutos. ·
-  **Automatizável:** Sim · **Status:** Aprovado na rodada histórica; regressão obrigatória na reabertura
+  **Automatizável:** Sim · **Status:** Aprovado (regressão QA 2026-07-18)
 
 ##### CT-PB17-05 — Contexto muda candidatas/tags
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** "festa" vs "estudo".
@@ -1063,13 +1061,14 @@ por `CT-S3-INT-02`. Os casos antes aprovados entram como regressão; `CT-PB17-05
   persistir JSON diferente se as mesmas músicas mantiverem os mesmos scores contextuais.
 - **Critério de aprovação:** pelo menos uma diferença material de score/ordem/seleção explicada pelo
   contexto, preservando determinismo e sem decisão direta do LLM.
-- **Automatizável:** Sim · **Status:** Passou na regressão do Dev em 2026-07-17 nos modos
-  Democrático e Festa Segura; aguarda reprodução e veredito formal do QA
+- **Automatizável:** Sim · **Status:** Aprovado (QA independente 2026-07-18, rodada 3) — pool misto
+  realista + perfil uniforme mostram que "festa" e "estudo" mudam o topo de forma coerente e
+  reprodutível nos dois modos; prova por mutação (contexto neutro → rankings idênticos) confirma que a
+  diferença é causada pelo contexto; efeito também confirmado pelo fallback determinístico
 
 ##### CT-PB17-06 — LLM não decide a playlist
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** seleção final vem do
-  motor; LLM só fornece critérios. · **Automatizável:** Sim · **Status:** Aprovado na rodada histórica;
-  regressão obrigatória na reabertura
+  motor; LLM só fornece critérios. · **Automatizável:** Sim · **Status:** Aprovado (regressão QA 2026-07-18)
 
 ### PB-07 — Vibe Check opcional
 
@@ -1133,7 +1132,9 @@ criação de playlist real (PB-14) → resultado explicável (PB-16).
 ##### CT-S3-INT-02 — Contexto do LLM consumido pelo motor e pela busca
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** tags do contexto influenciam
   candidatas/scores; playlist reflete a ocasião. · **Automatizável:** Parcialmente · **Status:** Parte
-  automatizável passou na regressão do Dev em 2026-07-17; aguarda QA independente e demonstração real
+  automatizável Aprovada (QA independente 2026-07-18) — contexto consumido pelo motor comprovado nos
+  dois modos, com prova por mutação; demonstração e2e real da playlist fica para o fechamento
+  integrado da Sprint 3 (CT-S3-INT-01)
 
 ##### CT-S3-INT-03 — Vibe Check influencia o ranking
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** baixa `sadness_tolerance`.
@@ -1168,9 +1169,11 @@ PBs 07, 14, 15, 16, 17 aprovados; CT-S3-INT-01..05 aprovados; regressão das Spr
 URL da playlist criada; payload de resultado; logs sanitizados; `pytest` verde; capturas das telas.
 
 #### Resultado da Sprint
-**Pendente — Sprint 3 reaberta por `INC-PB17-CTX-01`.** A regressão do Dev está verde e contém
-evidência positiva automatizada de `CT-PB17-05`/`CT-S3-INT-02`, mas a Sprint não pode ser aprovada
-antes da reprodução independente pelo QA e da demonstração real aplicável.
+**Pendente — PB-17 revalidado; falta o ciclo integrado.** O QA reproduziu de forma independente
+`CT-PB17-05` e a parte automatizável de `CT-S3-INT-02` em 2026-07-18 (rodada 3) e o PB-17 está
+`VALIDADO`, encerrando o portão `INC-PB17-CTX-01`. A Sprint 3 ainda não pode ser aprovada: falta
+executar/registrar os testes integrados da Sprint (`CT-S3-INT-01..05`, incluindo a demonstração e2e
+real da playlist variando a ocasião) e a regressão das Sprints 1–2 como ciclo próprio.
 
 ---
 
