@@ -34,6 +34,7 @@ DISCOVERY_EXPLANATION = (
     "Modo Descoberta favoreceu faixas novas e diversidade musical sem remover "
     "os critérios de rejeição e justiça."
 )
+BRIDGE_EXPLANATION = "Faixas-ponte aproximam subgrupos sem expor preferências individuais."
 
 
 def _parse_source(raw: str | None) -> list[int]:
@@ -67,8 +68,10 @@ def _jain_index(counts: list[int]) -> int:
     return round(index * 100)
 
 
-def _reason_for(num_contributors: int) -> str:
+def _reason_for(num_contributors: int, *, is_bridge: bool = False) -> str:
     """Justificativa agregada por faixa, sem nomear integrantes."""
+    if is_bridge:
+        return "Faixa-ponte: boa aceitação entre diferentes subgrupos musicais."
     if num_contributors > 1:
         return f"Combina com o gosto de {num_contributors} integrantes."
     if num_contributors == 1:
@@ -123,6 +126,8 @@ def compute_metrics(member_ids: list[int], tracks: list[PlaylistRunTrack]) -> di
         justica,
         "Limite de 2 faixas por artista aplicado na seleção.",
     ]
+    if any(track.is_bridge for track in tracks):
+        why_items.append(BRIDGE_EXPLANATION)
 
     return {
         "compatibility_score": compatibility_score,
@@ -202,8 +207,9 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
                 name=track.name,
                 artist=track.artist,
                 spotify_url=track.spotify_uri,
-                reason=_reason_for(len(names)),
+                reason=_reason_for(len(names), is_bridge=track.is_bridge),
                 contributed_by=names,
+                is_bridge=track.is_bridge,
             )
         )
 

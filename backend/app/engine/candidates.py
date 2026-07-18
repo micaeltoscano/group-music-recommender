@@ -12,11 +12,17 @@ class CandidateTrack:
         raw_data: Dict[str, Any],
         source_user_ids: Set[int],
         source_cluster_ids: Tuple[str, ...] = (),
+        is_bridge: bool = False,
+        bridge_score: float = 0.0,
+        bridge_cluster_ids: Tuple[str, ...] = (),
     ):
         self.id = track_id
         self.raw_data = raw_data
         self.source_user_ids = source_user_ids
         self.source_cluster_ids = source_cluster_ids
+        self.is_bridge = is_bridge
+        self.bridge_score = bridge_score
+        self.bridge_cluster_ids = bridge_cluster_ids
 
 
 class DiscardedTrack:

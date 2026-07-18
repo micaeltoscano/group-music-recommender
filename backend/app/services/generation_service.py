@@ -10,6 +10,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from app.clients import llm_client, spotify_client
+from app.config import settings
 from app.db.models import (
     MusicSession,
     MusicSessionMember,
@@ -18,6 +19,7 @@ from app.db.models import (
     User,
     VibeCheckAnswer,
 )
+from app.engine.bridge import evaluate_bridge_candidate
 from app.engine.candidates import CandidateTrack, generate_candidate_pool
 from app.engine.clustering import TasteClusteringResult, cluster_taste_profiles
 from app.engine.context_scoring import (
@@ -166,6 +168,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason="Missing name or artist",
                 source=json.dumps(list(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
                 selection_rank=selection_rank,
             ))
             continue
@@ -183,6 +186,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason=f"Spotify search error: {exc}",
                 source=json.dumps(list(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
                 selection_rank=selection_rank,
             ))
             continue
@@ -196,6 +200,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason="No results found",
                 source=json.dumps(list(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
                 selection_rank=selection_rank,
             ))
             continue
@@ -229,6 +234,7 @@ async def resolve_candidates(
                 match_confidence=best_confidence,
                 status="matched",
                 source=json.dumps(list(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
                 selection_rank=selection_rank,
             ))
         else:
@@ -247,6 +253,7 @@ async def resolve_candidates(
                 status="discarded",
                 discard_reason=reason,
                 source=json.dumps(list(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
                 selection_rank=selection_rank,
             ))
             
@@ -390,6 +397,7 @@ def _rank_candidates(
     context: ContextCriteria,
     vibe_preferences: VibePreferences | None = None,
     taste_clusters: TasteClusteringResult | None = None,
+    bridge_tracks_enabled: bool = False,
 ) -> list[CandidateTrack]:
     """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
     mode_key = ROOM_MODE_KEYS.get(room_mode or "Democrático", "democratic")
@@ -402,6 +410,20 @@ def _rank_candidates(
             if taste_clusters is not None
             else ()
         )
+        if bridge_tracks_enabled:
+            bridge = evaluate_bridge_candidate(
+                candidate,
+                profiles,
+                taste_clusters,
+                mode_config["individual"],
+            )
+            candidate.is_bridge = bridge.is_bridge
+            candidate.bridge_score = bridge.bridge_score
+            candidate.bridge_cluster_ids = bridge.accepted_cluster_ids
+        else:
+            candidate.is_bridge = False
+            candidate.bridge_score = 0.0
+            candidate.bridge_cluster_ids = ()
         context_score = calculate_context_score(candidate, context)
         diversity_score = calculate_candidate_diversity_score(candidate, profiles)
         group_data = calculate_group_score(
@@ -520,7 +542,8 @@ async def execute_generation(
             room.mode,
             context_criteria,
             vibe_preferences,
-            taste_clusters,
+            taste_clusters=taste_clusters,
+            bridge_tracks_enabled=settings.bridge_tracks_enabled,
         )
 
         host = db.get(User, host_id)

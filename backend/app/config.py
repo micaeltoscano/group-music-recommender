@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     # --- Modos pós-MVP (PB-21) ---------------------------------------------
     # Opt-in: o modo Descoberta não aparece nem pode ser selecionado sem flag.
     discovery_mode_enabled: bool = False
+    # Opt-in: identifica e explica faixas aceitas por múltiplos subgrupos.
+    bridge_tracks_enabled: bool = False
 
     # --- CORS ----------------------------------------------------------------
     # Origens permitidas para o frontend Vite (separadas por vírgula).

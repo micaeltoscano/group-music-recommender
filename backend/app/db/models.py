@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -324,6 +325,13 @@ class PlaylistRunTrack(Base):
     discard_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="matched")
     source: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON ou lista em string
+    # PB-23: marcação agregada, sem expor afinidades individuais dos clusters.
+    is_bridge: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
     # Ordem explícita: nasce como ranking durante o matching e, para faixas
     # selecionadas, recebe a posição final do sequenciador (PB-19).
     selection_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)

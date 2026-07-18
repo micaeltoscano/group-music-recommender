@@ -104,7 +104,7 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **[MVP] music_session_members**: session_id · user_id · role(host/member) · joined_at — PK(session_id,user_id) evita duplicidade
 **[MVP] user_music_snapshots**: id · user_id · time_range · top_tracks_json · top_artists_json · fetched_at
 **[MVP] playlist_runs**: id · music_session_id · status(**running/completed/failed**) · compatibility_score · fairness_score · spotify_playlist_id · spotify_playlist_url · llm_context_json · explanation_json · error_message · created_at
-**[MVP] playlist_run_tracks**: id · playlist_run_id · spotify_track_id · spotify_uri · track_name · artist_name · score · reason · position · source · **match_confidence** · **discard_reason**(nullable: not_found/unavailable_in_market/low_match/no_uri/artist_cap)
+**[MVP] playlist_run_tracks**: id · playlist_run_id · spotify_track_id · spotify_uri · track_name · artist_name · score · reason · position · source · **match_confidence** · **discard_reason**(nullable: not_found/unavailable_in_market/low_match/no_uri/artist_cap) · **is_bridge**
 **[MVP] vibe_check_answers**: id · session_id · user_id · answers_json · derived_preferences_json · created_at
 **[MVP] track_context_cache**: id · spotify_track_id · track_name · artist_name · lastfm_track_tags_json · lastfm_artist_tags_json · spotify_artist_genres_json · context_scores_json · source · confidence · fetched_at
 **[FUT] lyrics_analysis_cache**: id · spotify_track_id · track_name · artist_name · lyrics_hash · party_score · sadness_score · romance_score · explicitness_score · aggressiveness_score · motivational_score · confidence · method · analyzed_at
@@ -138,7 +138,7 @@ Guardas: `generate` exige **host**; todas as rotas de sala exigem **membro** (se
 6. Montar **pool de candidatas**: top tracks dos membros + top tracks de artistas fortes + (se usado) sugestões contextuais do LLM resolvidas via Spotify Search + (FUT) faixas-ponte entre subgrupos.
 7. **Enriquecer** cada candidata: tags Last.fm da faixa → do artista → gêneros Spotify → popularidade → (opcional) letras. Gravar em `track_context_cache` com `context_score` + `confidence`.
 8. Score **individual** por usuário.
-9. Score de **grupo**.
+9. Score de **grupo**; opcionalmente marcar faixas aceitas por múltiplos subgrupos como pontes.
 10. Aplicar `rejection_penalty`.
 11. Aplicar **fairness constraints** (representação mínima por membro).
 12. Selecionar faixas finais.
@@ -216,6 +216,16 @@ distingue evidência insuficiente, grupo único e subgrupos distintos; contém s
 IDs de cluster e similaridades, sem persistir ou replicar dados musicais brutos. Cada candidata fica
 associada transitoriamente aos clusters de seus membros de origem. Identificação de faixas-ponte e
 balanceamento permanecem nos PB-23/PB-24 e não alteram o ranking no PB-22.
+
+**[PB-23] Faixas-ponte:** com `BRIDGE_TRACKS_ENABLED=true`, cada candidata recebe a média de aceitação
+de cada cluster usando os componentes de afinidade dos scores individuais do PB-11. Popularidade e
+novidade são desconsideradas nessa marcação porque não demonstram ligação entre gostos. A faixa é
+marcada quando pelo menos dois clusters atingem 0,25; o score de ponte é o segundo maior score de
+cluster, preservando uma leitura conservadora entre subgrupos. A marcação não promove nem reordena
+candidatas: é persistida em
+`playlist_run_tracks.is_bridge`, exposta no resultado e apresentada com justificativa agregada. A
+flag é `false` por padrão, portanto os modos existentes permanecem inalterados quando desabilitada.
+Balanceamento ou alternância entre subgrupos continua reservado ao PB-24.
 
 ## 14. Modos de consenso
 
@@ -344,7 +354,7 @@ cp .env.example .env
 
 O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e caches
 (`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7`, `SPOTIFY_TOP_ITEMS_LIMIT=50`,
-`DISCOVERY_MODE_ENABLED=false` e
+`DISCOVERY_MODE_ENABLED=false`, `BRIDGE_TRACKS_ENABLED=false` e
 `LASTFM_CACHE_TTL_DAYS=30`) e para o LLM local
 (`OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=llama3.1:8b` — requer o Ollama instalado e
 o modelo baixado com `ollama pull llama3.1:8b`; sem ele, o fallback determinístico assume). As chaves

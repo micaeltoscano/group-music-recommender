@@ -111,7 +111,10 @@ export function Result() {
                   <span style={{ width: '22px', fontSize: '12px', color: 'var(--text-subtle)' }}>{idx + 1}</span>
                   <div style={{ width: '38px', height: '38px', flex: 'none', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, var(--accent) 0px, var(--accent) 4px, var(--bg-main) 4px, var(--bg-main) 8px)', opacity: 0.9 }}></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: 500 }}>{t.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{t.name}</span>
+                      {t.is_bridge && <span className="bridge-track-pill">FAIXA-PONTE</span>}
+                    </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-subtle)', marginTop: '2px' }}>{t.artist} · via {cBy}</div>
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '180px', textAlign: 'right', lineHeight: 1.4 }}>{t.reason}</div>

@@ -129,6 +129,7 @@ class TrackResultResponse(BaseModel):
     spotify_url: str | None
     reason: str
     contributed_by: list[str]
+    is_bridge: bool = False
 
 
 class MemberRepresentation(BaseModel):

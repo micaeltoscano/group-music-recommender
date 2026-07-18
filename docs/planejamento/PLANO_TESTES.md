@@ -23,11 +23,11 @@ guia executável para o agente de implementação e de referência de aceitaçã
 
 ## 2. Escopo
 
-- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21/PB-22
+- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21/PB-22/PB-23
   promovidos da Sprint 5 por decisão explícita de escopo.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
   PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
-- **Fora do escopo atual deste plano:** PB-23 e PB-24; seus casos serão detalhados antes da
+- **Fora do escopo atual deste plano:** PB-24; seus casos serão detalhados antes da
   implementação de cada item promovido.
 
 ## 3. Estratégia de testes
@@ -1495,6 +1495,52 @@ PB-09 validado; snapshots musicais temporários já convertidos em `UserTastePro
 
 ---
 
+### PB-23 — Identificação de músicas-ponte
+
+#### Objetivo da validação
+Comprovar que o motor identifica e marca candidatas com boa aceitação em múltiplos subgrupos, mantém
+os modos existentes intactos quando o recurso está desligado e indica as faixas-ponte no resultado.
+
+#### Requisitos e critérios cobertos
+Critérios 1–4 do PB-23.
+
+#### Pré-condições
+PB-11 e PB-22 validados; agrupamento no estado `clustered`; flag do recurso controlável no teste.
+
+#### Casos de teste
+##### CT-PB23-01 — Boa aceitação em múltiplos subgrupos
+- **Tipo:** unitário/motor · **Prioridade:** Alta · **Resultado esperado:** candidata cuja média de
+  afinidade atinge o limiar em pelo menos dois clusters recebe avaliação positiva, score de ponte e
+  IDs dos clusters aceitos. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB23-02 — Afinidade restrita a um subgrupo não forma ponte
+- **Tipo:** unitário/negócio · **Prioridade:** Alta · **Resultado esperado:** candidata aceita por um
+  único cluster permanece sem marcação de ponte. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB23-03 — Marcação durante o ranqueamento
+- **Tipo:** integração de motor · **Prioridade:** Alta · **Resultado esperado:** com a flag ligada e
+  subgrupos distintos, `_rank_candidates` anexa `is_bridge`, `bridge_score` e clusters aceitos às
+  candidatas correspondentes. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB23-04 — Recurso desligado preserva modos existentes
+- **Tipo:** configuração/regressão · **Prioridade:** Alta · **Resultado esperado:** flag falsa por
+  padrão; nos modos Democrático, Festa Segura e Descoberta, ordem e scores históricos não mudam e
+  nenhuma candidata é marcada. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB23-05 — Marcação persistida e indicada no resultado
+- **Tipo:** integração/API/frontend · **Prioridade:** Alta · **Resultado esperado:** matching persiste
+  `is_bridge`; resposta da sala identifica cada faixa-ponte e apresenta justificativa agregada; UI
+  exibe a sinalização sem revelar preferências individuais. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+##### CT-PB23-06 — Ausência de subgrupos e configuração inválida
+- **Tipo:** unitário/robustez · **Prioridade:** Média · **Resultado esperado:** agrupamento ausente,
+  insuficiente ou único não produz pontes; limiar fora de 0..1 é rejeitado; resultado permanece
+  determinístico sob reordenação dos perfis. · **Automatizável:** Sim · **Status:** Não executado
+
+---
+
 ## Apêndice — Rastreabilidade PB × critérios × casos
 
 | PB | Sprint | Nº de casos individuais | Testes integrados |
@@ -1521,5 +1567,6 @@ PB-09 validado; snapshots musicais temporários já convertidos em `UserTastePro
 | PB-20 | 4 | 5 (CT-PB20-01..05) | CT-S4-INT-* |
 | PB-21 | 5 | 6 (CT-PB21-01..06) | a definir no fechamento da Sprint 5 |
 | PB-22 | 5 | 6 (CT-PB22-01..06) | a definir no fechamento da Sprint 5 |
+| PB-23 | 5 | 6 (CT-PB23-01..06) | a definir no fechamento da Sprint 5 |
 
-**PB-23 e PB-24:** seus casos serão elaborados antes da implementação de cada item promovido.
+**PB-24:** seus casos serão elaborados antes da implementação do item promovido.
