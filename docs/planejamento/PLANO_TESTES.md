@@ -1420,32 +1420,32 @@ PB-11, PB-12 e PB-16 validados; `DISCOVERY_MODE_ENABLED` controlável no ambient
 ##### CT-PB21-01 — Feature flag desligada
 - **Tipo:** configuração/API · **Prioridade:** Alta · **Resultado esperado:** “Descoberta” não é
   anunciado pela API/UI e tentativa direta de seleção é rejeitada sem alterar a sala. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB21-02 — Feature flag ligada
 - **Tipo:** API/integração · **Prioridade:** Alta · **Resultado esperado:** modo aparece entre os
   disponíveis, pode ser selecionado pelo host e é persistido. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB21-03 — Novidade e diversidade recebem peso superior
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** peso de novidade supera o
   Democrático e candidatas novas/diversas ganham preferência verificável. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB21-04 — Rejeição e representação preservadas
 - **Tipo:** unitário/regressão · **Prioridade:** Alta · **Resultado esperado:** veto forte ainda
   penaliza e a elevação do integrante menos representado continua aplicada. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB21-05 — Explicação no resultado
 - **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** explicação persistida informa
   que o modo favoreceu descoberta, novidade e diversidade. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB21-06 — Seletor segue os modos anunciados pelo servidor
 - **Tipo:** frontend/usabilidade · **Prioridade:** Média · **Resultado esperado:** UI não mantém lista
   divergente e descreve o propósito do modo Descoberta. · **Automatizável:** Parcialmente ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ---
 
