@@ -1191,9 +1191,10 @@ reprovou por `DEF-S3-INT-03-01` (Alta); o Dev corrigiu no commit `088597b` (Vibe
 ranking com influência limitada 0.20) e a rodada 2 revalidou de forma independente: CT-S3-INT-01
 (parcial), INT-02, **INT-03 (agora Aprovado)**, INT-04 (regressão **217 passed / 6 skipped / 0
 failed**) e INT-05 **Aprovados**. `DEF-S3-INT-03-01` **fechado**; nenhum defeito Alta/bloqueante
-aberto. **Pendência única para o encerramento formal:** demonstração e2e **real** da playlist em
-conta Spotify variando a ocasião (`CT-S3-INT-01`), que exige contas Premium autorizadas
-(Development Mode, R-01) — não é defeito de código. Relatório:
+aberto. **Encerramento diferido:** a demonstração e2e **real** da playlist (`CT-S3-INT-01`) está com
+**validação pendente, a ser feita futuramente devido a limitações de API** (contas Premium /
+Development Mode). Assinatura atual: `SPRINT 3 EM VALIDAÇÃO — EVIDÊNCIA E2E REAL PENDENTE`; a
+assinatura `SPRINT 3 CONCLUÍDA` só sai após essa demonstração. Relatório:
 [`docs/relatorios-testes/SPRINT-03-INTEGRADO.md`](../relatorios-testes/SPRINT-03-INTEGRADO.md).
 
 ---

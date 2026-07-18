@@ -2,9 +2,21 @@
 
 **Autoridade:** Agente de Teste (QA) · **Branch:** `feat/SPRINT03/PB17`
 
+## Fechamento (2026-07-18) — validação e2e real diferida
+
+**Assinatura oficial:** `SPRINT 3 EM VALIDAÇÃO — EVIDÊNCIA E2E REAL PENDENTE (DIFERIDA POR LIMITAÇÃO DE API)`.
+
+Todos os PBs (PB-07, PB-14, PB-15, PB-16, PB-17) e a parte **automatizável** do ciclo integrado estão
+`VALIDADO`, sem defeito Alta/bloqueante aberto (`DEF-S3-INT-03-01` fechado). O único critério de
+encerramento em aberto é a **playlist real demonstrável de ponta a ponta** (`CT-S3-INT-01`): a
+**validação está pendente e será feita futuramente devido a limitações de API** (conta Spotify
+Premium / Development Mode, ≤5 usuários). Não há trabalho de código pendente — a lacuna é de
+evidência/ambiente. A assinatura `SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO` só deve ser emitida após
+essa demonstração real.
+
 ## Rodada 2 — revalidação após correção (2026-07-18)
 
-**Veredito: SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO** *(na parte automatizável; ver limitação e2e real).*
+**Veredito da parte automatizável: Aprovado** *(a conclusão formal da Sprint aguarda a e2e real acima).*
 
 O Dev corrigiu `DEF-S3-INT-03-01` no commit `088597b` (`feat(PB-07): integrar Vibe Check ao ranking`):
 novo motor puro `app/engine/vibe_scoring.py`, `execute_generation` agora consulta `vibe_check_answers`,

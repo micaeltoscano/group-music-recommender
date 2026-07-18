@@ -143,7 +143,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 |---|---|---|---:|---|
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Integrada Aprovada (automatizável); falta só a demo e2e real** |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **EM VALIDAÇÃO — e2e real diferida (limitação de API); automatizável VALIDADO** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
@@ -1160,12 +1160,13 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ### Critérios de encerramento da Sprint 3
 
-- [ ] PB-07, PB-14, PB-15, PB-16, PB-17 concluídos e critérios validados;
-- [ ] testes individuais de cada PB passando;
-- [ ] testes integrados da Sprint 3 passando;
-- [ ] regressão das Sprints 1 e 2 passando;
-- [ ] playlist real demonstrável de ponta a ponta;
-- [ ] bloqueios documentados; plano atualizado.
+- [x] PB-07, PB-14, PB-15, PB-16, PB-17 concluídos e critérios validados;
+- [x] testes individuais de cada PB passando;
+- [x] testes integrados da Sprint 3 passando (parte automatizável — Spotify mockado);
+- [x] regressão das Sprints 1 e 2 passando (217 passed / 6 skipped / 0 failed);
+- [ ] **playlist real demonstrável de ponta a ponta — VALIDAÇÃO PENDENTE, será feita futuramente
+  devido a limitações de API** (`CT-S3-INT-01`, requer conta Spotify Premium / Development Mode);
+- [x] bloqueios documentados; plano atualizado.
 
 ### Evidências da Sprint 3
 
@@ -1192,9 +1193,17 @@ com influência limitada a 20%. Revalidação independente do QA: o reprodutor a
 sondagem adversarial confirma que o sinal **não inverte consenso forte**, preserva o "pular" e é
 monotônico em `valence`. **`DEF-S3-INT-03-01` fechado; nenhum defeito Alta/bloqueante aberto.**
 CT-S3-INT-01 (parcial), INT-02, INT-03, INT-04 (regressão 217 passed) e INT-05 aprovados.
-**Pendência única para o encerramento formal do incremento:** a demonstração e2e **real** da playlist
-em conta Spotify variando a ocasião (`CT-S3-INT-01`), que exige contas Premium autorizadas
-(Development Mode, R-01) — não é defeito de código.
+
+**Encerramento (QA 2026-07-18):** todos os PBs e a parte automatizável do ciclo integrado estão
+`VALIDADO`, sem defeito Alta/bloqueante aberto. **A demonstração e2e real da playlist (`CT-S3-INT-01`)
+fica com VALIDAÇÃO PENDENTE — será feita futuramente devido a limitações de API** (conta Spotify
+Premium / Development Mode). Por isso a assinatura oficial da Sprint **não** é `SPRINT 3 CONCLUÍDA`;
+permanece:
+
+> `SPRINT 3 EM VALIDAÇÃO — EVIDÊNCIA E2E REAL PENDENTE (DIFERIDA POR LIMITAÇÃO DE API)`
+
+Ao retomar, executar `CT-S3-INT-01` real e só então emitir `SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO`.
+Nenhum trabalho de código está pendente; a pendência é puramente de evidência/ambiente.
 
 ---
 
