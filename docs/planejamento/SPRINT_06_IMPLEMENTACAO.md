@@ -29,8 +29,8 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 | 1 | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
 | 2 | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
 | 3 | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
-| 4 | PB-28 | Conformidade visual do Login/Landing | EM IMPLEMENTAÇÃO |
-| 5 | PB-29 | Estado compartilhado e privado do Vibe Check | A FAZER |
+| 4 | PB-28 | Conformidade visual do Login/Landing | CONCLUÍDO TECNICAMENTE |
+| 5 | PB-29 | Estado compartilhado e privado do Vibe Check | EM IMPLEMENTAÇÃO |
 
 ## 4. Restrições transversais
 
@@ -127,13 +127,24 @@ responsivo.
 
 ### Evidências e execução
 
-A preencher ao concluir o PB.
+- `Login.jsx` foi reconstruído em React a partir de `01-login-landing.png` e do estado Login do
+  protótipo: cabeçalho, hero, mock de satisfação, prova social, quatro passos, diferenciais e CTA.
+- A implementação usa exclusivamente classes e tokens do `index.css`; não incorpora o HTML do
+  protótipo e remove todos os estilos inline da tela.
+- O botão continua iniciando o OAuth real em `/auth/login`, bloqueia duplo clique, indica
+  redirecionamento e se recupera ao voltar pelo histórico. Erros via query string possuem `alert`.
+- Controles têm foco visível; hierarquia semântica, descrição de segurança, responsividade em três
+  faixas e `prefers-reduced-motion` foram incluídos.
+- Verificação: `npm run build` concluído com 46 módulos transformados.
+- Migrações: nenhuma.
 
 ## 9. PB-29 — Estado compartilhado e privado do Vibe Check
 
 ### Objetivo
 
-A preencher antes da implementação.
+Exibir no lobby o estado individual `pendente`, `respondido` ou `pulado` e o total agregado, sem
+revelar respostas. Cada integrante poderá responder, pular e editar somente o próprio registro;
+ausência/pulo continuará neutro para o motor.
 
 ### Evidências e execução
 
@@ -147,4 +158,5 @@ A preencher ao fim da implementação.
 
 - PB-25 — `5d38e83 feat(PB-25): tornar matching Spotify resiliente`.
 - PB-26 — `53c59f3 feat(PB-26): adicionar pool contextual hibrido`.
-- PB-27 — a registrar após o commit.
+- PB-27 — `5504680 feat(PB-27): compartilhar progresso da geracao`.
+- PB-28 — a registrar após o commit.

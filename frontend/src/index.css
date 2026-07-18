@@ -207,6 +207,85 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 
 .form-error { margin: 14px 0 0; color: var(--accent-hover); font-size: 0.75rem; line-height: 1.5; }
 
+/* ---- Login / landing de alta fidelidade (PB-28) ---- */
+
+.login-shell { min-height: 100vh; width: 100%; overflow: hidden; background: var(--bg); }
+.login-header .login-equalizer { height: 30px; }
+.login-equalizer { height: 30px; display: inline-flex; align-items: flex-end; gap: 4px; }
+.login-equalizer i {
+  width: 5px; height: 100%; display: block; border-radius: 3px 3px 0 0;
+  background: var(--accent); transform-origin: bottom; animation: login-equalizer 1.1s ease-in-out infinite;
+}
+.login-equalizer i:nth-child(2) { animation-duration: 0.8s; animation-delay: 0.15s; }
+.login-equalizer i:nth-child(3) { animation-duration: 1.3s; animation-delay: 0.3s; }
+.login-equalizer i:nth-child(4) { animation-duration: 0.9s; animation-delay: 0.1s; }
+.login-equalizer.dark { gap: 5px; }
+.login-equalizer.dark i { width: 6px; background: var(--bg); }
+.login-hero {
+  width: min(1080px, calc(100% - 48px)); margin: 0 auto; padding: 88px 0 40px;
+  display: flex; align-items: center; justify-content: center; gap: 64px;
+}
+.login-hero-copy { flex: 1; max-width: 540px; min-width: 0; }
+.login-hero-copy > .eyebrow { margin: 0 0 18px; }
+.login-hero h1 { max-width: 540px; font-size: clamp(2.8rem, 5vw, 3.5rem); line-height: 1.02; }
+.login-hero h1 em { color: var(--accent); font-style: normal; }
+.login-lead { margin: 22px 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+.login-action-row { margin-top: 36px; display: flex; align-items: center; gap: 16px; }
+.login-spotify-button {
+  min-width: 228px; padding: 18px 26px; display: inline-flex; align-items: center;
+  justify-content: space-between; gap: 18px; border: 0; border-radius: var(--radius-btn);
+  background: var(--accent); color: var(--bg); font-family: var(--font-body); font-size: 0.9rem;
+  font-weight: 600; letter-spacing: 0.05em; cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.login-spotify-button:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.login-spotify-button:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
+.login-spotify-button:disabled { opacity: 0.62; cursor: wait; }
+.login-security { margin: 0; color: var(--muted-2); font-size: 0.68rem; line-height: 1.55; }
+.login-security span { color: var(--accent-2); }
+.login-error { margin: 16px 0 0; color: var(--accent-hover); font-size: 0.72rem; line-height: 1.6; }
+.login-playlist-preview {
+  width: 340px; flex: none; padding: 44px 36px; border-radius: 20px;
+  background: var(--accent); color: var(--bg); box-shadow: var(--shadow-hero);
+}
+.login-preview-code { margin: 20px 0 10px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.16em; }
+.login-preview-context { margin: 0; min-height: 42px; font-size: 0.78rem; font-weight: 500; line-height: 1.6; }
+.login-preview-score {
+  margin-top: 18px; padding-top: 18px; display: flex; justify-content: space-between;
+  border-top: 1px solid var(--surface-2); font-size: 0.7rem; font-weight: 600;
+}
+.login-preview-track { height: 6px; margin-top: 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--accent-hover); }
+.login-preview-track span { width: 87%; height: 100%; display: block; border-radius: inherit; background: var(--bg); }
+.login-proof {
+  margin: 8px auto 0; padding: 0 24px; display: flex; flex-wrap: wrap;
+  justify-content: center; gap: 40px; color: var(--muted-2); font-size: 0.68rem; letter-spacing: 0.14em;
+}
+.login-section { width: min(1080px, calc(100% - 48px)); margin: 0 auto; padding: 88px 0 40px; }
+.login-section > .eyebrow { margin: 0 0 14px; text-align: center; }
+.login-section > h2 { max-width: 760px; margin: 0 auto 44px; font-size: 1.9rem; text-align: center; }
+.login-steps-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.login-steps-grid article, .login-features article {
+  padding: 26px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
+}
+.login-steps-grid article > strong { color: var(--accent); font-family: var(--font-display); font-size: 1.65rem; }
+.login-steps-grid h3, .login-features h3 { margin: 10px 0 0; font-size: 1rem; }
+.login-steps-grid p, .login-features p { margin: 8px 0 0; color: var(--muted); font-size: 0.75rem; line-height: 1.6; }
+.login-features { padding-top: 56px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.login-features article { padding: 28px; }
+.login-features article > span { color: var(--accent-2); font-size: 1.4rem; }
+.login-features h3 { margin-top: 14px; font-size: 1.05rem; }
+.login-final-cta {
+  margin-top: 24px; padding: 72px 24px 96px; display: flex; flex-direction: column;
+  align-items: center; border-top: 1px solid var(--hairline); background: var(--surface-2);
+}
+.login-final-cta h2 { max-width: 560px; margin: 0; font-size: 2.1rem; line-height: 1.2; text-align: center; }
+.login-spotify-button.final { margin-top: 28px; }
+
+@keyframes login-equalizer {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
 /* ---- Sala / lobby (PB-05) ---- */
 
 .room-shell { min-height: 100vh; width: 100%; background: var(--bg); }
@@ -539,6 +618,17 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 @media (max-width: 640px) {
   .product-header { padding: 0 20px; }
   .product-header > .eyebrow { display: none; }
+  .login-hero { width: min(100% - 32px, 540px); padding-top: 52px; }
+  .login-hero h1 { font-size: clamp(2.35rem, 12vw, 3rem); }
+  .login-action-row { align-items: stretch; flex-direction: column; }
+  .login-spotify-button { width: 100%; }
+  .login-security { text-align: center; }
+  .login-playlist-preview { width: 100%; padding: 36px 28px; }
+  .login-proof { gap: 16px 24px; }
+  .login-section { width: min(100% - 32px, 540px); padding-top: 64px; }
+  .login-section > h2 { font-size: 1.55rem; }
+  .login-steps-grid, .login-features { grid-template-columns: 1fr; }
+  .login-final-cta h2 { font-size: 1.7rem; }
   .home-content { width: min(100% - 32px, 474px); padding-top: 48px; }
   .greeting-row { justify-content: flex-start; }
   .greeting-row h1 { font-size: 1.25rem; }
@@ -571,4 +661,16 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 @media (max-width: 760px) {
   .room-actions-grid { grid-template-columns: 1fr; }
   .room-header-code { display: none; }
+}
+
+@media (max-width: 900px) and (min-width: 641px) {
+  .login-hero { flex-direction: column; align-items: stretch; }
+  .login-hero-copy { max-width: 640px; margin: 0 auto; }
+  .login-playlist-preview { width: min(420px, 100%); margin: 0 auto; }
+  .login-steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-equalizer i { animation: none; }
+  .login-spotify-button, .generation-progress span { transition: none; }
 }
