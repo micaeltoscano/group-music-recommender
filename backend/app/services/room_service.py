@@ -11,11 +11,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.models import MusicSession, MusicSessionMember, User
+from app.config import settings
 
 ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ROOM_CODE_ATTEMPTS = 10
 ROOM_LIFETIME = timedelta(hours=24)
 MAX_ROOM_MEMBERS = 5
+BASE_CONSENSUS_MODES = ("Democrático", "Festa Segura")
+DISCOVERY_MODE = "Descoberta"
 
 
 class RoomCodeGenerationError(RuntimeError):
@@ -40,6 +43,19 @@ class RoomAccessDeniedError(PermissionError):
 
 class RoomHostRequiredError(PermissionError):
     """Indica tentativa de alteração da sala por quem não é o host."""
+
+
+class RoomModeUnavailableError(ValueError):
+    """Indica tentativa de selecionar um modo conhecido, mas desabilitado."""
+
+
+def available_consensus_modes() -> list[str]:
+    """Retorna os modos habilitados pela configuração atual do produto."""
+
+    modes = list(BASE_CONSENSUS_MODES)
+    if settings.discovery_mode_enabled:
+        modes.append(DISCOVERY_MODE)
+    return modes
 
 
 def _generate_room_code() -> str:
@@ -216,6 +232,10 @@ def update_room_mode(
 ) -> MusicSession:
     """Persiste um modo já validado pelo contrato da API."""
     room = _get_room_for_host(db, code, user_id)
+    if mode not in available_consensus_modes():
+        raise RoomModeUnavailableError(
+            "O modo Descoberta está desabilitado na configuração do produto."
+        )
     room.mode = mode
     db.commit()
     db.refresh(room)

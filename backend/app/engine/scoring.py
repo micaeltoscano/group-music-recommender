@@ -103,3 +103,38 @@ def calculate_group_score(
         "coverage": round(coverage, 4),
         "individual_scores": scores
     }
+
+
+def calculate_candidate_diversity_score(
+    candidate: CandidateTrack,
+    profiles: List[UserTasteProfile],
+) -> float:
+    """Mede quanto artista/gêneros ampliam o repertório já conhecido pelo grupo.
+
+    É um sinal puro e determinístico. Modos com peso de diversidade zero continuam
+    matematicamente inalterados; o modo Descoberta passa a consumir este valor.
+    """
+
+    known_artists = {artist_id for profile in profiles for artist_id in profile.artists}
+    known_genres = {
+        genre.strip().lower() for profile in profiles for genre in profile.genres if genre.strip()
+    }
+    candidate_artists = {
+        str(artist.get("id"))
+        for artist in candidate.raw_data.get("artists", [])
+        if isinstance(artist, dict) and artist.get("id")
+    }
+    candidate_genres = {
+        genre.strip().lower()
+        for genre in candidate.raw_data.get("genres", [])
+        if isinstance(genre, str) and genre.strip()
+    }
+
+    artist_diversity = (
+        1.0 if candidate_artists and candidate_artists.isdisjoint(known_artists) else 0.0
+    )
+    if candidate_genres:
+        genre_diversity = len(candidate_genres - known_genres) / len(candidate_genres)
+    else:
+        genre_diversity = artist_diversity
+    return round((artist_diversity * 0.6) + (genre_diversity * 0.4), 4)

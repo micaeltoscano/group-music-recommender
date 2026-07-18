@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-ConsensusMode = Literal["Democrático", "Festa Segura"]
+ConsensusMode = Literal["Democrático", "Festa Segura", "Descoberta"]
 
 
 class RoomContextUpdate(BaseModel):
@@ -47,9 +47,15 @@ class RoomContextUpdate(BaseModel):
 
 
 class RoomModeUpdate(BaseModel):
-    """Modo de consenso permitido no MVP."""
+    """Modo de consenso conhecido; disponibilidade é validada no servidor."""
 
     mode: ConsensusMode
+
+
+class ConsensusModesResponse(BaseModel):
+    """Modos que podem ser selecionados na configuração atual."""
+
+    modes: list[ConsensusMode]
 
 
 class RoomMemberResponse(BaseModel):

@@ -20,6 +20,7 @@ export const api = {
   createRoom: () => requestJson('/rooms', { method: 'POST' }),
   joinRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
   getRoom: (code) => requestJson(`/rooms/${encodeURIComponent(code)}`),
+  getConsensusModes: () => requestJson('/rooms/consensus-modes'),
   updateRoomContext: (code, context) => requestJson(`/rooms/${encodeURIComponent(code)}/context`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

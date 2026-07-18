@@ -54,5 +54,23 @@ CONSENSUS_MODES = {
             "diversity": 0.0,
         },
         "rejection_penalty": 1.0,  # Veto derruba a música totalmente (penalidade de 100%)
-    }
+    },
+    "discovery": {
+        "individual": {
+            "track_affinity": 0.30,
+            "artist_affinity": 0.20,
+            "genre_affinity": 0.15,
+            "popularity": 0.05,
+            "novelty": 0.30,
+        },
+        "group": {
+            "average_score": 0.35,
+            "min_score": 0.25,
+            "coverage": 0.15,
+            "context": 0.10,
+            "diversity": 0.15,
+        },
+        # Rejeições fortes continuam derrubando a faixa, mesmo com novidade alta.
+        "rejection_penalty": 0.75,
+    },
 }

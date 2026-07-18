@@ -30,6 +30,11 @@ from app.schemas.rooms import (
 )
 from app.services.room_service import list_room_members
 
+DISCOVERY_EXPLANATION = (
+    "Modo Descoberta favoreceu faixas novas e diversidade musical sem remover "
+    "os critérios de rejeição e justiça."
+)
+
 
 def _parse_source(raw: str | None) -> list[int]:
     """Interpreta o campo `source` (JSON com ids dos contribuintes). Tolera lixo."""
@@ -161,6 +166,9 @@ def finalize_run_metrics(db: Session, run: PlaylistRun) -> None:
     tracks = _matched_tracks(db, run.id)
     member_ids = _member_ids(db, run.session_id)
     metrics = compute_metrics(member_ids, tracks)
+    room = db.get(MusicSession, run.session_id)
+    if room is not None and room.mode == "Descoberta":
+        metrics["why_items"].append(DISCOVERY_EXPLANATION)
 
     run.compatibility_score = metrics["compatibility_score"]
     run.fairness_score = metrics["fairness_score"]
@@ -228,6 +236,9 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
         fairness_score = metrics["fairness_score"]
         representation_data = metrics["representation"]
         why_items = metrics["why_items"]
+
+    if room.mode == "Descoberta" and DISCOVERY_EXPLANATION not in why_items:
+        why_items = [*why_items, DISCOVERY_EXPLANATION]
 
     representation = [
         MemberRepresentation(

@@ -4,10 +4,11 @@ import { api } from './apiClient'
 
 const POLLING_INTERVAL_MS = 4000
 const OCCASIONS = ['Pré-jogo no apê', 'Festa', 'Churrasco', 'Viagem', 'Estudo', 'Academia']
-const CONSENSUS_MODES = [
-  { name: 'Democrático', description: 'todo mundo com o mesmo peso' },
-  { name: 'Festa Segura', description: 'hits conhecidos, baixa rejeição' },
-]
+const MODE_DESCRIPTIONS = {
+  Democrático: 'todo mundo com o mesmo peso',
+  'Festa Segura': 'hits conhecidos, baixa rejeição',
+  Descoberta: 'mais novidade e diversidade, preservando justiça',
+}
 
 function EqualizerMark() {
   return (
@@ -48,6 +49,17 @@ export default function Room({ user }) {
   const [savingMode, setSavingMode] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [settingsFeedback, setSettingsFeedback] = useState(null)
+  const [availableModes, setAvailableModes] = useState(['Democrático', 'Festa Segura'])
+
+  useEffect(() => {
+    let active = true
+    api.getConsensusModes().then((response) => {
+      if (active && response.ok && Array.isArray(response.body?.modes)) {
+        setAvailableModes(response.body.modes)
+      }
+    })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -88,6 +100,9 @@ export default function Room({ user }) {
     [room, user],
   )
   const isHost = currentMember?.role === 'host'
+  const consensusModes = availableModes.map(
+    (name) => ({ name, description: MODE_DESCRIPTIONS[name] || '' }),
+  )
 
   useEffect(() => {
     if (!room || contextDirty) return
@@ -391,7 +406,7 @@ export default function Room({ user }) {
                   {savingMode && <small>SALVANDO…</small>}
                 </div>
                 <div className="mode-options">
-                  {CONSENSUS_MODES.map((mode) => (
+                  {consensusModes.map((mode) => (
                     <button
                       className={room.mode === mode.name ? 'mode-option selected' : 'mode-option'}
                       type="button"

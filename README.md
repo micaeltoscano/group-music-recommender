@@ -44,7 +44,7 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 5. Coleta de top tracks/artists dos membros (com cache/snapshot).
 6. Compatibilidade do grupo + Individual Taste Modeling.
 7. Geração de pool de candidatas + scoring (individual → grupo) + rejection + fairness.
-8. **Modos**: Democrático e Festa Segura (Descoberta se der tempo).
+8. **Modos**: Democrático e Festa Segura; Descoberta disponível no pós-MVP por feature flag.
 9. Mood & Context Scoring com **Last.fm** (com fallback em cascata).
 10. Playlist Experience Sequencer (regras simples).
 11. Criação de playlist real no Spotify do host.
@@ -115,7 +115,9 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 
 **Auth:** `GET /auth/login` · `GET /auth/callback` · `POST /auth/logout` · `GET /auth/me` ·
 `DELETE /auth/me`
-**Rooms:** `POST /rooms` · `POST /rooms/{code}/join` · `GET /rooms/{code}` · `PUT /rooms/{code}/context` · `PUT /rooms/{code}/mode` · `POST /rooms/{code}/generate` · `GET /rooms/{code}/result`
+**Rooms:** `POST /rooms` · `POST /rooms/{code}/join` · `GET /rooms/{code}` ·
+`GET /rooms/consensus-modes` · `PUT /rooms/{code}/context` · `PUT /rooms/{code}/mode` ·
+`POST /rooms/{code}/generate` · `GET /rooms/{code}/result`
 **Vibe Check:** `GET /rooms/{code}/vibe-check` · `POST /rooms/{code}/vibe-check`
 **Music data:** `GET /me/top` · `POST /me/refresh-music-snapshot`
 **Feedback:** `POST /playlist-runs/{run_id}/tracks/{track_id}/feedback` · `POST /playlist-runs/{run_id}/feedback`
@@ -214,12 +216,17 @@ Se alguém ficou muito baixo → correção na seleção final (troca marginal p
 
 1. **Democrático** — todos iguais. **[MVP]**
 2. **Festa Segura** — conhecidas, alta aceitação, baixa rejeição. **[MVP]**
-3. **Descoberta** — consenso + novas/nicho. **[MVP se der tempo]**
+3. **Descoberta** — novidade/diversidade com veto e representação preservados. **[PB-21, opt-in]**
 4. Host + Grupo — leve prioridade ao host. **[FUT]**
 5. Menor Rejeição — minimiza faixas que alguém odiaria. **[FUT]**
 6. Ponte Musical — grupos divergentes, faixas intermediárias. **[FUT]**
 
 Modo = perfil de pesos/restrições aplicado sobre o mesmo pipeline.
+
+O modo Descoberta fica desabilitado por padrão. `DISCOVERY_MODE_ENABLED=true` faz o backend anunciá-lo
+em `GET /rooms/consensus-modes` e aceitar sua seleção; com a flag desligada, a tentativa direta recebe
+422 e a sala não é alterada. Seu peso de novidade é superior ao Democrático, diversidade passa a ser
+calculada contra artistas/gêneros já conhecidos pelo grupo e o resultado registra essa decisão.
 
 **Controle de popularidade/descoberta** (do Vibe Check ou host): só conhecidas / mistura / descobrir. Festa grande ↑popularity; viagem equilíbrio; estudo sem hit; descoberta ↑novelty; Festa Segura ↓obscuras. Evitar popularity bias: popularidade é variável ajustável + `diversity_score`.
 
@@ -331,7 +338,8 @@ cp .env.example .env
 ```
 
 O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e caches
-(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7`, `SPOTIFY_TOP_ITEMS_LIMIT=50` e
+(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7`, `SPOTIFY_TOP_ITEMS_LIMIT=50`,
+`DISCOVERY_MODE_ENABLED=false` e
 `LASTFM_CACHE_TTL_DAYS=30`) e para o LLM local
 (`OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=llama3.1:8b` — requer o Ollama instalado e
 o modelo baixado com `ollama pull llama3.1:8b`; sem ele, o fallback determinístico assume). As chaves

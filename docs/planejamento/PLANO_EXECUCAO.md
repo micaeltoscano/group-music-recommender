@@ -145,16 +145,20 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **PBs individuais VALIDADOS (PB-03/18/19/20); falta a validação integrada (`CT-S4-INT-*`)** |
-| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — aberta por decisão explícita do usuário; primeiro item AGUARDANDO-QA** |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
-- **Sprint ativa:** Sprint 4 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
-  evidência e2e real pendente da Sprint 3). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
+- **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
+  validação integrada pendente das Sprints 1–4). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
   de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
 - **Exceção processual explícita:** em 2026-07-18, o usuário autorizou avançar para a Sprint 4 sem a
   demonstração e2e real da Sprint 3 e sem as assinaturas integradas das Sprints 1–2. A exceção libera
   implementação, mas **não** transforma evidência pendente em aprovação de QA nem autoriza emitir as
   assinaturas `SPRINT N CONCLUÍDA`. As dívidas de validação permanecem registradas.
+- **Promoção do pós-MVP:** em 2026-07-18, após o QA validar individualmente todos os PBs da Sprint 4,
+  o usuário determinou seguir para a Sprint 5. A decisão promove PB-21..24 e libera sua implementação
+  ordenada, mas não equivale à assinatura integrada `SPRINT 4 CONCLUÍDA`; `CT-S4-INT-*` e as dívidas
+  integradas anteriores continuam pendentes.
 
 > **Convenção de Status (legível por máquina).** A **primeira palavra** do campo `- **Status:**` de
 > cada PB é um *token* de um vocabulário fechado; o texto após ` — ` é detalhe humano livre. O
@@ -1442,9 +1446,8 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 - **Riscos/limitações:** os dois endpoints são independentes; em falha de rede durante o envio da
   tela, uma parte pode chegar antes da outra, mas o reenvio é seguro por upsert. Feedback continua
   deliberadamente fora do motor/ranking do MVP.
-- **Próxima ação exata:** QA executa `CT-PB20-01..05`, inspeciona a tela contra
-  `docs/design/screenshots/07-feedback.png` e confirma persistência/autorização. O Dev não encerra a
-  Sprint 4 antes do veredito.
+- **Próxima ação exata:** PB validado individualmente; preservar como pendência separada apenas a
+  inspeção visual e `CT-S4-INT-*`, sem reabrir PB-20.
 
 > **Nota — Qualidade/robustez/documentação (antigo PB-20):** deixou de ser um PB e virou a
 > **Definition of Done**, aplicada a **todos** os PBs desde a Sprint 1 (ver `../produto/BACKLOG_PRODUTO.md`
@@ -1478,23 +1481,83 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 4". Cobrem, no mínimo:
 
 ### Status da Sprint 4
 
-**A fazer.**
+**PBs individuais validados; validação integrada pendente.** A Sprint 5 foi aberta operacionalmente
+por decisão explícita do usuário, sem emitir `SPRINT 4 CONCLUÍDA`.
 
 ---
 
 ## Sprint 5 — Expansão pós-MVP (fora do MVP)
 
-Não iniciar sem decisão explícita de escopo, e somente com o MVP (Sprints 1–4) estável. Todos com
-**Status:** A-FAZER.
+Aberta por decisão explícita do usuário em 2026-07-18. A exceção preserva, sem promover a aprovação,
+as validações integradas pendentes das Sprints 1–4.
 
-- **PB-21 — Modo Descoberta** (Baixa, 5 pts) — perfil de pesos que favorece novidade/diversidade,
-  mantendo rejeição e justiça. Depende de PB-11, PB-12 e PB-16.
-- **PB-22 — Agrupamento de perfis musicais** (Baixa, 4 pts) — identifica subgrupos de afinidade a
-  partir de dados autorizados, de forma determinística. Depende de PB-09.
-- **PB-23 — Identificação de músicas-ponte** (Baixa, 5 pts) — marca faixas com boa aceitação entre
-  subgrupos durante o ranqueamento. Depende de PB-11 e PB-22.
-- **PB-24 — Balanceamento entre subgrupos** (Baixa, 4 pts) — alterna representantes dos subgrupos na
-  seleção final, preservando consenso e justiça. Depende de PB-12, PB-16, PB-22 e PB-23.
+### Ordem de implementação
+
+1. PB-21
+2. PB-22
+3. PB-23
+4. PB-24
+
+### Execução dos PBs
+
+#### PB-21 — Modo Descoberta
+
+- **Status:** AGUARDANDO-QA — implementação e testes técnicos concluídos em 2026-07-18; aguarda
+  validação independente de `CT-PB21-01..06`.
+- **Objetivo:** oferecer, por feature flag, um perfil de pesos que favoreça novidade/diversidade sem
+  abandonar consenso, rejeição e representação mínima.
+- **Dependências:** PB-11, PB-12 e PB-16 — todas `VALIDADO`.
+- **Critérios de aceitação:**
+  1. Modo selecionável somente quando habilitado na configuração.
+  2. Peso de novidade superior ao modo Democrático.
+  3. Rejeições fortes e representação mínima continuam consideradas.
+  4. Resultado explica que o modo favoreceu descoberta musical.
+- **Plano de implementação:** feature flag `DISCOVERY_MODE_ENABLED`; lista de modos disponível vinda
+  da API; perfil `discovery` no motor; mapeamento explícito no pipeline e explicação persistida.
+- **Testes obrigatórios:** `CT-PB21-01..06` no `PLANO_TESTES.md`.
+- **Bloqueios:** nenhum.
+- **Resultado da implementação:** `DISCOVERY_MODE_ENABLED` é `false` por padrão. O endpoint autenticado
+  `GET /rooms/consensus-modes` anuncia apenas os modos habilitados; a tentativa direta de selecionar
+  “Descoberta” com a flag desligada recebe 422 sem alterar a sala. Com a flag ligada, o host pode
+  selecionar e persistir o modo. O frontend consome essa lista, sem alterar o payload histórico do
+  lobby. O perfil `discovery` aumenta novidade para 0,30 e diversidade para 0,15; diversidade é um
+  sinal puro calculado contra artistas/gêneros conhecidos. Veto de 0,75 e elevação do integrante
+  menos representado continuam no mesmo pipeline. A explicação do modo é persistida no run e exibida
+  no resultado.
+- **Arquivos criados:** `backend/tests/test_pb21_discovery_mode.py`.
+- **Arquivos alterados:** configuração/env/Compose; schemas/API/serviço de salas; scoring, pesos,
+  geração e resultado; seletor/cliente frontend; README; planos de execução e testes.
+- **Migração:** não aplicável; `music_sessions.mode` já é texto e suporta o novo valor.
+- **Resultado dos testes técnicos:** `test_pb21_discovery_mode.py` **6 passed / 0 failed** cobrindo
+  `CT-PB21-01..06`. Suíte backend completa **288 passed / 6 skipped / 0 failed**; `compileall`,
+  `pip check`, build Vite (**46 módulos**), `docker compose config` e `git diff --check` aprovados.
+- **Riscos/limitações:** o sinal de novidade preserva a heurística existente do PB-11 (datas iniciadas
+  em `202` são novas); não estima idade relativa em anos. Diversidade sem gêneros usa o artista como
+  fallback. O recurso permanece opt-in para permitir calibração antes de habilitação geral.
+- **Próxima ação exata:** QA executa `CT-PB21-01..06`, com atenção ao bloqueio server-side da flag,
+  à inversão verificável do ranking e à preservação de veto/representação. Não iniciar PB-22 antes do
+  veredito `VALIDADO`.
+
+#### PB-22 — Agrupamento de perfis musicais
+
+- **Status:** A-FAZER
+- **Objetivo:** identificar subgrupos de afinidade a partir de dados autorizados, deterministicamente.
+- **Dependências:** PB-09.
+- **Próxima ação exata:** aguardar PB-21 `VALIDADO`.
+
+#### PB-23 — Identificação de músicas-ponte
+
+- **Status:** A-FAZER
+- **Objetivo:** marcar faixas com boa aceitação entre subgrupos durante o ranqueamento.
+- **Dependências:** PB-11 e PB-22.
+- **Próxima ação exata:** aguardar PB-22 `VALIDADO`.
+
+#### PB-24 — Balanceamento entre subgrupos
+
+- **Status:** A-FAZER
+- **Objetivo:** alternar representantes dos subgrupos preservando consenso e justiça.
+- **Dependências:** PB-12, PB-16, PB-22 e PB-23.
+- **Próxima ação exata:** aguardar PB-22/PB-23 `VALIDADO`.
 
 Detalhes e critérios de aceitação em `../produto/BACKLOG_PRODUTO.md` (§10, PB-21 a PB-24).
 
@@ -1556,38 +1619,37 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 4, branch de entrega `feat/SPRINT04/PB20`.
-- **PB em andamento:** PB-20 `AGUARDANDO-QA` — feedback pós-playlist implementado.
-- **Último resultado concluído:** feedback por faixa e geral persistidos com autorização, vínculo
-  usuário/run, upsert e aviso de uso futuro; formulário integrado ao resultado e privacidade
-  estendida aos novos dados. Migração ida/volta aprovada em PostgreSQL isolado; suíte completa e
-  build Vite aprovados.
-- **Onde parou:** implementação e testes técnicos do PB-20 concluídos; handoff para QA.
-- **Próxima ação exata:** QA executa `CT-PB20-01..05`. Se `REPROVADO`, o Dev corrige somente PB-20;
-  se `VALIDADO`, inicia-se separadamente a validação integrada da Sprint 4. As dívidas integradas das
-  Sprints 1–3 continuam registradas pela exceção e não foram promovidas a concluídas.
+- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB21`.
+- **PB em andamento:** PB-21 `AGUARDANDO-QA` — Modo Descoberta opt-in implementado.
+- **Último resultado concluído:** feature flag e catálogo server-side de modos, pesos de
+  novidade/diversidade, veto/representação preservados, explicação persistida e seletor frontend
+  orientado pela API. Suíte completa **288 passed / 6 skipped / 0 failed**; build Vite aprovado.
+- **Onde parou:** implementação e testes técnicos do PB-21 concluídos; handoff para QA.
+- **Próxima ação exata:** QA executa `CT-PB21-01..06`. Se `REPROVADO`, o Dev corrige somente PB-21;
+  se `VALIDADO`, pode iniciar PB-22. As validações integradas das Sprints 1–4 permanecem pendentes e
+  não foram promovidas a concluídas pela abertura operacional da Sprint 5.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb20_feedback.py -o addopts='' -q
+  APP_ENV=test .venv/bin/pytest tests/test_pb21_discovery_mode.py -o addopts='' -q
   APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum técnico no PB-20. Aguarda QA. Dívidas integradas das Sprints 1–3 preservadas
+- **Bloqueios:** nenhum técnico no PB-21. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
   pela exceção explícita do usuário.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 9 testes focados; suíte completa 272 passed / 6 skipped;
-  build Vite, `compileall`, `pip check`, migração PostgreSQL ida/volta e `git diff --check`.
-- [x] Comparei o comportamento real com os critérios existentes. — quatro sinais, duas notas,
-  associação, autorização e aviso futuro cobertos com persistência inspecionada.
-- [x] Atualizei status sem declarar validação independente. — PB-20 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — upsert por usuário/run e envio em duas rotas.
+- [x] Rodei as verificações relevantes. — 6 testes focados; suíte completa 288 passed / 6 skipped;
+  build Vite, `compileall`, `pip check`, Compose e `git diff --check`.
+- [x] Comparei o comportamento real com os critérios existentes. — flag, pesos, ranking,
+  rejeição/representação, explicação e UI cobertos.
+- [x] Atualizei status sem declarar validação independente. — PB-21 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — catálogo server-side e recurso opt-in.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — README, plano de execução e diário de retomada.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit do PB-20 — incluído no handoff desta sessão.
+- [x] Commit do PB-21 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

@@ -9,6 +9,7 @@ from app.api.auth import get_current_user
 from app.db.models import MusicSession
 from app.db.session import get_db
 from app.schemas.rooms import (
+    ConsensusModesResponse,
     PlaylistRunResponse,
     RoomContextUpdate,
     RoomMemberResponse,
@@ -23,6 +24,8 @@ from app.services.room_service import (
     RoomFullError,
     RoomHostRequiredError,
     RoomNotFoundError,
+    RoomModeUnavailableError,
+    available_consensus_modes,
     create_room,
     get_room_for_member,
     join_room,
@@ -93,6 +96,15 @@ def join_music_room(
     return _room_response(db, room)
 
 
+@router.get("/consensus-modes", response_model=ConsensusModesResponse)
+def read_consensus_modes(
+    _current_user: dict = Depends(get_current_user),
+) -> ConsensusModesResponse:
+    """Lista somente os modos habilitados pela configuração do servidor."""
+
+    return ConsensusModesResponse(modes=available_consensus_modes())
+
+
 @router.get("/{code}", response_model=RoomResponse)
 def read_music_room(
     code: str,
@@ -114,6 +126,8 @@ def _raise_room_update_error(exc: Exception) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     if isinstance(exc, (RoomAccessDeniedError, RoomHostRequiredError)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    if isinstance(exc, RoomModeUnavailableError):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     raise exc
 
 
@@ -145,7 +159,7 @@ def set_music_room_mode(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RoomResponse:
-    """Seleciona um dos dois modos de consenso disponíveis no MVP."""
+    """Seleciona um modo de consenso habilitado na configuração do produto."""
     try:
         room = update_room_mode(
             db,
@@ -153,7 +167,12 @@ def set_music_room_mode(
             current_user["id"],
             mode=payload.mode,
         )
-    except (RoomNotFoundError, RoomAccessDeniedError, RoomHostRequiredError) as exc:
+    except (
+        RoomNotFoundError,
+        RoomAccessDeniedError,
+        RoomHostRequiredError,
+        RoomModeUnavailableError,
+    ) as exc:
         _raise_room_update_error(exc)
     return _room_response(db, room)
 

@@ -23,12 +23,12 @@ guia executável para o agente de implementação e de referência de aceitaçã
 
 ## 2. Escopo
 
-- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), com testes individuais, e testes integrados das
-  Sprints 1 a 4.
+- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21 promovido da
+  Sprint 5 por decisão explícita de escopo.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
   PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
-- **Fora do escopo deste plano:** PB-21 (Modo Descoberta) e PB-22 (Agrupamento/faixas-ponte) —
-  versões futuras; serão incluídos quando promovidos por decisão de escopo.
+- **Fora do escopo atual deste plano:** PB-22, PB-23 e PB-24; seus casos serão detalhados antes da
+  implementação de cada item promovido.
 
 ## 3. Estratégia de testes
 
@@ -1397,6 +1397,53 @@ Pendente.
 
 ---
 
+## Sprint 5 — Expansão pós-MVP
+
+### PB-21 — Modo Descoberta
+
+#### Objetivo da validação
+Comprovar que o modo opcional favorece novidade/diversidade apenas quando habilitado, preserva os
+mecanismos de rejeição e representação e explica seu efeito no resultado.
+
+#### Requisitos e critérios cobertos
+Critérios 1–4 do PB-21.
+
+#### Pré-condições
+PB-11, PB-12 e PB-16 validados; `DISCOVERY_MODE_ENABLED` controlável no ambiente de teste.
+
+#### Casos de teste
+##### CT-PB21-01 — Feature flag desligada
+- **Tipo:** configuração/API · **Prioridade:** Alta · **Resultado esperado:** “Descoberta” não é
+  anunciado pela API/UI e tentativa direta de seleção é rejeitada sem alterar a sala. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB21-02 — Feature flag ligada
+- **Tipo:** API/integração · **Prioridade:** Alta · **Resultado esperado:** modo aparece entre os
+  disponíveis, pode ser selecionado pelo host e é persistido. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB21-03 — Novidade e diversidade recebem peso superior
+- **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** peso de novidade supera o
+  Democrático e candidatas novas/diversas ganham preferência verificável. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB21-04 — Rejeição e representação preservadas
+- **Tipo:** unitário/regressão · **Prioridade:** Alta · **Resultado esperado:** veto forte ainda
+  penaliza e a elevação do integrante menos representado continua aplicada. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB21-05 — Explicação no resultado
+- **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** explicação persistida informa
+  que o modo favoreceu descoberta, novidade e diversidade. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB21-06 — Seletor segue os modos anunciados pelo servidor
+- **Tipo:** frontend/usabilidade · **Prioridade:** Média · **Resultado esperado:** UI não mantém lista
+  divergente e descreve o propósito do modo Descoberta. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+---
+
 ## Apêndice — Rastreabilidade PB × critérios × casos
 
 | PB | Sprint | Nº de casos individuais | Testes integrados |
@@ -1421,6 +1468,6 @@ Pendente.
 | PB-18 | 4 | 5 (CT-PB18-01..05) | CT-S4-INT-* |
 | PB-19 | 4 | 5 (CT-PB19-01..05) | CT-S4-INT-* |
 | PB-20 | 4 | 5 (CT-PB20-01..05) | CT-S4-INT-* |
+| PB-21 | 5 | 6 (CT-PB21-01..06) | a definir no fechamento da Sprint 5 |
 
-**PB-21 e PB-22:** fora do escopo deste plano (versões futuras). Seus casos serão elaborados quando os
-itens forem promovidos ao backlog ativo.
+**PB-22, PB-23 e PB-24:** seus casos serão elaborados antes da implementação de cada item promovido.

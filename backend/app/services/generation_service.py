@@ -25,7 +25,7 @@ from app.engine.context_scoring import (
     enrich_candidate_genres,
 )
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
-from app.engine.scoring import calculate_group_score
+from app.engine.scoring import calculate_candidate_diversity_score, calculate_group_score
 from app.engine.sequencer import SequencerTrack, sequence_tracks
 from app.engine.taste import UserTasteProfile
 from app.engine.vibe_scoring import (
@@ -41,6 +41,11 @@ from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
 MIN_PLAYLIST_TRACKS = 20
 MAX_PLAYLIST_TRACKS = 30
 MAX_TRACKS_PER_ARTIST = 2
+ROOM_MODE_KEYS = {
+    "Democrático": "democratic",
+    "Festa Segura": "safe_party",
+    "Descoberta": "discovery",
+}
 
 
 class GenerationConflictError(Exception):
@@ -385,18 +390,20 @@ def _rank_candidates(
     vibe_preferences: VibePreferences | None = None,
 ) -> list[CandidateTrack]:
     """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
-    mode_key = "safe_party" if room_mode == "Festa Segura" else "democratic"
+    mode_key = ROOM_MODE_KEYS.get(room_mode or "Democrático", "democratic")
     mode_config = CONSENSUS_MODES[mode_key]
     scored: list[dict[str, Any]] = []
 
     for candidate in candidates:
         context_score = calculate_context_score(candidate, context)
+        diversity_score = calculate_candidate_diversity_score(candidate, profiles)
         group_data = calculate_group_score(
             candidate,
             profiles,
             mode_config["individual"],
             mode_config["group"],
             context_score=context_score,
+            diversity_score=diversity_score,
         )
         if vibe_preferences is not None:
             vibe_score = calculate_vibe_score(candidate, vibe_preferences)

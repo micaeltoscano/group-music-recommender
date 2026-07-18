@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     music_snapshot_ttl_days: int = Field(default=7, ge=1)
     spotify_top_items_limit: int = Field(default=50, ge=1, le=50)
 
+    # --- Modos pós-MVP (PB-21) ---------------------------------------------
+    # Opt-in: o modo Descoberta não aparece nem pode ser selecionado sem flag.
+    discovery_mode_enabled: bool = False
+
     # --- CORS ----------------------------------------------------------------
     # Origens permitidas para o frontend Vite (separadas por vírgula).
     backend_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
