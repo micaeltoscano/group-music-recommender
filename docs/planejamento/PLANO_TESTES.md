@@ -1466,32 +1466,32 @@ PB-09 validado; snapshots musicais temporários já convertidos em `UserTastePro
 ##### CT-PB22-01 — Somente sinais musicais temporários autorizados
 - **Tipo:** unitário/privacidade · **Prioridade:** Alta · **Resultado esperado:** agrupamento consome
   somente faixas, artistas e gêneros extraídos de `UserTasteProfile`; o resultado não replica esses
-  dados brutos nem requer banco ou rede. · **Automatizável:** Sim · **Status:** Não executado
+  dados brutos nem requer banco ou rede. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB22-02 — Evidência insuficiente explícita
 - **Tipo:** unitário/limites · **Prioridade:** Alta · **Resultado esperado:** menos de três perfis,
   perfil esparso ou ausência de qualquer par semelhante retorna `insufficient_evidence`, sem criar
-  subgrupos artificiais. · **Automatizável:** Sim · **Status:** Não executado
+  subgrupos artificiais. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB22-03 — Agrupamento determinístico
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** a mesma coleção de perfis produz
   os mesmos pares, membros e IDs de cluster independentemente da ordem de entrada. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB22-04 — Grupo homogêneo sem falsa divisão
 - **Tipo:** unitário/negócio · **Prioridade:** Alta · **Resultado esperado:** perfis conectados pela
   afinidade formam `single_group`, sem subgrupos distintos inventados. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB22-05 — Clusters disponíveis ao motor
 - **Tipo:** integração de motor · **Prioridade:** Alta · **Resultado esperado:** candidatas ranqueadas
   recebem IDs transitórios dos clusters de seus integrantes de origem, sem alterar seus dados brutos
-  ou aplicar ainda a regra de músicas-ponte. · **Automatizável:** Sim · **Status:** Não executado
+  ou aplicar ainda a regra de músicas-ponte. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB22-06 — Configuração e identidade inválidas
 - **Tipo:** unitário/robustez · **Prioridade:** Média · **Resultado esperado:** limiar fora de 0..1 e
   `user_id` duplicado são rejeitados explicitamente. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ---
 

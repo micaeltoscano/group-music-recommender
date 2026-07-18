@@ -145,7 +145,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
-| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — primeiro item VALIDADO; segundo AGUARDANDO-QA; demais A-FAZER** |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — PB-21/PB-22 VALIDADOS; PB-23/24 A-FAZER (Sprint não validada)** |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
 - **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
@@ -1544,8 +1544,14 @@ as validações integradas pendentes das Sprints 1–4.
 
 #### PB-22 — Agrupamento de perfis musicais
 
-- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; agrupamento puro e
-  determinístico integrado ao pipeline, com 10 testes técnicos focados e regressão verde.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB22-01..06 verificados independentemente. Motor puro
+  consome só sinais autorizados e não replica dados brutos (privacidade); `insufficient_evidence` em
+  <3 perfis/perfil esparso/sem par acima do limiar; **determinismo confirmado nas 24 permutações**;
+  homogêneo → `single_group`; candidatas recebem os cluster IDs dos membros e **mutação confirma que
+  os clusters não alteram o ranking** (critério 4); limiar fora de [0,1] e user_id duplicado →
+  ValueError. Sondagem QA `backend/tests/test_pb22_taste_clustering_qa.py` (13 casos) + Dev (10)
+  verdes; suíte completa 325 passed / 6 skipped / 0 failed. Sem defeitos. Relatório:
+  [`docs/relatorios-testes/PB-22.md`](../relatorios-testes/PB-22.md).
 - **Objetivo:** identificar subgrupos de afinidade a partir de dados autorizados, deterministicamente.
 - **Dependências:** PB-09 `VALIDADO`; portão anterior PB-21 `VALIDADO` pelo relatório de QA.
 - **Critérios de aceitação:**
