@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 VALIDADO; PB-18/19/20 A-FAZER (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 VALIDADO; PB-18 AGUARDANDO-QA; PB-19/20 A-FAZER (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1287,7 +1287,9 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-18 — Enriquecimento de contexto com Last.fm
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; cascata faixa → artista →
+  gêneros Spotify → consenso integrada ao pipeline, com cache persistente, fonte/confiança e
+  fallback que preserva a geração. Testes técnicos verdes; falta validação independente.
 - **Objetivo:** tags do Last.fm (faixa → artista) combinadas com gêneros Spotify, em cache com
   confiança, sem interromper a geração em erro/ausência.
 - **Dependências:** PB-10 e PB-17.
@@ -1297,17 +1299,42 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
   3. Cada resultado registra fonte e confiança.
   4. Consultas repetidas reutilizam cache válido.
   5. Resposta vazia/erro não interrompe a geração.
-- **Plano de implementação:** `LastFmClient` + cascata; cache em `track_context_cache` com `confidence`/`source`.
-- **Arquivos ou módulos previstos:** `backend/app/clients/lastfm_client.py`,
-  `backend/app/db/models.py` (`track_context_cache`), migração.
+- **Plano de implementação:** `LastFmClient` + serviço de cascata; cache em `track_context_cache` com
+  `confidence`/`source`; tags selecionadas anexadas à candidata antes do ranking contextual.
+- **Arquivos criados:** `backend/app/clients/lastfm_client.py`,
+  `backend/app/services/context_enrichment_service.py`,
+  `backend/alembic/versions/0013_pb18_track_context_cache.py`,
+  `backend/tests/test_pb18_lastfm_context.py`.
+- **Arquivos alterados:** `backend/app/config.py`, `backend/app/db/models.py`,
+  `backend/app/engine/context_scoring.py`, `backend/app/services/generation_service.py`,
+  `.env.example`, `README.md`, este plano.
 - **Testes obrigatórios do PB:** ver `PLANO_TESTES.md` §10 (PB-18) — cascata, cache válido reutilizado,
   erro/vazio não quebra, confiança por fonte.
 - **Evidências necessárias:** `track_context_cache` com fonte/confiança; cascata exercida.
 - **Riscos:** R-07 (sem tags).
-- **Bloqueios:** `LASTFM_API_KEY` para o caminho principal (cascata não depende).
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar `LastFmClient` com cascata e cache.
+- **Migração:** `0013_pb18_context_cache`, reversível; cria cache único por `spotify_track_id` com
+  tags da faixa/artista, gêneros Spotify, `context_scores_json`, `source`, `confidence` e
+  `fetched_at`. Ciclo `upgrade → downgrade 0012 → upgrade` aprovado em PostgreSQL real; banco deixado
+  em `0013_pb18_context_cache (head)`; `alembic check` sem drift.
+- **Decisões:** confiança por fonte: faixa 0,95; artista 0,75; gêneros Spotify 0,50; consenso 0,20.
+  Cache válido por 30 dias (configurável); timeout padrão de 5s. Sem chave, nome/artista, tags ou em
+  qualquer falha externa, a cascata continua sem lançar erro. O cliente não inclui chave em mensagens
+  de erro. Tags Last.fm entram como sinal do score contextual, sem decidir diretamente a playlist.
+- **Bloqueios:** nenhum técnico. `LASTFM_API_KEY` real não estava disponível; o caminho externo foi
+  validado com cliente mockado e parser do envelope oficial, e a ausência da chave/fallback foi
+  exercitada sem rede.
+- **Resultado da implementação:** `track.getTopTags` é tentado primeiro; somente quando vazio/erro o
+  cliente tenta `artist.getTopTags`; depois usa gêneros Spotify ou consenso. Cada candidata recebe
+  `context_source`, `context_confidence` e `context_tags`; o cache válido evita nova chamada externa.
+- **Resultado dos testes técnicos:** `test_pb18_lastfm_context.py` **9 passed / 0 failed** cobrindo
+  `CT-PB18-01..05`; regressão direta PB-17/PB-18 **15 passed**; suíte backend completa
+  **238 passed / 6 skipped / 0 failed**. `compileall`, `pip check`, build Vite (**45 módulos**),
+  `git diff --check`, migração reversível e `alembic check` aprovados.
+- **Riscos/limitações:** integração real com Last.fm não exercitada por ausência de chave; timeout,
+  HTTP/payload inválido, resposta vazia e erro inesperado estão cobertos por fallback/mocks. O cache
+  de fallback expira normalmente para permitir nova tentativa futura.
+- **Próxima ação exata:** QA executa `CT-PB18-01..05`, com atenção à ordem real das chamadas, ao reuso
+  do cache sem rede e à continuidade do pipeline diante de falhas inesperadas do cliente.
 
 #### PB-19 — Sequenciamento da experiência musical
 

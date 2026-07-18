@@ -201,6 +201,7 @@ def _candidate_terms(candidate: CandidateTrack) -> set[str]:
     artists = raw.get("artists") or []
     values: list[object] = [raw.get("name"), album.get("name")]
     values.extend(raw.get("genres") or [])
+    values.extend(raw.get("context_tags") or [])
     values.extend(
         artist.get("name")
         for artist in artists

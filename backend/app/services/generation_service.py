@@ -32,6 +32,7 @@ from app.engine.vibe_scoring import (
     calculate_vibe_score,
 )
 from app.engine.weights import CONSENSUS_MODES, VIBE_CHECK_INFLUENCE
+from app.services.context_enrichment_service import enrich_candidates_context
 from app.services.music_service import get_or_refresh_snapshot
 from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
 
@@ -431,6 +432,10 @@ async def execute_generation(
         if not candidates:
             raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
         candidates = enrich_candidate_genres(candidates, artist_genres)
+        # PB-18: Last.fm é apenas uma fonte auxiliar. O serviço consulta tags
+        # da faixa → artista e cai para os gêneros já anexados acima (ou
+        # consenso), persistindo fonte/confiança e reutilizando cache válido.
+        candidates = await enrich_candidates_context(db, candidates)
         vibe_answers = (
             db.query(VibeCheckAnswer)
             .filter(

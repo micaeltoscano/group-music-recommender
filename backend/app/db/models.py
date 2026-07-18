@@ -218,6 +218,36 @@ class UserMusicSnapshot(Base):
         )
 
 
+class TrackContextCache(Base):
+    """Enriquecimento contextual reutilizável das candidatas (PB-18)."""
+
+    __tablename__ = "track_context_cache"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    spotify_track_id: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, nullable=False
+    )
+    track_name: Mapped[str] = mapped_column(Text, nullable=False)
+    artist_name: Mapped[str] = mapped_column(Text, nullable=False)
+    lastfm_track_tags_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    lastfm_artist_tags_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    spotify_artist_genres_json: Mapped[list[str]] = mapped_column(
+        JSON, nullable=False, default=list
+    )
+    context_scores_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<TrackContextCache spotify_track_id={self.spotify_track_id!r} "
+            f"source={self.source!r}>"
+        )
+
+
 class PlaylistRun(Base):
     """Registro de uma execução de geração de playlist (PB-13)."""
 

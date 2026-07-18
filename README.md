@@ -105,7 +105,7 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **[MVP] playlist_runs**: id · music_session_id · status(**running/completed/failed**) · compatibility_score · fairness_score · spotify_playlist_id · spotify_playlist_url · llm_context_json · explanation_json · error_message · created_at
 **[MVP] playlist_run_tracks**: id · playlist_run_id · spotify_track_id · spotify_uri · track_name · artist_name · score · reason · position · source · **match_confidence** · **discard_reason**(nullable: not_found/unavailable_in_market/low_match/no_uri/artist_cap)
 **[MVP] vibe_check_answers**: id · session_id · user_id · answers_json · derived_preferences_json · created_at
-**[MVP] track_context_cache**: id · spotify_track_id · track_name · artist_name · lastfm_track_tags_json · lastfm_artist_tags_json · spotify_artist_genres_json · context_scores_json · confidence · fetched_at
+**[MVP] track_context_cache**: id · spotify_track_id · track_name · artist_name · lastfm_track_tags_json · lastfm_artist_tags_json · spotify_artist_genres_json · context_scores_json · source · confidence · fetched_at
 **[FUT] lyrics_analysis_cache**: id · spotify_track_id · track_name · artist_name · lyrics_hash · party_score · sadness_score · romance_score · explicitness_score · aggressiveness_score · motivational_score · confidence · method · analyzed_at
 **[MVP-estrutura/FUT-uso] member_track_feedback**: id · user_id · playlist_run_id · spotify_track_id · liked · disliked · more_like_this · never_again · created_at
 **[MVP-estrutura/FUT-uso] playlist_feedback**: id · user_id · playlist_run_id · representation_score · satisfaction_score · comments · created_at
@@ -183,16 +183,14 @@ O LLM transforma o pedido humano em **critérios estruturados** — não decide 
 ```
 Fontes (ordem): Last.fm tags da faixa → tags do artista → gêneros/artistas Spotify → Vibe Check → letras (opcional) → regras simples → fallback por consenso do grupo. Cada faixa recebe `context_score` + `confidence` + `source`.
 
-> **Estado operacional (2026-07-17): PB-17 corrigido e aguardando novo QA na Sprint 3.** O contexto
-> estruturado agora gera `context_score` determinístico por candidata, usando ocasião, humor,
-> energia, tags e gêneros Spotify dos artistas. Os modos reservam 15% do score coletivo para esse
-> sinal; consenso e afinidade continuam predominantes. A regressão do Dev comprovou “festa” versus
-> “estudo” com rankings distintos (`CT-PB17-05`/`CT-S3-INT-02`). PB-18 continuará responsável apenas
-> pelo enriquecimento posterior via Last.fm.
+> **Estado operacional (2026-07-18): PB-18 implementado, aguardando QA.** O contexto estruturado
+> gera `context_score` determinístico por candidata usando ocasião, humor, energia, gêneros Spotify
+> e tags selecionadas pela cascata Last.fm. Consenso e afinidade continuam predominantes; a fonte
+> externa apenas enriquece o sinal contextual e nunca bloqueia a geração.
 
 ## 11. Last.fm Tag Layer
 
-Fonte **auxiliar**, não dependência absoluta. Cascata: (1) tags da faixa (artist+track) → (2) tags do artista → (3) gêneros Spotify + outros sinais → (4) consenso+afinidade+popularidade. Positivas p/ festa: party, dance, happy, upbeat, pop, funk, summer, electronic. Negativas: sad, acoustic, melancholic, ambient, sleep, depressive, slow. Cache obrigatório em `track_context_cache` com `confidence` (`lastfm_track_tags` > `lastfm_artist_tags_fallback` > `spotify_genres`).
+Fonte **auxiliar**, não dependência absoluta. Cascata: (1) tags da faixa (artist+track) → (2) tags do artista → (3) gêneros Spotify + outros sinais → (4) consenso+afinidade+popularidade. Positivas p/ festa: party, dance, happy, upbeat, pop, funk, summer, electronic. Negativas: sad, acoustic, melancholic, ambient, sleep, depressive, slow. Cache obrigatório em `track_context_cache` com `source` e `confidence` (`lastfm_track_tags` > `lastfm_artist_tags_fallback` > `spotify_genres` > `consensus_fallback`). O cache vale 30 dias por padrão (`LASTFM_CACHE_TTL_DAYS`) e o timeout externo é configurável (`LASTFM_TIMEOUT_SECONDS`); sem `LASTFM_API_KEY`, a cascata começa diretamente nos gêneros Spotify.
 
 ## 12. Lyrics Theme Classifier (opcional / extra acadêmico)
 
@@ -321,12 +319,17 @@ histórias posteriores.
 cp .env.example .env
 ```
 
-O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e cache
-(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7` e `SPOTIFY_TOP_ITEMS_LIMIT=50`) e para o LLM local
+O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e caches
+(`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7`, `SPOTIFY_TOP_ITEMS_LIMIT=50` e
+`LASTFM_CACHE_TTL_DAYS=30`) e para o LLM local
 (`OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=llama3.1:8b` — requer o Ollama instalado e
 o modelo baixado com `ollama pull llama3.1:8b`; sem ele, o fallback determinístico assume). As chaves
 de Spotify / Last.fm ficam **vazias no exemplo** e só devem ser preenchidas no `.env` local quando a
 integração correspondente for exercitada. Nunca comite segredos.
+
+No PB-18, `LASTFM_API_KEY` habilita as consultas `track.getTopTags` e `artist.getTopTags`. O backend
+reutiliza `track_context_cache` enquanto válido; chave ausente, timeout, erro HTTP ou resposta vazia
+caem automaticamente para gêneros Spotify e, por fim, para os sinais de consenso do motor.
 
 No PB-08, `GET /me/top` reutiliza o snapshot fresco e
 `POST /me/refresh-music-snapshot` força uma nova coleta. Ambos aceitam `time_range` como

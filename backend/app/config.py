@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     spotify_client_secret: str | None = None
     spotify_redirect_uri: str | None = None
     lastfm_api_key: str | None = None
+    lastfm_timeout_seconds: float = Field(default=5.0, gt=0)
+    lastfm_cache_ttl_days: int = Field(default=30, ge=1)
     fernet_key: str | None = None
 
     # --- LLM local (PB-17) ----------------------------------------------------
