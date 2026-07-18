@@ -783,7 +783,10 @@ Faixa popular com veto forte de um membro; grupo com scores {10,10,1}; entradas 
 ##### CT-PB12-07 — Vibe Check como entrada opcional (não bloqueante)
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** com e sem `derived_preferences_json`.
 - **Resultado esperado:** funciona sem Vibe Check; com ele, ajusta pesos (ex.: baixa `sadness_tolerance`
-  penaliza tags tristes). · **Automatizável:** Sim · **Status:** Não executado
+  penaliza tags tristes). · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18) — sem
+  respostas, o ranking é idêntico ao anterior (não bloqueante); com `valence` baixa, faixas `sad` são
+  penalizadas; sinal limitado a 20% não inverte consenso forte. Cobertura:
+  `backend/tests/test_s3_vibe_scoring_qa.py` e `test_s3_integration_qa.py::test_ct_s3_int_03_*`.
 
 ### PB-13 — Controle e histórico da geração
 
@@ -1143,12 +1146,13 @@ criação de playlist real (PB-14) → resultado explicável (PB-16).
 ##### CT-S3-INT-03 — Vibe Check influencia o ranking
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** baixa `sadness_tolerance`.
 - **Resultado esperado:** faixas com tag `sad` penalizadas na seleção. · **Automatizável:** Sim ·
-  **Status:** **Reprovado (QA 2026-07-18)** — `DEF-S3-INT-03-01` (Alta). Com o mesmo grupo/pool,
-  `valence=0.0` (baixa tolerância a tristeza) e `valence=1.0` produzem **exatamente a mesma ordem**
-  (soma de posições das faixas `sad` = 190 em ambos). As preferências do Vibe Check
-  (`vibe_check_answers`) são persistidas (PB-07) mas **nunca consumidas** por `execute_generation`
-  nem pelo motor — mesmo padrão de `INC-PB17-CTX-01`. Reprodutor:
-  `backend/tests/test_s3_integration_qa.py::test_ct_s3_int_03_vibe_check_penaliza_faixas_tristes`.
+  **Status:** Aprovado (QA rodada 2, 2026-07-18) — `DEF-S3-INT-03-01` corrigido no commit `088597b`.
+  `execute_generation` agora consulta `vibe_check_answers` e mistura um `vibe_score` (motor puro
+  `engine/vibe_scoring.py`) ao `group_score` com influência limitada `0.20`; `valence` baixa penaliza
+  faixas `sad`. Verificado de forma independente: reprodutor QA intocado
+  (`test_s3_integration_qa.py`) agora passa e sondagem adversarial nova
+  (`test_s3_vibe_scoring_qa.py`, 6 casos) confirma limite de influência (não inverte consenso forte),
+  preservação do "pular" e monotonicidade de `valence`. Regressão: 217 passed / 6 skipped / 0 failed.
 
 #### Casos de regressão
 ##### CT-S3-INT-04 — Regressão das Sprints 1 e 2
@@ -1182,13 +1186,15 @@ PBs 07, 14, 15, 16, 17 aprovados; CT-S3-INT-01..05 aprovados; regressão das Spr
 URL da playlist criada; payload de resultado; logs sanitizados; `pytest` verde; capturas das telas.
 
 #### Resultado da Sprint
-**REPROVADA (QA 2026-07-18) — `DEF-S3-INT-03-01` (Alta) aberto.** O ciclo integrado foi executado:
-CT-S3-INT-01 (parte automatizável), CT-S3-INT-02, CT-S3-INT-04 (regressão 201 passed) e CT-S3-INT-05
-**Aprovados**; **CT-S3-INT-03 Reprovado** — as preferências do Vibe Check (PB-07) são persistidas mas
-não chegam ao motor, então `valence` alta/baixa produz a mesma seleção. Como CT-S3-INT-03 é critério
-de aprovação da Sprint e o defeito é Alta, a Sprint 3 **não** pode ser encerrada. Reprodutor
-automatizado: `backend/tests/test_s3_integration_qa.py`. Falta ainda a demonstração e2e real
-(CT-S3-INT-01) com conta Spotify. Correção do `DEF-S3-INT-03-01` cabe ao Dev; QA reexecuta depois.
+**Casos automatizáveis Aprovados (QA rodada 2, 2026-07-18); falta só a demo e2e real.** Rodada 1
+reprovou por `DEF-S3-INT-03-01` (Alta); o Dev corrigiu no commit `088597b` (Vibe Check integrado ao
+ranking com influência limitada 0.20) e a rodada 2 revalidou de forma independente: CT-S3-INT-01
+(parcial), INT-02, **INT-03 (agora Aprovado)**, INT-04 (regressão **217 passed / 6 skipped / 0
+failed**) e INT-05 **Aprovados**. `DEF-S3-INT-03-01` **fechado**; nenhum defeito Alta/bloqueante
+aberto. **Pendência única para o encerramento formal:** demonstração e2e **real** da playlist em
+conta Spotify variando a ocasião (`CT-S3-INT-01`), que exige contas Premium autorizadas
+(Development Mode, R-01) — não é defeito de código. Relatório:
+[`docs/relatorios-testes/SPRINT-03-INTEGRADO.md`](../relatorios-testes/SPRINT-03-INTEGRADO.md).
 
 ---
 

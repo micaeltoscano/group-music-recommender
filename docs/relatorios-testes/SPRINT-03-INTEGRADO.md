@@ -1,10 +1,48 @@
 # Relatório de QA — Validação integrada da Sprint 3
 
-**Data:** 2026-07-18 · **Branch:** `feat/SPRINT03/PB17` · **Autoridade:** Agente de Teste (QA)
+**Autoridade:** Agente de Teste (QA) · **Branch:** `feat/SPRINT03/PB17`
 
-## Veredito
+## Rodada 2 — revalidação após correção (2026-07-18)
 
-**SPRINT 3 REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS.**
+**Veredito: SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO** *(na parte automatizável; ver limitação e2e real).*
+
+O Dev corrigiu `DEF-S3-INT-03-01` no commit `088597b` (`feat(PB-07): integrar Vibe Check ao ranking`):
+novo motor puro `app/engine/vibe_scoring.py`, `execute_generation` agora consulta `vibe_check_answers`,
+agrega as respostas (membros que pulam contam como neutro `0.5`; sem respostas → comportamento
+anterior) e mistura um `vibe_score` ao `group_score` com influência limitada `VIBE_CHECK_INFLUENCE = 0.20`.
+`valence` mapeia tolerância a tristeza (baixa penaliza faixas `sad`).
+
+Verificação independente do QA:
+
+- **Reprodutor original intocado** `tests/test_s3_integration_qa.py` — **5 passed** (o Dev não alterou
+  este arquivo de QA); `CT-S3-INT-03` que antes reprovava **agora passa**: com `valence=0.0` as faixas
+  `sad` caem no ranking em relação a `valence=1.0`.
+- **Sondagem adversarial nova** `tests/test_s3_vibe_scoring_qa.py` — **6 passed**: influência limitada
+  (0.20) **não inverte consenso forte** (faixa amada triste continua em 1º); pular preserva o ranking
+  anterior; respostas parciais diluem o sinal sem quebrar; `valence` é monotônica para faixas tristes
+  e neutra para não-tristes.
+- **Regressão / suíte completa** `APP_ENV=test pytest` → **217 passed / 6 skipped / 0 failed**.
+
+| Caso | Rodada 2 |
+|---|---|
+| CT-S3-INT-01 | Aprovado (parcial) — demo e2e **real** ainda pendente |
+| CT-S3-INT-02 | Aprovado |
+| CT-S3-INT-03 | **Aprovado** (defeito corrigido) |
+| CT-S3-INT-04 | Aprovado (217 passed) |
+| CT-S3-INT-05 | Aprovado |
+
+`DEF-S3-INT-03-01`: **Fechado.** Nenhum defeito Alta/bloqueante aberto.
+
+**Limitação remanescente (não bloqueia os casos automatizáveis):** a criação de playlist em conta
+Spotify **real** variando a ocasião (`CT-S3-INT-01` "grupo real") ainda não foi demonstrada — Spotify
+mockado em todos os testes; requer contas Premium autorizadas (Development Mode, ≤5 usuários, R-01).
+O encerramento formal da Sprint no incremento demonstrável depende dessa evidência manual.
+
+---
+
+## Rodada 1 — validação inicial (2026-07-18)
+
+**Veredito: SPRINT 3 REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS.**
 
 Motivo: `DEF-S3-INT-03-01` (Alta) — `CT-S3-INT-03` reprova. Um defeito Alta em critério de aprovação
 da Sprint impede o encerramento (Plano de Testes §7 e §8).

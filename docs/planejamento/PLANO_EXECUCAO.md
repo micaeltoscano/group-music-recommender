@@ -143,7 +143,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 |---|---|---|---:|---|
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Em andamento — REPROVADA (integrada); correção `DEF-S3-INT-03-01` aguardando QA** |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Integrada Aprovada (automatizável); falta só a demo e2e real** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
@@ -859,10 +859,12 @@ e o Vibe Check opcional está disponível.
 
 #### PB-07 — Vibe Check opcional
 
-- **Status:** AGUARDANDO-QA — correção de `DEF-S3-INT-03-01` implementada em 2026-07-18; respostas
-  do Vibe Check agora são agregadas e consumidas pelo motor com influência limitada a 20%. O
-  veredito individual histórico do PB-07 permanece registrado, mas a integração reaberta aguarda
-  revalidação independente de `CT-S3-INT-03` e `CT-PB12-07`.
+- **Status:** VALIDADO (QA revalidação integrada 2026-07-18) — correção de `DEF-S3-INT-03-01`
+  confirmada independentemente. As respostas do Vibe Check são agregadas e consumidas pelo motor
+  (`engine/vibe_scoring.py`) com influência limitada a 20%; `CT-S3-INT-03` passa (reprodutor QA
+  intocado) e a sondagem adversarial `tests/test_s3_vibe_scoring_qa.py` (6 casos) confirma que o
+  sinal não inverte consenso forte, preserva o "pular" e é monotônico em `valence`. Suíte completa
+  217 passed / 6 skipped / 0 failed. Sem defeitos abertos.
 - **Objetivo:** questionário curto (3–5 perguntas), pulável, cujas respostas viram preferências
   normalizadas (0–1) por usuário/sala, atualizáveis a cada nova resposta.
 - **Dependências:** PB-05 e PB-06.
@@ -1172,27 +1174,27 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
   passed / 6 skipped / 0 failed** (CT-S3-INT-04).
 - Casos integrados: CT-S3-INT-01 (parcial ✔), CT-S3-INT-02 ✔, CT-S3-INT-03 ✖ (`DEF-S3-INT-03-01`),
   CT-S3-INT-04 ✔, CT-S3-INT-05 ✔.
-- Handoff do Dev após correção: `APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py
-  tests/test_s3_vibe_scoring.py -q` → **10 passed**; suíte completa → **211 passed / 6 skipped / 0
-  failed**; o status histórico de CT-S3-INT-03 continua reprovado até a reexecução independente.
+- Revalidação QA (rodada 2, após correção `088597b`): reprodutor QA intocado
+  `tests/test_s3_integration_qa.py` → **5 passed** (CT-S3-INT-03 agora verde); sondagem adversarial
+  nova `tests/test_s3_vibe_scoring_qa.py` → **6 passed**; suíte completa → **217 passed / 6 skipped /
+  0 failed**.
 - Playlist criada no Spotify (id/URL): — pendente (demonstração e2e real; Spotify mockado nos testes).
-- Data da validação: 2026-07-18.
+- Data da validação: 2026-07-18 (rodadas 1 e 2).
 
 ### Status da Sprint 3
 
-**REPROVADA na validação integrada (QA 2026-07-18).** Todos os PBs individuais estão `VALIDADO` e o
-portão `INC-PB17-CTX-01` foi fechado, mas o ciclo integrado revelou `DEF-S3-INT-03-01` (Alta):
-**CT-S3-INT-03 reprovou** — as preferências do Vibe Check (PB-07) são persistidas em
-`vibe_check_answers`, porém `execute_generation` e o motor nunca as consomem, então `valence` alta ou
-baixa produz exatamente a mesma seleção (mesmo padrão de `INC-PB17-CTX-01`, agora no PB-07).
-CT-S3-INT-01 (parte automatizável), CT-S3-INT-02, CT-S3-INT-04 (regressão 201 passed / 6 skipped /
-0 failed) e CT-S3-INT-05 passaram. Reprodutor: `backend/tests/test_s3_integration_qa.py`. Como
-CT-S3-INT-03 é critério de aprovação e o defeito é Alta, a Sprint **não** pode ser encerrada.
-Pendências não bloqueantes: demonstração e2e real da playlist (CT-S3-INT-01) com conta Spotify.
-**Correção do Dev aguardando QA:** `execute_generation` agora lê as respostas da sala e o motor puro
-aplica um sinal agregado de energia, tolerância a melancolia e popularidade. O reprodutor antes
-vermelho passa, assim como todo o ciclo integrado, mas a Sprint permanece formalmente reprovada até
-o novo veredito independente.
+**Ciclo integrado Aprovado na parte automatizável (QA rodada 2, 2026-07-18); falta a demo e2e real.**
+A rodada 1 reprovou por `DEF-S3-INT-03-01` (Alta) — Vibe Check persistido mas não consumido pelo
+motor. O Dev corrigiu no commit `088597b`: `execute_generation` agora lê `vibe_check_answers`, agrega
+as respostas (quem pula conta como neutro) e o motor puro `engine/vibe_scoring.py` aplica um
+`vibe_score` (energia, tolerância a melancolia via `valence`, popularidade) misturado ao `group_score`
+com influência limitada a 20%. Revalidação independente do QA: o reprodutor antes vermelho passa e a
+sondagem adversarial confirma que o sinal **não inverte consenso forte**, preserva o "pular" e é
+monotônico em `valence`. **`DEF-S3-INT-03-01` fechado; nenhum defeito Alta/bloqueante aberto.**
+CT-S3-INT-01 (parcial), INT-02, INT-03, INT-04 (regressão 217 passed) e INT-05 aprovados.
+**Pendência única para o encerramento formal do incremento:** a demonstração e2e **real** da playlist
+em conta Spotify variando a ocasião (`CT-S3-INT-01`), que exige contas Premium autorizadas
+(Development Mode, R-01) — não é defeito de código.
 
 ---
 
@@ -1416,10 +1418,10 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
   QA reexecutar CT-PB01-06 e registrar seu veredito formal.
 - A capacidade real da equipe (velocidade) ainda precisa ser medida na Sprint 1.
 - **INC-PB17-CTX-01:** **encerrado (QA 2026-07-18).** PB-17 `VALIDADO` na revalidação independente.
-- **DEF-S3-INT-03-01 (Alta, CORRIGIDO PELO DEV — AGUARDANDO QA):** o Vibe Check (PB-07) agora é
-  consumido pelo ranqueamento com peso de 20%; baixa tolerância a melancolia penaliza faixas `sad`,
-  e energia/popularidade também ajustam a ordem. O reprodutor passa localmente; o defeito continua
-  bloqueando o encerramento até a revalidação independente.
+- **DEF-S3-INT-03-01 (Alta):** **FECHADO (QA revalidação independente 2026-07-18).** O Vibe Check é
+  consumido pelo ranqueamento com influência limitada a 20%; o reprodutor QA intocado passa e a
+  sondagem adversarial confirma que o sinal não inverte consenso forte, preserva o "pular" e é
+  monotônico em `valence`. Não bloqueia mais o encerramento.
 
 ## 15. Diário de retomada
 
@@ -1427,23 +1429,23 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
 - **Sprint/branch de trabalho:** Sprint 3, branch `feat/SPRINT03/PB17`.
-- **PB em andamento:** PB-07 `AGUARDANDO-QA` após correção integrada de `DEF-S3-INT-03-01`.
-- **Último resultado concluído:** Dev conectou `vibe_check_answers` ao motor puro; o reprodutor de
-  `CT-S3-INT-03` e todo o ciclo integrado agora passam. Suíte completa: **211 passed / 6 skipped / 0
-  failed**; build Vite aprovado.
-- **Onde parou:** correção pronta e documentada; Sprint 3 continua formalmente REPROVADA até QA.
-- **Próxima ação exata:** QA reexecuta `CT-S3-INT-03`, `CT-PB12-07` e regressão; se verde, conduz a
-  demonstração e2e real (CT-S3-INT-01) antes de `SPRINT 3 CONCLUÍDA`.
+- **PB em andamento:** nenhum — PB-07 `VALIDADO` (QA 2026-07-18). Todos os PBs da Sprint 3 validados.
+- **Último resultado concluído:** QA revalidou a correção `DEF-S3-INT-03-01` (commit `088597b`) de
+  forma independente: reprodutor QA intocado `tests/test_s3_integration_qa.py` → 5 passed;
+  sondagem adversarial `tests/test_s3_vibe_scoring_qa.py` → 6 passed; suíte completa **217 passed /
+  6 skipped / 0 failed**. Defeito fechado.
+- **Onde parou:** ciclo integrado aprovado na parte automatizável; resta só a demo e2e real.
+- **Próxima ação exata:** conduzir a demonstração e2e **real** (`CT-S3-INT-01`) com conta Spotify
+  Premium (criar playlist variando a ocasião) e então emitir `SPRINT 3 CONCLUÍDA — INCREMENTO
+  VALIDADO`. Requer credenciais/contas autorizadas (Development Mode, ≤5 usuários).
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py \
-    tests/test_s3_vibe_scoring.py -q
-  APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
-  cd ../frontend && npm run build
+  APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py tests/test_s3_vibe_scoring_qa.py -q
+  APP_ENV=test .venv/bin/pytest -q   # regressão completa
   ```
-- **Bloqueios:** revalidação de `DEF-S3-INT-03-01` e demonstração real `CT-S3-INT-01` bloqueiam o
-  encerramento da Sprint 3; não há bloqueio técnico para o handoff.
+- **Bloqueios:** nenhum de código. Encerramento formal do incremento aguarda a demonstração e2e real
+  `CT-S3-INT-01` (ambiente/contas Spotify).
 
 ## 16. Checklist de encerramento de sessão
 
