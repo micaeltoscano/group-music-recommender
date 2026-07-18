@@ -207,13 +207,18 @@ async def request_playlist_generation(
     except PlaylistGenerationError as exc:
         if exc.reason == "reauth_required":
             response_status = status.HTTP_401_UNAUTHORIZED
+        elif exc.reason == "rate_limited":
+            response_status = status.HTTP_429_TOO_MANY_REQUESTS
         elif exc.reason == "insufficient_tracks":
             response_status = status.HTTP_422_UNPROCESSABLE_ENTITY
         else:
             response_status = status.HTTP_502_BAD_GATEWAY
+        detail = {"message": str(exc), "run_id": str(exc.run_id)}
+        if exc.retry_after is not None:
+            detail["retry_after"] = exc.retry_after
         raise HTTPException(
             status_code=response_status,
-            detail={"message": str(exc), "run_id": str(exc.run_id)},
+            detail=detail,
         ) from exc
 
 

@@ -63,9 +63,17 @@ class InsufficientTracksError(RuntimeError):
 class PlaylistGenerationError(RuntimeError):
     """Falha controlada do pipeline, sem expor detalhes externos ou tokens."""
 
-    def __init__(self, message: str, *, run_id: uuid.UUID, reason: str = "unavailable") -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        run_id: uuid.UUID,
+        reason: str = "unavailable",
+        retry_after: int | None = None,
+    ) -> None:
         self.run_id = run_id
         self.reason = reason
+        self.retry_after = retry_after
         super().__init__(message)
 
 
@@ -144,7 +152,7 @@ async def resolve_candidates(
     Resolve as músicas candidatas no Spotify e salva na tabela playlist_run_tracks.
     `candidates` é uma lista de CandidateTrack (com ID original, raw_data e source_user_ids).
     """
-    from app.clients.spotify_client import search_track
+    from app.clients.spotify_client import SpotifyRateLimited, search_track
     from app.db.models import PlaylistRunTrack
     from app.engine.track_matcher import calculate_match_confidence
     import json
@@ -173,11 +181,50 @@ async def resolve_candidates(
                 selection_rank=selection_rank,
             ))
             continue
+
+        # Candidatas originadas nos snapshots já são objetos Spotify completos.
+        # Reutilizar o ID/URI evita uma busca redundante por faixa e reduz
+        # drasticamente a chance de rate limit. Itens externos/incompletos
+        # continuam pelo matching textual logo abaixo.
+        raw_spotify_id = str(candidate.raw_data.get("id") or "")
+        raw_spotify_uri = candidate.raw_data.get("uri")
+        if raw_spotify_id == str(candidate.id) and raw_spotify_uri:
+            if candidate.raw_data.get("is_playable") is False:
+                tracks_to_insert.append(PlaylistRunTrack(
+                    run_id=run_id,
+                    candidate_id=candidate.id,
+                    name=original_name,
+                    artist=original_artist,
+                    status="discarded",
+                    discard_reason="unavailable_in_market",
+                    source=json.dumps(sorted(candidate.source_user_ids)),
+                    is_bridge=candidate.is_bridge,
+                    selection_rank=selection_rank,
+                ))
+                continue
+            tracks_to_insert.append(PlaylistRunTrack(
+                run_id=run_id,
+                candidate_id=candidate.id,
+                spotify_id=raw_spotify_id,
+                spotify_uri=str(raw_spotify_uri),
+                name=original_name,
+                artist=original_artist,
+                match_confidence=1.0,
+                status="matched",
+                source=json.dumps(sorted(candidate.source_user_ids)),
+                is_bridge=candidate.is_bridge,
+                selection_rank=selection_rank,
+            ))
+            continue
             
         # Busca
         query = f"{original_name} {original_artist}"
         try:
             results = await search_track(host_token, query, market=market, limit=3)
+        except SpotifyRateLimited:
+            # Rate limit é do lote, não da faixa. Continuar criaria dezenas de
+            # descartes falsos e prolongaria a janela de bloqueio.
+            raise
         except Exception as exc:
             tracks_to_insert.append(PlaylistRunTrack(
                 run_id=run_id,
@@ -600,6 +647,12 @@ async def execute_generation(
         if isinstance(exc, spotify_client.ReauthenticationRequired):
             reason = "reauth_required"
             message = "Autorize novamente sua conta Spotify antes de gerar a playlist."
+        elif isinstance(exc, spotify_client.SpotifyRateLimited):
+            reason = "rate_limited"
+            message = (
+                "Spotify temporariamente limitado; "
+                f"tente novamente em {exc.retry_after} segundos."
+            )
         elif isinstance(exc, InsufficientTracksError):
             reason = "insufficient_tracks"
             message = str(exc)
@@ -608,7 +661,16 @@ async def execute_generation(
             message = "Não foi possível gerar a playlist agora. Tente novamente."
 
         fail_generation(db, run_id, message)
-        raise PlaylistGenerationError(message, run_id=run_id, reason=reason) from exc
+        raise PlaylistGenerationError(
+            message,
+            run_id=run_id,
+            reason=reason,
+            retry_after=(
+                exc.retry_after
+                if isinstance(exc, spotify_client.SpotifyRateLimited)
+                else None
+            ),
+        ) from exc
 
 
 def get_generation_executor() -> GenerationExecutor:
