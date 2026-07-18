@@ -1127,30 +1127,43 @@ criação de playlist real (PB-14) → resultado explicável (PB-16).
 ##### CT-S3-INT-01 — E2E completo com playlist real
 - **Tipo:** e2e · **Prioridade:** Alta · **Cenário:** grupo real conclui do login ao resultado.
 - **Resultado esperado:** playlist privada criada; tela de resultado com métricas e representação. ·
-  **Automatizável:** Não · **Status:** Não executado
+  **Automatizável:** Não · **Status:** Aprovado parcialmente (QA 2026-07-18) — parte automatizável
+  (Spotify mockado) verde: `POST /generate` com 2 membros → 202/completed, playlist registrada no run,
+  ≥20 faixas `matched`, `GET /result` → 200; não-membro → 403. **Demonstração e2e real com conta
+  Spotify permanece pendente** (limite de 5 usuários / Development Mode).
 
 ##### CT-S3-INT-02 — Contexto do LLM consumido pelo motor e pela busca
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** tags do contexto influenciam
   candidatas/scores; playlist reflete a ocasião. · **Automatizável:** Parcialmente · **Status:** Parte
   automatizável Aprovada (QA independente 2026-07-18) — contexto consumido pelo motor comprovado nos
-  dois modos, com prova por mutação; demonstração e2e real da playlist fica para o fechamento
-  integrado da Sprint 3 (CT-S3-INT-01)
+  dois modos, com prova por mutação (PB-17) e confirmado ponta a ponta via API no ciclo integrado
+  (mesmos snapshots/modo; só a ocasião muda → ordem final das faixas muda). Demonstração e2e real da
+  playlist fica para o fechamento (CT-S3-INT-01).
 
 ##### CT-S3-INT-03 — Vibe Check influencia o ranking
 - **Tipo:** integração · **Prioridade:** Média · **Cenário:** baixa `sadness_tolerance`.
 - **Resultado esperado:** faixas com tag `sad` penalizadas na seleção. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** **Reprovado (QA 2026-07-18)** — `DEF-S3-INT-03-01` (Alta). Com o mesmo grupo/pool,
+  `valence=0.0` (baixa tolerância a tristeza) e `valence=1.0` produzem **exatamente a mesma ordem**
+  (soma de posições das faixas `sad` = 190 em ambos). As preferências do Vibe Check
+  (`vibe_check_answers`) são persistidas (PB-07) mas **nunca consumidas** por `execute_generation`
+  nem pelo motor — mesmo padrão de `INC-PB17-CTX-01`. Reprodutor:
+  `backend/tests/test_s3_integration_qa.py::test_ct_s3_int_03_vibe_check_penaliza_faixas_tristes`.
 
 #### Casos de regressão
 ##### CT-S3-INT-04 — Regressão das Sprints 1 e 2
 - **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** auth/salas/motor/execução
-  continuam aprovados. · **Automatizável:** Sim · **Status:** Não executado
+  continuam aprovados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18) — suíte
+  completa `APP_ENV=test pytest` (excluindo o novo arquivo integrado) → **201 passed / 6 skipped /
+  0 failed**; sem regressão em Sprints 1–3.
 
 #### Casos de falha
 ##### CT-S3-INT-05 — Falha de serviço externo não invalida o fluxo
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** LLM indisponível + algumas faixas não
   encontradas. · **Resultado esperado:** fallback de contexto + descartes motivados; playlist ainda é
-  criada com faixas válidas. · **Automatizável:** Parcialmente · **Status:** Não executado
+  criada com faixas válidas. · **Automatizável:** Parcialmente · **Status:** Aprovado (QA 2026-07-18)
+  — LLM indisponível (`httpx.post` erro) + 5 buscas sem resultado → geração conclui 202/completed,
+  contexto de fallback persistido, 5 faixas descartadas com motivo `No results`, ≥20 `matched`.
 
 #### Verificações de segurança
 Token do host nunca no frontend; explicações sem dados sensíveis de terceiros; só host gera; só membro
@@ -1169,11 +1182,13 @@ PBs 07, 14, 15, 16, 17 aprovados; CT-S3-INT-01..05 aprovados; regressão das Spr
 URL da playlist criada; payload de resultado; logs sanitizados; `pytest` verde; capturas das telas.
 
 #### Resultado da Sprint
-**Pendente — PB-17 revalidado; falta o ciclo integrado.** O QA reproduziu de forma independente
-`CT-PB17-05` e a parte automatizável de `CT-S3-INT-02` em 2026-07-18 (rodada 3) e o PB-17 está
-`VALIDADO`, encerrando o portão `INC-PB17-CTX-01`. A Sprint 3 ainda não pode ser aprovada: falta
-executar/registrar os testes integrados da Sprint (`CT-S3-INT-01..05`, incluindo a demonstração e2e
-real da playlist variando a ocasião) e a regressão das Sprints 1–2 como ciclo próprio.
+**REPROVADA (QA 2026-07-18) — `DEF-S3-INT-03-01` (Alta) aberto.** O ciclo integrado foi executado:
+CT-S3-INT-01 (parte automatizável), CT-S3-INT-02, CT-S3-INT-04 (regressão 201 passed) e CT-S3-INT-05
+**Aprovados**; **CT-S3-INT-03 Reprovado** — as preferências do Vibe Check (PB-07) são persistidas mas
+não chegam ao motor, então `valence` alta/baixa produz a mesma seleção. Como CT-S3-INT-03 é critério
+de aprovação da Sprint e o defeito é Alta, a Sprint 3 **não** pode ser encerrada. Reprodutor
+automatizado: `backend/tests/test_s3_integration_qa.py`. Falta ainda a demonstração e2e real
+(CT-S3-INT-01) com conta Spotify. Correção do `DEF-S3-INT-03-01` cabe ao Dev; QA reexecuta depois.
 
 ---
 

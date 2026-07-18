@@ -143,7 +143,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 |---|---|---|---:|---|
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
-| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Em andamento** — reaberta |
+| Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **REPROVADA (integrada)** — `DEF-S3-INT-03-01` |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | A fazer |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
@@ -1149,18 +1149,25 @@ Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 3". Cobrem, no mínimo:
 
 ### Evidências da Sprint 3
 
-- Comandos/telas/integrações: — (a preencher)
-- Playlist criada no Spotify (id/URL): — (a preencher)
-- Data da validação: — (a preencher)
+- Comandos/testes: `APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py` → **4 passed /
+  1 failed** (CT-S3-INT-03 falha); regressão `--ignore=tests/test_s3_integration_qa.py` → **201
+  passed / 6 skipped / 0 failed** (CT-S3-INT-04).
+- Casos integrados: CT-S3-INT-01 (parcial ✔), CT-S3-INT-02 ✔, CT-S3-INT-03 ✖ (`DEF-S3-INT-03-01`),
+  CT-S3-INT-04 ✔, CT-S3-INT-05 ✔.
+- Playlist criada no Spotify (id/URL): — pendente (demonstração e2e real; Spotify mockado nos testes).
+- Data da validação: 2026-07-18.
 
 ### Status da Sprint 3
 
-**Em andamento — portão `INC-PB17-CTX-01` fechado (2026-07-18).** O QA revalidou o PB-17 de forma
-independente: `CT-PB17-05` e a parte automatizável de `CT-S3-INT-02` reproduzidas (pool misto +
-prova por mutação, nos dois modos), regressão dos casos antes aprovados verde e suíte completa
-201 passed / 6 skipped / 0 failed. **PB-17 VALIDADO.** Todos os PBs individuais da Sprint 3 estão
-validados. Falta apenas o **ciclo integrado da Sprint 3** (`CT-S3-INT-01..05` + regressão das
-Sprints 1–2 + demonstração e2e real com playlist), que é um ciclo próprio e ainda **não** executado.
+**REPROVADA na validação integrada (QA 2026-07-18).** Todos os PBs individuais estão `VALIDADO` e o
+portão `INC-PB17-CTX-01` foi fechado, mas o ciclo integrado revelou `DEF-S3-INT-03-01` (Alta):
+**CT-S3-INT-03 reprovou** — as preferências do Vibe Check (PB-07) são persistidas em
+`vibe_check_answers`, porém `execute_generation` e o motor nunca as consomem, então `valence` alta ou
+baixa produz exatamente a mesma seleção (mesmo padrão de `INC-PB17-CTX-01`, agora no PB-07).
+CT-S3-INT-01 (parte automatizável), CT-S3-INT-02, CT-S3-INT-04 (regressão 201 passed / 6 skipped /
+0 failed) e CT-S3-INT-05 passaram. Reprodutor: `backend/tests/test_s3_integration_qa.py`. Como
+CT-S3-INT-03 é critério de aprovação e o defeito é Alta, a Sprint **não** pode ser encerrada.
+Pendências não bloqueantes: demonstração e2e real da playlist (CT-S3-INT-01) com conta Spotify.
 
 ---
 
@@ -1383,8 +1390,12 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 - **PB-01:** bloqueio de Node removido; frontend nativo iniciou e respondeu HTTP 200. Falta apenas o
   QA reexecutar CT-PB01-06 e registrar seu veredito formal.
 - A capacidade real da equipe (velocidade) ainda precisa ser medida na Sprint 1.
-- **INC-PB17-CTX-01:** **encerrado (QA 2026-07-18).** PB-17 `VALIDADO` na revalidação independente;
-  o portão da Sprint 3 agora é o ciclo integrado (`CT-S3-INT-*`), não mais este incidente.
+- **INC-PB17-CTX-01:** **encerrado (QA 2026-07-18).** PB-17 `VALIDADO` na revalidação independente.
+- **DEF-S3-INT-03-01 (Alta, ABERTO — bloqueia o encerramento da Sprint 3):** o Vibe Check (PB-07)
+  grava `vibe_check_answers`, mas `execute_generation`/motor nunca consomem `valence/energy/popularity`;
+  `CT-S3-INT-03` reprova (valence alta vs baixa → mesma seleção). Corrigir conectando as preferências
+  derivadas ao ranqueamento, sem que decidam sozinhas a playlist. Reprodutor:
+  `backend/tests/test_s3_integration_qa.py::test_ct_s3_int_03_vibe_check_penaliza_faixas_tristes`.
 
 ## 15. Diário de retomada
 
@@ -1392,26 +1403,22 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
 - **Sprint/branch de trabalho:** Sprint 3, branch `feat/SPRINT03/PB17`.
-- **PB em andamento:** nenhum — PB-17 `VALIDADO` (QA independente 2026-07-18). Todos os PBs
-  individuais da Sprint 3 estão validados.
-- **Último resultado concluído:** QA reproduziu `CT-PB17-05`/`CT-S3-INT-02` (pool misto + prova por
-  mutação nos dois modos), regressão dos casos antes aprovados verde, suíte completa
-  201 passed / 6 skipped / 0 failed (8 testes novos em `tests/test_pb17_qa_validador.py`).
-- **Onde parou:** portão `INC-PB17-CTX-01` fechado; falta o ciclo integrado da Sprint 3.
-- **Próxima ação exata:** executar os testes integrados da Sprint 3 (`CT-S3-INT-01..05`) + regressão
-  das Sprints 1–2 + demonstração e2e real da playlist variando a ocasião, e então emitir
-  `SPRINT 3 CONCLUÍDA` ou `SPRINT 3 REPROVADA`.
+- **PB em andamento:** nenhum PB individual — todos `VALIDADO`. A Sprint 3 foi **REPROVADA** na
+  validação integrada por `DEF-S3-INT-03-01` (Alta).
+- **Último resultado concluído:** ciclo integrado da Sprint 3 executado. CT-S3-INT-01 (parcial),
+  INT-02, INT-04 (regressão 201 passed / 6 skipped / 0 failed) e INT-05 **Aprovados**; **INT-03
+  Reprovado** (Vibe Check não chega ao motor). Novo arquivo `tests/test_s3_integration_qa.py`.
+- **Onde parou:** Sprint 3 REPROVADA; defeito `DEF-S3-INT-03-01` documentado e reproduzível.
+- **Próxima ação exata:** Dev corrige `DEF-S3-INT-03-01` (conectar `vibe_check_answers`/preferências
+  derivadas ao ranqueamento) com testes; marca o item `AGUARDANDO-QA`; QA reexecuta CT-S3-INT-03 +
+  regressão e, se verde, faz a demonstração e2e real (CT-S3-INT-01) antes de `SPRINT 3 CONCLUÍDA`.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb17_qa_validador.py \
-    tests/test_pb17_llm_context.py tests/test_pb17_generation_integration.py \
-    tests/test_pb17_qa_revalidacao.py tests/test_pb17_context_scoring.py -q
-  APP_ENV=test .venv/bin/pytest tests -q
-  .venv/bin/alembic current
-  cd ../frontend && npm run build
+  APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py -q
+  APP_ENV=test .venv/bin/pytest --ignore=tests/test_s3_integration_qa.py -q  # regressão
   ```
-- **Bloqueios:** nenhum externo; o portão restante é o ciclo integrado da Sprint 3.
+- **Bloqueios:** `DEF-S3-INT-03-01` (Alta) bloqueia o encerramento da Sprint 3.
 
 ## 16. Checklist de encerramento de sessão
 
