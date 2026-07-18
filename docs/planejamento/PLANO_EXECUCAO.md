@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 e PB-18 VALIDADOS; PB-19 AGUARDANDO-QA; PB-20 A-FAZER (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03/PB-18/PB-19 VALIDADOS; PB-20 A-FAZER (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1343,9 +1343,14 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-19 — Sequenciamento da experiência musical
 
-- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; seleção final sequenciada antes
-  do envio ao Spotify, com abertura forte, risco no meio, cap e não adjacência determinísticos.
-  Testes técnicos verdes; falta validação independente.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB19-01..05 verificados independentemente, com
+  **propriedade exaustiva**: para toda combinação de artistas de tamanho 2–6, quando existe arranjo
+  sem adjacência (oráculo de permutações), o sequenciador produz um; o cap de 2/artista nunca é
+  violado; abertura de alta aceitação (cede se forçaria adjacência); risco no meio; determinismo
+  estável mesmo permutando a entrada. Integração verificada: a ordem persistida em `selection_rank`
+  coincide com as URIs enviadas ao Spotify. Sondagem QA `backend/tests/test_pb19_sequencer_qa.py`
+  (7 casos) + Dev (10) verdes; suíte completa 263 passed / 6 skipped / 0 failed. Sem defeitos.
+  Relatório: [`docs/relatorios-testes/PB-19.md`](../relatorios-testes/PB-19.md).
 - **Objetivo:** ordenar a seleção final com abertura de alta aceitação, faixas arriscadas no meio,
   sem 2 do mesmo artista consecutivas e respeitando o cap de 2/artista.
 - **Dependências:** PB-12, PB-14 e PB-15.

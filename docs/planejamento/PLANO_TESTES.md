@@ -1280,24 +1280,24 @@ Critérios 1–4 do PB-19.
 #### Casos de teste
 ##### CT-PB19-01 — Sem duas faixas do mesmo artista consecutivas
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** nenhuma adjacência do mesmo
-  artista. · **Automatizável:** Sim · **Status:** Não executado
+  artista. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB19-02 — Abertura com alta aceitação
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** 1ª faixa entre as de maior
-  aceitação. · **Automatizável:** Sim · **Status:** Não executado
+  aceitação. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB19-03 — Faixas de maior risco no meio
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** posições de risco na região
-  intermediária. · **Automatizável:** Sim · **Status:** Não executado
+  intermediária. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB19-04 — Cap de 2/artista preservado após sequenciar
 - **Tipo:** limites · **Prioridade:** Alta · **Resultado esperado:** ordenação não viola o cap. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB19-05 — Entrada mínima (poucas faixas / artista único)
 - **Tipo:** limites/robustez · **Prioridade:** Média · **Cenário:** seleção pequena ou dominada por 1
   artista. · **Resultado esperado:** degradação graciosa sem erro; melhor esforço nas regras. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ### PB-20 — Feedback pós-playlist
 
