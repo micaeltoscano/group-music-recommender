@@ -67,6 +67,7 @@ class RoomMemberResponse(BaseModel):
     display_name: str | None
     image_url: str | None
     role: Literal["host", "member"]
+    vibe_status: Literal["pending", "answered", "skipped"] = "pending"
     joined_at: datetime
 
     @field_validator("joined_at")
@@ -96,6 +97,15 @@ class RoomGenerationResponse(BaseModel):
         return value.astimezone(timezone.utc)
 
 
+class VibeSummaryResponse(BaseModel):
+    """Contagem agregada, sem os valores privados das respostas."""
+
+    total: int
+    pending: int
+    answered: int
+    skipped: int
+
+
 class RoomResponse(BaseModel):
     """Estado inicial de uma sala recém-criada."""
 
@@ -109,6 +119,7 @@ class RoomResponse(BaseModel):
     expires_at: datetime
     members: list[RoomMemberResponse]
     generation: RoomGenerationResponse | None = None
+    vibe_summary: VibeSummaryResponse
 
     @field_validator("created_at", "expires_at")
     @classmethod

@@ -448,9 +448,12 @@ class VibeCheckAnswer(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     
-    energy: Mapped[float] = mapped_column(Float, nullable=False)
-    valence: Mapped[float] = mapped_column(Float, nullable=False)
-    popularity: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="answered", server_default="answered"
+    )
+    energy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    valence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    popularity: Mapped[float | None] = mapped_column(Float, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

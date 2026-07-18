@@ -367,7 +367,37 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
   padding: 3px 7px; border: 1px solid var(--accent); border-radius: var(--radius-pill);
   color: var(--accent); font-size: 0.52rem; letter-spacing: 0.08em;
 }
+.member-vibe-badge {
+  min-width: 54px; padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-pill);
+  color: var(--dim); font-size: 0.48rem; letter-spacing: 0.06em; text-align: center;
+}
+.member-vibe-badge.answered { border-color: var(--accent-2); color: var(--accent-2); }
+.member-vibe-badge.skipped { color: var(--muted-2); }
 .online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); }
+.vibe-status-card {
+  min-height: 200px; padding: 24px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; border: 1px solid var(--accent-2); border-radius: var(--radius-card);
+  background: var(--surface); text-align: center;
+}
+.vibe-status-card > p { margin: 0 0 8px; color: var(--accent-2); font-size: 0.7rem; letter-spacing: 0.1em; }
+.vibe-status-card h3 { margin: 0; font-size: 1.25rem; }
+.vibe-own-status {
+  margin-top: 12px; padding: 4px 9px; border: 1px solid var(--border); border-radius: var(--radius-pill);
+  color: var(--muted-2); font-size: 0.52rem; letter-spacing: 0.08em;
+}
+.vibe-own-status.answered { border-color: var(--accent-2); color: var(--accent-2); }
+.vibe-own-status.skipped { color: var(--muted); }
+.vibe-status-card small { margin-top: 9px; color: var(--muted-2); font-size: 0.6rem; }
+.vibe-status-link {
+  width: 100%; margin-top: 16px; padding: 11px 15px; border-radius: 9px;
+  background: var(--accent-2); color: var(--bg); font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.06em; text-decoration: none;
+}
+.vibe-status-link:hover { background: var(--text); color: var(--bg); }
+.vibe-edit-notice {
+  margin: 0 0 20px; color: var(--accent-2); font-size: 0.62rem; letter-spacing: 0.08em;
+  line-height: 1.5; text-align: center;
+}
 .waiting-card {
   min-height: 474px; padding: 44px; display: flex; flex-direction: column;
   justify-content: center;

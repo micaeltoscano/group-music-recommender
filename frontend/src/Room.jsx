@@ -115,6 +115,12 @@ export default function Room({ user }) {
   )
   const generation = room?.generation
   const generationRunning = generation?.status === 'running' || room?.status === 'generating'
+  const ownVibeStatus = currentMember?.vibe_status || 'pending'
+  const vibeCta = ownVibeStatus === 'answered'
+    ? 'EDITAR VIBE CHECK'
+    : ownVibeStatus === 'skipped'
+      ? 'RESPONDER VIBE CHECK'
+      : 'RESPONDER VIBE CHECK'
 
   useEffect(() => {
     if (generation?.status === 'completed') {
@@ -346,11 +352,18 @@ export default function Room({ user }) {
                 </button>
               </section>
 
-              <section className="room-code-card" style={{ padding: '24px', textAlign: 'center', borderColor: 'var(--success)' }}>
-                <p style={{ fontSize: '12px', letterSpacing: '0.1em', color: 'var(--success)', marginBottom: '8px' }}>[ ALINHAMENTO ]</p>
-                <h3 style={{ margin: '0 0 16px', fontFamily: '"Chakra Petch", sans-serif', fontSize: '20px' }}>Qual a Vibe?</h3>
-                <Link to={`/rooms/${code}/vibe-check`} className="btn btn-primary" style={{ width: '100%', background: 'var(--success)' }}>
-                  RESPONDER VIBE CHECK
+              <section className="vibe-status-card">
+                <p>[ ALINHAMENTO ]</p>
+                <h3>Qual a Vibe?</h3>
+                <span className={`vibe-own-status ${ownVibeStatus}`}>
+                  {ownVibeStatus === 'answered' ? 'VOCÊ RESPONDEU' : ownVibeStatus === 'skipped' ? 'VOCÊ PULOU' : 'PENDENTE'}
+                </span>
+                <small>
+                  {room.vibe_summary.answered}/{room.vibe_summary.total} responderam
+                  {room.vibe_summary.skipped > 0 && ` · ${room.vibe_summary.skipped} pularam`}
+                </small>
+                <Link to={`/rooms/${code}/vibe-check`} className="vibe-status-link">
+                  {vibeCta}
                 </Link>
               </section>
 
@@ -377,6 +390,9 @@ export default function Room({ user }) {
                         {member.user_id === user?.id && <small>VOCÊ</small>}
                       </span>
                       {member.role === 'host' && <span className="host-badge">HOST</span>}
+                      <span className={`member-vibe-badge ${member.vibe_status}`}>
+                        {member.vibe_status === 'answered' ? 'VIBE ✓' : member.vibe_status === 'skipped' ? 'PULOU' : 'PENDENTE'}
+                      </span>
                       <span className="online-dot" aria-label="online" />
                     </li>
                   ))}

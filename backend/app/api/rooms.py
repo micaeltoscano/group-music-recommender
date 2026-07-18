@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.db.models import MusicSession, PlaylistRun
+from app.db.models import MusicSession, PlaylistRun, VibeCheckAnswer
 from app.db.session import get_db
 from app.schemas.rooms import (
     ConsensusModesResponse,
@@ -17,6 +17,7 @@ from app.schemas.rooms import (
     RoomModeUpdate,
     RoomResponse,
     RoomResultResponse,
+    VibeSummaryResponse,
 )
 from app.services.room_service import (
     RoomAccessDeniedError,
@@ -39,16 +40,38 @@ router = APIRouter()
 
 
 def _room_response(db: Session, room: MusicSession) -> RoomResponse:
+    member_rows = list_room_members(db, room.id)
+    member_ids = [user.id for _, user in member_rows]
+    vibe_status_by_user = {
+        answer.user_id: answer.status
+        for answer in (
+            db.query(VibeCheckAnswer)
+            .filter(
+                VibeCheckAnswer.session_id == room.id,
+                VibeCheckAnswer.user_id.in_(member_ids),
+            )
+            .all()
+        )
+    }
     members = [
         RoomMemberResponse(
             user_id=user.id,
             display_name=user.display_name,
             image_url=user.image_url,
             role=membership.role,
+            vibe_status=vibe_status_by_user.get(user.id, "pending"),
             joined_at=membership.joined_at,
         )
-        for membership, user in list_room_members(db, room.id)
+        for membership, user in member_rows
     ]
+    answered = sum(member.vibe_status == "answered" for member in members)
+    skipped = sum(member.vibe_status == "skipped" for member in members)
+    vibe_summary = VibeSummaryResponse(
+        total=len(members),
+        pending=len(members) - answered - skipped,
+        answered=answered,
+        skipped=skipped,
+    )
     latest_run = (
         db.query(PlaylistRun)
         .filter(PlaylistRun.session_id == room.id)
@@ -79,6 +102,7 @@ def _room_response(db: Session, room: MusicSession) -> RoomResponse:
         expires_at=room.expires_at,
         members=members,
         generation=generation,
+        vibe_summary=vibe_summary,
     )
 
 

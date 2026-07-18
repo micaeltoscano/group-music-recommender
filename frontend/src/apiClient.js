@@ -37,6 +37,9 @@ export const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(answers),
   }),
+  skipVibeCheck: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/vibe-check/skip`, {
+    method: 'POST',
+  }),
   generatePlaylist: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/generate`, { method: 'POST' }),
   getRoomResult: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/result`),
   submitTrackFeedback: (runId, trackId, feedback) => requestJson(

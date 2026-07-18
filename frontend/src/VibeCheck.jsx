@@ -15,12 +15,15 @@ export function VibeCheck() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [existingStatus, setExistingStatus] = useState('pending')
 
   useEffect(() => {
     async function load() {
       const res = await api.getVibeCheck(code)
       if (res.ok) {
         setQuestions(res.body.questions)
+        setExistingStatus(res.body.status || 'pending')
+        setAnswers(res.body.answer || {})
       } else {
         setError(res.body?.detail || 'Erro ao carregar Vibe Check.')
       }
@@ -44,8 +47,16 @@ export function VibeCheck() {
     }
   }
 
-  const skipVibe = () => {
-    navigate(`/rooms/${code}`)
+  const skipVibe = async () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    const res = await api.skipVibeCheck(code)
+    if (res.ok) {
+      navigate(`/rooms/${code}`)
+      return
+    }
+    setError(res.body?.detail || 'Erro ao pular o Vibe Check.')
+    setIsSubmitting(false)
   }
 
   const submitAnswers = async (finalAnswers) => {
@@ -117,6 +128,9 @@ export function VibeCheck() {
     <div className="layout-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '72px 24px 120px' }}>
       <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'var(--text-subtle)', marginBottom: '18px' }}>[ VC-01 · VIBE CHECK MODULE ]</div>
       <div style={{ width: '620px', maxWidth: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-dark)', borderRadius: '20px', padding: '44px' }}>
+        {existingStatus === 'answered' && (
+          <p className="vibe-edit-notice">SUAS RESPOSTAS ATUAIS ESTÃO CARREGADAS · EDITE E ENVIE NOVAMENTE</p>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
           <div style={{ fontSize: '12px', letterSpacing: '0.14em', color: 'var(--success)' }}>
             PERGUNTA {currentIdx + 1}/{questions.length}

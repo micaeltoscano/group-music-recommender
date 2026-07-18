@@ -12,6 +12,7 @@ from app.schemas.vibe_check import (
     VibeCheckSubmitResponse,
     VibeCheckQuestion,
     VibeCheckOption,
+    VibeCheckValues,
 )
 
 router = APIRouter()
@@ -88,8 +89,24 @@ def get_vibe_check(
     """
     Retorna as perguntas do Vibe Check e verifica se o usuário tem permissão.
     """
-    _check_membership(db, code, current_user["id"])
-    return VibeCheckResponse(questions=QUESTIONS)
+    room = _check_membership(db, code, current_user["id"])
+    own_answer = (
+        db.query(VibeCheckAnswer)
+        .filter_by(session_id=room.id, user_id=current_user["id"])
+        .one_or_none()
+    )
+    values = None
+    if own_answer is not None and own_answer.status == "answered":
+        values = VibeCheckValues(
+            energy=own_answer.energy,
+            valence=own_answer.valence,
+            popularity=own_answer.popularity,
+        )
+    return VibeCheckResponse(
+        questions=QUESTIONS,
+        status=own_answer.status if own_answer is not None else "pending",
+        answer=values,
+    )
 
 
 @router.post("/{code}/vibe-check", response_model=VibeCheckSubmitResponse)
@@ -115,6 +132,7 @@ def submit_vibe_check(
     )
 
     if existing_answer:
+        existing_answer.status = "answered"
         existing_answer.energy = payload.energy
         existing_answer.valence = payload.valence
         existing_answer.popularity = payload.popularity
@@ -125,9 +143,40 @@ def submit_vibe_check(
             energy=payload.energy,
             valence=payload.valence,
             popularity=payload.popularity,
+            status="answered",
         )
         db.add(new_answer)
 
     db.commit()
 
     return VibeCheckSubmitResponse(message="Vibe Check salvo com sucesso.")
+
+
+@router.post("/{code}/vibe-check/skip", response_model=VibeCheckSubmitResponse)
+def skip_vibe_check(
+    code: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> VibeCheckSubmitResponse:
+    """Registra ausência voluntária sem fabricar preferências neutras."""
+
+    room = _check_membership(db, code, current_user["id"])
+    answer = (
+        db.query(VibeCheckAnswer)
+        .filter_by(session_id=room.id, user_id=current_user["id"])
+        .one_or_none()
+    )
+    if answer is None:
+        answer = VibeCheckAnswer(
+            session_id=room.id,
+            user_id=current_user["id"],
+            status="skipped",
+        )
+        db.add(answer)
+    else:
+        answer.status = "skipped"
+        answer.energy = None
+        answer.valence = None
+        answer.popularity = None
+    db.commit()
+    return VibeCheckSubmitResponse(message="Vibe Check pulado; nenhuma preferência foi aplicada.")

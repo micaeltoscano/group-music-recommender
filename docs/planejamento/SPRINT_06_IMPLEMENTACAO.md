@@ -30,7 +30,7 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 | 2 | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
 | 3 | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
 | 4 | PB-28 | Conformidade visual do Login/Landing | CONCLUÍDO TECNICAMENTE |
-| 5 | PB-29 | Estado compartilhado e privado do Vibe Check | EM IMPLEMENTAÇÃO |
+| 5 | PB-29 | Estado compartilhado e privado do Vibe Check | CONCLUÍDO TECNICAMENTE |
 
 ## 4. Restrições transversais
 
@@ -148,7 +148,18 @@ ausência/pulo continuará neutro para o motor.
 
 ### Evidências e execução
 
-A preencher ao concluir o PB.
+- `vibe_check_answers` agora diferencia `answered` e `skipped`; valores numéricos são anuláveis para
+  que pular não fabrique uma resposta `0.5`. Registros históricos recebem `answered` por default.
+- `GET /rooms/{code}` expõe somente o status por membro e contagens agregadas de pendentes,
+  respondidos e pulados. Nenhum valor de energia, valência ou popularidade aparece nesse contrato.
+- `GET /rooms/{code}/vibe-check` devolve os valores exclusivamente ao próprio integrante e permite
+  pré-carregar/editar. `POST /skip` faz upsert do pulo; uma resposta posterior substitui o estado.
+- O motor carrega exclusivamente linhas `answered`; pendentes e pulados participam como ausência
+  neutra na agregação vigente.
+- O lobby apresenta badges individuais, total agregado e CTA `EDITAR` após resposta, sem transferir
+  controle de contexto/modo/geração aos participantes.
+- Testes: `22 passed` na suíte de PB-07, Vibe scoring, PB-27 e PB-29; `npm run build` concluído.
+- Migração: `0018_pb29_vibe_status.py`.
 
 ## 10. Validação técnica integrada da Sprint
 
@@ -159,4 +170,5 @@ A preencher ao fim da implementação.
 - PB-25 — `5d38e83 feat(PB-25): tornar matching Spotify resiliente`.
 - PB-26 — `53c59f3 feat(PB-26): adicionar pool contextual hibrido`.
 - PB-27 — `5504680 feat(PB-27): compartilhar progresso da geracao`.
-- PB-28 — a registrar após o commit.
+- PB-28 — `c57179c feat(PB-28): alinhar login ao design`.
+- PB-29 — a registrar após o commit.

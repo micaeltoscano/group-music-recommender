@@ -576,6 +576,31 @@ def _rank_candidates(
     return [item["candidate"] for item in selected]
 
 
+def load_vibe_preferences(
+    db: Session,
+    session_id: uuid.UUID,
+    member_ids: list[int],
+) -> VibePreferences | None:
+    """Agrega somente respostas reais; pendente/pulado permanecem neutros."""
+
+    vibe_answers = (
+        db.query(VibeCheckAnswer)
+        .filter(
+            VibeCheckAnswer.session_id == session_id,
+            VibeCheckAnswer.user_id.in_(member_ids),
+            VibeCheckAnswer.status == "answered",
+        )
+        .all()
+    )
+    return aggregate_vibe_preferences(
+        (
+            (answer.energy, answer.valence, answer.popularity)
+            for answer in vibe_answers
+        ),
+        total_members=len(member_ids),
+    )
+
+
 async def execute_generation(
     db: Session,
     run_id: uuid.UUID,
@@ -654,20 +679,10 @@ async def execute_generation(
         )
         candidates.extend(contextual_candidates)
         update_generation_progress(db, run_id, "ranking")
-        vibe_answers = (
-            db.query(VibeCheckAnswer)
-            .filter(
-                VibeCheckAnswer.session_id == room.id,
-                VibeCheckAnswer.user_id.in_(member_ids),
-            )
-            .all()
-        )
-        vibe_preferences = aggregate_vibe_preferences(
-            (
-                (answer.energy, answer.valence, answer.popularity)
-                for answer in vibe_answers
-            ),
-            total_members=len(member_ids),
+        vibe_preferences = load_vibe_preferences(
+            db,
+            room.id,
+            member_ids,
         )
         ranked_candidates = _rank_candidates(
             candidates,
