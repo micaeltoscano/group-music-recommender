@@ -1511,33 +1511,33 @@ PB-11 e PB-22 validados; agrupamento no estado `clustered`; flag do recurso cont
 ##### CT-PB23-01 — Boa aceitação em múltiplos subgrupos
 - **Tipo:** unitário/motor · **Prioridade:** Alta · **Resultado esperado:** candidata cuja média de
   afinidade atinge o limiar em pelo menos dois clusters recebe avaliação positiva, score de ponte e
-  IDs dos clusters aceitos. · **Automatizável:** Sim · **Status:** Não executado
+  IDs dos clusters aceitos. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB23-02 — Afinidade restrita a um subgrupo não forma ponte
 - **Tipo:** unitário/negócio · **Prioridade:** Alta · **Resultado esperado:** candidata aceita por um
   único cluster permanece sem marcação de ponte. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB23-03 — Marcação durante o ranqueamento
 - **Tipo:** integração de motor · **Prioridade:** Alta · **Resultado esperado:** com a flag ligada e
   subgrupos distintos, `_rank_candidates` anexa `is_bridge`, `bridge_score` e clusters aceitos às
-  candidatas correspondentes. · **Automatizável:** Sim · **Status:** Não executado
+  candidatas correspondentes. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB23-04 — Recurso desligado preserva modos existentes
 - **Tipo:** configuração/regressão · **Prioridade:** Alta · **Resultado esperado:** flag falsa por
   padrão; nos modos Democrático, Festa Segura e Descoberta, ordem e scores históricos não mudam e
-  nenhuma candidata é marcada. · **Automatizável:** Sim · **Status:** Não executado
+  nenhuma candidata é marcada. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB23-05 — Marcação persistida e indicada no resultado
 - **Tipo:** integração/API/frontend · **Prioridade:** Alta · **Resultado esperado:** matching persiste
   `is_bridge`; resposta da sala identifica cada faixa-ponte e apresenta justificativa agregada; UI
   exibe a sinalização sem revelar preferências individuais. · **Automatizável:** Parcialmente ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB23-06 — Ausência de subgrupos e configuração inválida
 - **Tipo:** unitário/robustez · **Prioridade:** Média · **Resultado esperado:** agrupamento ausente,
   insuficiente ou único não produz pontes; limiar fora de 0..1 é rejeitado; resultado permanece
-  determinístico sob reordenação dos perfis. · **Automatizável:** Sim · **Status:** Não executado
+  determinístico sob reordenação dos perfis. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ---
 

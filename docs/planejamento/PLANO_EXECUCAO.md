@@ -145,7 +145,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
-| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — dois primeiros VALIDADOS; terceiro AGUARDANDO-QA; último A-FAZER** |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — PB-21/22/23 VALIDADOS; PB-24 A-FAZER (Sprint não validada)** |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
 - **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
@@ -1587,8 +1587,15 @@ as validações integradas pendentes das Sprints 1–4.
 
 #### PB-23 — Identificação de músicas-ponte
 
-- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; identificação opt-in,
-  persistência e indicação no resultado prontas, com 11 testes técnicos focados e regressão verde.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB23-01..06 verificados independentemente. Ponte exige
+  ≥2 clusters com aceitação ≥0,25 (afinidade do PB-11, popularidade/novidade zeradas — confirmado que
+  candidata só popular/nova não vira ponte); `bridge_score` = 2º maior score de cluster; **mutação
+  confirma que a marcação não reordena o ranking em nenhum dos 3 modos** (critério 3, não promove) e
+  que a flag off não marca nada; None/single/insufficient → sem ponte; limiar fora de [0,1] →
+  ValueError; determinismo nas 24 permutações; resultado expõe só booleano + explicação agregada.
+  Sondagem QA `backend/tests/test_pb23_bridge_tracks_qa.py` (15 casos) + Dev (11) verdes; suíte
+  completa 351 passed / 6 skipped / 0 failed. Migração `0015` reversível. Sem defeitos. Relatório:
+  [`docs/relatorios-testes/PB-23.md`](../relatorios-testes/PB-23.md).
 - **Objetivo:** marcar faixas com boa aceitação entre subgrupos durante o ranqueamento.
 - **Dependências:** PB-11 e PB-22 `VALIDADO`; relatório PB-22 sem defeitos abertos.
 - **Critérios de aceitação:**
