@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api import auth, health, music, rooms, vibe_check
+from app.api import auth, feedback, health, music, rooms, vibe_check
 from app.config import settings
 
 
@@ -37,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
     app.include_router(vibe_check.router, prefix="/rooms", tags=["vibe_check"])
     app.include_router(music.router, prefix="/me", tags=["music"])
+    app.include_router(feedback.router, prefix="/playlist-runs", tags=["feedback"])
 
     @app.get("/", tags=["root"], summary="Raiz")
     def root() -> dict[str, str]:

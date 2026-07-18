@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03/PB-18/PB-19 VALIDADOS; PB-20 A-FAZER (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03/PB-18/PB-19 VALIDADOS; PB-20 AGUARDANDO-QA (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1395,7 +1395,8 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-20 — Feedback pós-playlist
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — implementação e testes técnicos concluídos em 2026-07-18; aguarda
+  validação independente de `CT-PB20-01..05`.
 - **Objetivo:** coletar feedback por faixa (like/dislike/more_like_this/never_again) e geral
   (representação/satisfação), associado à execução correta, sem uso no ranking do MVP.
 - **Dependências:** PB-16.
@@ -1412,10 +1413,32 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
   não-membro, aviso de uso futuro, persistência.
 - **Evidências necessárias:** feedback persistido e vinculado; não-membro bloqueado.
 - **Riscos:** vinculação incorreta de execução.
-- **Bloqueios:** depende de PB-15.
-- **Resultado da implementação:** — (não iniciado)
-- **Resultado dos testes:** — (não executado)
-- **Próxima ação exata:** implementar rotas de feedback e persistência.
+- **Bloqueios:** nenhum técnico; PB-16 validado.
+- **Resultado da implementação:** criadas as duas rotas autenticadas com autorização por membership
+  e exigência de run concluído. Os registros usam upsert único por usuário/run/faixa e por
+  usuário/run; faixa descartada ou pertencente a outra execução não é aceita. O resultado expõe
+  `run_id`/`track_id`; a ação da tela de resultado abre o novo formulário responsivo, com os quatro
+  sinais por faixa, duas escalas 0–5, comentário opcional e estado de confirmação. A interface e as
+  respostas da API deixam explícito que o uso será futuro e não afeta o ranking do MVP. A remoção de
+  conta também exclui os novos feedbacks pessoais sem afetar os de terceiros.
+- **Arquivos criados:** `backend/app/api/feedback.py`, `backend/app/schemas/feedback.py`,
+  `backend/app/services/feedback_service.py`, `backend/alembic/versions/0014_pb20_feedback.py`,
+  `backend/tests/test_pb20_feedback.py`, `frontend/src/Feedback.jsx`.
+- **Arquivos alterados:** modelos/registro da API, schemas e serviço do resultado, serviço de
+  privacidade, rota/app/cliente/CSS do frontend, README e este plano.
+- **Migração:** `0014_pb20_feedback`, validada em PostgreSQL isolado com cadeia completa
+  `upgrade head`, `downgrade 0013_pb18_context_cache` e novo `upgrade head`; banco temporário removido.
+  Aplicada também ao banco local da aplicação, que permaneceu saudável; as duas rotas constam no OpenAPI.
+- **Resultado dos testes técnicos:** `test_pb20_feedback.py` cobre `CT-PB20-01..05`, atualização
+  idempotente, autenticação, limites 0–5, run incompleto, faixa descartada, integração do payload de
+  resultado e privacidade: **9 passed / 0 failed**. Suíte backend completa **272 passed / 6 skipped /
+  0 failed**; `compileall`, `pip check`, build Vite (**46 módulos**) e `git diff --check` aprovados.
+- **Riscos/limitações:** os dois endpoints são independentes; em falha de rede durante o envio da
+  tela, uma parte pode chegar antes da outra, mas o reenvio é seguro por upsert. Feedback continua
+  deliberadamente fora do motor/ranking do MVP.
+- **Próxima ação exata:** QA executa `CT-PB20-01..05`, inspeciona a tela contra
+  `docs/design/screenshots/07-feedback.png` e confirma persistência/autorização. O Dev não encerra a
+  Sprint 4 antes do veredito.
 
 > **Nota — Qualidade/robustez/documentação (antigo PB-20):** deixou de ser um PB e virou a
 > **Definition of Done**, aplicada a **todos** os PBs desde a Sprint 1 (ver `../produto/BACKLOG_PRODUTO.md`
@@ -1527,39 +1550,38 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 4, branch de entrega `feat/SPRINT04/PB03`.
-- **PB em andamento:** PB-03 `AGUARDANDO-QA` — logout e remoção/anonimização implementados.
-- **Último resultado concluído:** `POST /auth/logout` invalida a sessão atual; `DELETE /auth/me`
-  apaga tokens, todas as sessões, snapshots e respostas do Vibe Check e anonimiza a identidade sem
-  remover a sala hospedada nem dados do outro integrante. Suíte completa **223 passed / 6 skipped /
-  0 failed**; build Vite aprovado.
-- **Onde parou:** implementação e testes técnicos do PB-03 concluídos; handoff para QA.
-- **Próxima ação exata:** QA executa `CT-PB03-01..04`. Se `VALIDADO`, o Dev pode iniciar PB-18;
-  se `REPROVADO`, corrige somente PB-03. As validações integradas diferidas das Sprints 1–3 continuam
-  registradas pela exceção e não foram promovidas a concluídas.
+- **Sprint/branch de trabalho:** Sprint 4, branch de entrega `feat/SPRINT04/PB20`.
+- **PB em andamento:** PB-20 `AGUARDANDO-QA` — feedback pós-playlist implementado.
+- **Último resultado concluído:** feedback por faixa e geral persistidos com autorização, vínculo
+  usuário/run, upsert e aviso de uso futuro; formulário integrado ao resultado e privacidade
+  estendida aos novos dados. Migração ida/volta aprovada em PostgreSQL isolado; suíte completa e
+  build Vite aprovados.
+- **Onde parou:** implementação e testes técnicos do PB-20 concluídos; handoff para QA.
+- **Próxima ação exata:** QA executa `CT-PB20-01..05`. Se `REPROVADO`, o Dev corrige somente PB-20;
+  se `VALIDADO`, inicia-se separadamente a validação integrada da Sprint 4. As dívidas integradas das
+  Sprints 1–3 continuam registradas pela exceção e não foram promovidas a concluídas.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb03_privacy.py \
-    tests/test_pb02_auth.py tests/test_pb02_auth_qa.py -q
+  APP_ENV=test .venv/bin/pytest tests/test_pb20_feedback.py -o addopts='' -q
   APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum técnico no PB-03. Aguarda QA. Dívidas integradas das Sprints 1–3 preservadas
+- **Bloqueios:** nenhum técnico no PB-20. Aguarda QA. Dívidas integradas das Sprints 1–3 preservadas
   pela exceção explícita do usuário.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 21 testes focados, suíte completa 223 passed / 6 skipped,
-  build Vite, `compileall`, `pip check` e `git diff --check`.
-- [x] Comparei o comportamento real com os critérios existentes. — logout, 401 pós-logout, remoção
-  pessoal e preservação de terceiros cobertos com persistência inspecionada.
-- [x] Atualizei status sem declarar validação independente. — PB-03 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — anonimização preserva integridade; sem migração.
+- [x] Rodei as verificações relevantes. — 9 testes focados; suíte completa 272 passed / 6 skipped;
+  build Vite, `compileall`, `pip check`, migração PostgreSQL ida/volta e `git diff --check`.
+- [x] Comparei o comportamento real com os critérios existentes. — quatro sinais, duas notas,
+  associação, autorização e aviso futuro cobertos com persistência inspecionada.
+- [x] Atualizei status sem declarar validação independente. — PB-20 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — upsert por usuário/run e envio em duas rotas.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — README, plano de execução e diário de retomada.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit do PB-03 — incluído no handoff desta sessão.
+- [x] Commit do PB-20 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (
     AppSession,
+    MemberTrackFeedback,
+    PlaylistFeedback,
     SpotifyToken,
     User,
     UserMusicSnapshot,
@@ -61,6 +63,12 @@ def remove_personal_data(db: Session, user_id: int) -> None:
             synchronize_session=False
         )
         db.query(VibeCheckAnswer).filter(VibeCheckAnswer.user_id == user_id).delete(
+            synchronize_session=False
+        )
+        db.query(MemberTrackFeedback).filter(
+            MemberTrackFeedback.user_id == user_id
+        ).delete(synchronize_session=False)
+        db.query(PlaylistFeedback).filter(PlaylistFeedback.user_id == user_id).delete(
             synchronize_session=False
         )
 

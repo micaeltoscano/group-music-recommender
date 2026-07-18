@@ -77,7 +77,7 @@ export function Result() {
         </div>
         <div style={{ flex: 1 }}></div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-outline" onClick={() => navigate(`/rooms/${code}/vibe-check`)}>DAR FEEDBACK</button>
+          <button className="btn-outline" onClick={() => navigate(`/rooms/${code}/feedback`)}>DAR FEEDBACK</button>
           {playlist_url && (
             <a href={playlist_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
               <button className="btn" style={{ fontWeight: 600 }}>ABRIR NO SPOTIFY ▶</button>

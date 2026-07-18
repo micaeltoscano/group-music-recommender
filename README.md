@@ -72,8 +72,9 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 
 - **OAuth:** parâmetro `state` contra CSRF; validar `redirect_uri`; cookie de sessão **httpOnly + Secure (prod) + SameSite** adequado; nunca expor nem **logar** access/refresh token; `logout` invalida `app_session`.
 - **Retenção:** salas efêmeras expiram; snapshots expiram; `POST /auth/logout` invalida a sessão
-  atual e `DELETE /auth/me` apaga tokens, sessões, snapshots e respostas pessoais. A identidade é
-  anonimizada para preservar salas/playlists compartilhadas sem manter vínculo com a conta Spotify.
+  atual e `DELETE /auth/me` apaga tokens, sessões, snapshots, respostas e feedbacks pessoais. A
+  identidade é anonimizada para preservar salas/playlists compartilhadas sem manter vínculo com a
+  conta Spotify.
 - **LLM e privacidade:** **não** enviar dados brutos do Spotify ao LLM. O LLM recebe só o **contexto do host** e critérios **agregados/anônimos** quando necessário.
 - **Explicabilidade com privacidade:** motivos legíveis **sem** expor dados sensíveis de outros membros. Evitar "Pedro odeia funk"; preferir agregado: "alguns membros indicaram baixa tolerância a músicas muito tristes".
 
@@ -107,8 +108,8 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **[MVP] vibe_check_answers**: id · session_id · user_id · answers_json · derived_preferences_json · created_at
 **[MVP] track_context_cache**: id · spotify_track_id · track_name · artist_name · lastfm_track_tags_json · lastfm_artist_tags_json · spotify_artist_genres_json · context_scores_json · source · confidence · fetched_at
 **[FUT] lyrics_analysis_cache**: id · spotify_track_id · track_name · artist_name · lyrics_hash · party_score · sadness_score · romance_score · explicitness_score · aggressiveness_score · motivational_score · confidence · method · analyzed_at
-**[MVP-estrutura/FUT-uso] member_track_feedback**: id · user_id · playlist_run_id · spotify_track_id · liked · disliked · more_like_this · never_again · created_at
-**[MVP-estrutura/FUT-uso] playlist_feedback**: id · user_id · playlist_run_id · representation_score · satisfaction_score · comments · created_at
+**[MVP-estrutura/FUT-uso] member_track_feedback**: id · user_id · playlist_run_id · spotify_track_id · liked · disliked · more_like_this · never_again · created_at · updated_at — único por usuário/run/faixa
+**[MVP-estrutura/FUT-uso] playlist_feedback**: id · user_id · playlist_run_id · representation_score(0–5) · satisfaction_score(0–5) · comments · created_at · updated_at — único por usuário/run
 
 ## 6. Rotas
 
@@ -117,7 +118,7 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **Rooms:** `POST /rooms` · `POST /rooms/{code}/join` · `GET /rooms/{code}` · `PUT /rooms/{code}/context` · `PUT /rooms/{code}/mode` · `POST /rooms/{code}/generate` · `GET /rooms/{code}/result`
 **Vibe Check:** `GET /rooms/{code}/vibe-check` · `POST /rooms/{code}/vibe-check`
 **Music data:** `GET /me/top` · `POST /me/refresh-music-snapshot`
-**Feedback:** `POST /playlist-runs/{id}/tracks/{track_id}/feedback` · `POST /playlist-runs/{id}/feedback`
+**Feedback:** `POST /playlist-runs/{run_id}/tracks/{track_id}/feedback` · `POST /playlist-runs/{run_id}/feedback`
 **Debug [opcional]:** `GET /rooms/{code}/debug/scoring`
 
 Guardas: `generate` exige **host**; todas as rotas de sala exigem **membro** (senão 403). `generate` retorna **409** se `status = generating`.
@@ -183,7 +184,7 @@ O LLM transforma o pedido humano em **critérios estruturados** — não decide 
 ```
 Fontes (ordem): Last.fm tags da faixa → tags do artista → gêneros/artistas Spotify → Vibe Check → letras (opcional) → regras simples → fallback por consenso do grupo. Cada faixa recebe `context_score` + `confidence` + `source`.
 
-> **Estado operacional (2026-07-18): PB-18 validado; PB-19 implementado, aguardando QA.** O contexto estruturado
+> **Estado operacional (2026-07-18): PB-18/PB-19 validados; PB-20 implementado, aguardando QA.** O contexto estruturado
 > gera `context_score` determinístico por candidata usando ocasião, humor, energia, gêneros Spotify
 > e tags selecionadas pela cascata Last.fm. Consenso e afinidade continuam predominantes; a fonte
 > externa apenas enriquece o sinal contextual e nunca bloqueia a geração.
@@ -235,7 +236,10 @@ regra impossível (por exemplo, um único artista), o algoritmo faz o melhor esf
 
 ## 16. Feedback e evolução futura
 
-**Feedback pós-playlist:** like / dislike / more_like_this / never_again por faixa + representação 0–5 + satisfação. MVP coleta e persiste (`member_track_feedback`, `playlist_feedback`); uso no ranking é futuro.
+**Feedback pós-playlist:** like / dislike / more_like_this / never_again por faixa + representação
+0–5 + satisfação 0–5. O MVP coleta e persiste (`member_track_feedback`, `playlist_feedback`) com
+autorização de membro e associação ao usuário/run; a tela informa explicitamente que o uso no
+ranking é futuro.
 
 **Roadmap:** (1) aprendizado com feedback (pesos personalizados) · (2) Learning to Rank · (3) bandits contextuais · (4) perfis persistentes opcionais · (5) grupos persistentes · (6) integrações (link/QR/histórico/export) · (7) sequenciamento avançado por energia · (8) avaliação offline (com/sem Vibe Check, Last.fm, fairness).
 

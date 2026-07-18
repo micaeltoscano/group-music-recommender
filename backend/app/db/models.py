@@ -5,7 +5,20 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -323,6 +336,81 @@ class PlaylistRunTrack(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<PlaylistRunTrack id={self.id} status={self.status!r}>"
+
+
+class MemberTrackFeedback(Base):
+    """Sinais futuros de um integrante sobre uma faixa da execução (PB-20)."""
+
+    __tablename__ = "member_track_feedback"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "playlist_run_id",
+            "spotify_track_id",
+            name="uq_member_track_feedback_user_run_track",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    playlist_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    spotify_track_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    liked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    disliked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    more_like_this: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    never_again: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class PlaylistFeedback(Base):
+    """Avaliação geral de um integrante sobre uma execução concluída (PB-20)."""
+
+    __tablename__ = "playlist_feedback"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "playlist_run_id", name="uq_playlist_feedback_user_run"
+        ),
+        CheckConstraint(
+            "representation_score BETWEEN 0 AND 5",
+            name="ck_playlist_feedback_representation_score",
+        ),
+        CheckConstraint(
+            "satisfaction_score BETWEEN 0 AND 5",
+            name="ck_playlist_feedback_satisfaction_score",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    playlist_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    representation_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    satisfaction_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    comments: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
 
 class VibeCheckAnswer(Base):

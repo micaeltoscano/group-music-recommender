@@ -116,7 +116,8 @@ class PlaylistRunResponse(BaseModel):
 
 class TrackResultResponse(BaseModel):
     """Metadados e justificativas por faixa."""
-    
+
+    track_id: str | None
     name: str
     artist: str
     spotify_url: str | None
@@ -134,7 +135,8 @@ class MemberRepresentation(BaseModel):
 
 class RoomResultResponse(BaseModel):
     """Payload de resultado com métricas agregadas e sem vazar rejeições."""
-    
+
+    run_id: UUID
     playlist_url: str | None
     compatibility_score: int
     fairness_score: int

@@ -190,6 +190,7 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
         names = [members_map[uid] for uid in contributors]
         track_results.append(
             TrackResultResponse(
+                track_id=track.spotify_id,
                 name=track.name,
                 artist=track.artist,
                 spotify_url=track.spotify_uri,
@@ -238,6 +239,7 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
     ]
 
     return RoomResultResponse(
+        run_id=run.id,
         playlist_url=run.spotify_playlist_url,
         compatibility_score=compatibility_score,
         fairness_score=fairness_score,

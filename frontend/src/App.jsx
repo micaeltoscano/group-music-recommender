@@ -6,6 +6,7 @@ import Login from './Login'
 import Room from './Room'
 import { VibeCheck } from './VibeCheck'
 import { Result } from './Result'
+import { Feedback } from './Feedback'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -50,6 +51,10 @@ export default function App() {
         <Route
           path="/rooms/:code/result"
           element={user ? <Result /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/rooms/:code/feedback"
+          element={user ? <Feedback user={user} /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </BrowserRouter>

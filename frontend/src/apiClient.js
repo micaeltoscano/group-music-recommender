@@ -38,4 +38,20 @@ export const api = {
   }),
   generatePlaylist: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/generate`, { method: 'POST' }),
   getRoomResult: (code) => requestJson(`/rooms/${encodeURIComponent(code)}/result`),
+  submitTrackFeedback: (runId, trackId, feedback) => requestJson(
+    `/playlist-runs/${encodeURIComponent(runId)}/tracks/${encodeURIComponent(trackId)}/feedback`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedback),
+    },
+  ),
+  submitPlaylistFeedback: (runId, feedback) => requestJson(
+    `/playlist-runs/${encodeURIComponent(runId)}/feedback`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedback),
+    },
+  ),
 }
