@@ -1246,25 +1246,25 @@ Critérios 1–5 do PB-18.
 #### Casos de teste
 ##### CT-PB18-01 — Tags da faixa preferidas às do artista
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** usa tags da faixa quando
-  existem; confiança maior. · **Automatizável:** Sim · **Status:** Não executado
+  existem; confiança maior. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB18-02 — Cascata quando faltam tags
 - **Tipo:** recuperação · **Prioridade:** Alta · **Cenário:** sem tags de faixa/artista.
 - **Resultado esperado:** usa gêneros Spotify e demais sinais; confiança menor registrada. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB18-03 — Fonte e confiança registradas
 - **Tipo:** unitário · **Prioridade:** Média · **Resultado esperado:** cada resultado tem `source` e
-  `confidence`. · **Automatizável:** Sim · **Status:** Não executado
+  `confidence`. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB18-04 — Cache válido é reutilizado
 - **Tipo:** cache · **Prioridade:** Média · **Cenário:** consulta repetida da mesma faixa.
 - **Resultado esperado:** sem nova chamada externa enquanto o cache é válido. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB18-05 — Erro/vazio do Last.fm não interrompe a geração
 - **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** cascata assume; geração segue.
-- **Automatizável:** Sim · **Status:** Não executado
+- **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ### PB-19 — Sequenciamento da experiência musical
 

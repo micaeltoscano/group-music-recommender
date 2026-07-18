@@ -144,7 +144,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 1 | Fundação técnica + autenticação + sala utilizável | PB-01, PB-02, PB-04, PB-05, PB-06, PB-08 | 25 | Validação integrada pendente |
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
-| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 VALIDADO; PB-18 AGUARDANDO-QA; PB-19/20 A-FAZER (Sprint não validada)** |
+| Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **Em andamento — PB-03 e PB-18 VALIDADOS; PB-19/20 A-FAZER (Sprint não validada)** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | A fazer |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
@@ -1287,9 +1287,14 @@ Done** aplicada a todos os PBs desde a Sprint 1 — não é mais um PB à parte.
 
 #### PB-18 — Enriquecimento de contexto com Last.fm
 
-- **Status:** AGUARDANDO-QA — implementação concluída em 2026-07-18; cascata faixa → artista →
-  gêneros Spotify → consenso integrada ao pipeline, com cache persistente, fonte/confiança e
-  fallback que preserva a geração. Testes técnicos verdes; falta validação independente.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB18-01..05 verificados independentemente. Ordem real da
+  cascata confirmada por espião (faixa antes de artista; artista só sem tags de faixa); cache válido
+  **não** chama a rede (stub que lança se invocado) e cache expirado re-consulta; confiança exata por
+  fonte (0.95/0.75/0.50/0.20); exceção inesperada do cliente não propaga; a `LASTFM_API_KEY` não vaza
+  no cache nem na candidata. Sondagem QA `backend/tests/test_pb18_lastfm_context_qa.py` (8 casos) +
+  Dev (9) verdes; suíte completa 246 passed / 6 skipped / 0 failed. Migração `0013` reversível
+  (estrutura verificada). Sem defeitos. Relatório:
+  [`docs/relatorios-testes/PB-18.md`](../relatorios-testes/PB-18.md).
 - **Objetivo:** tags do Last.fm (faixa → artista) combinadas com gêneros Spotify, em cache com
   confiança, sem interromper a geração em erro/ausência.
 - **Dependências:** PB-10 e PB-17.
