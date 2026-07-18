@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     discovery_mode_enabled: bool = False
     # Opt-in: identifica e explica faixas aceitas por múltiplos subgrupos.
     bridge_tracks_enabled: bool = False
+    # PB-24: reordena somente o prefixo final quando habilitado.
+    subgroup_balancing_enabled: bool = False
+    subgroup_max_share: float = Field(default=0.60, ge=0.5, le=1.0)
 
     # --- CORS ----------------------------------------------------------------
     # Origens permitidas para o frontend Vite (separadas por vírgula).

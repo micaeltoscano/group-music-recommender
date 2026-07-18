@@ -285,6 +285,12 @@ class PlaylistRun(Base):
     # Contexto estruturado interpretado do host (PB-17): ocasião, humor, energia,
     # tags +/- e itens a evitar. Cacheado por run para não reprocessar no LLM.
     llm_context_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    subgroup_balancing_applied: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

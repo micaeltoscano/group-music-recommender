@@ -23,12 +23,11 @@ guia executável para o agente de implementação e de referência de aceitaçã
 
 ## 2. Escopo
 
-- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21/PB-22/PB-23
-  promovidos da Sprint 5 por decisão explícita de escopo.
+- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21/PB-22/PB-23/
+  PB-24 promovidos da Sprint 5 por decisão explícita de escopo.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
   PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
-- **Fora do escopo atual deste plano:** PB-24; seus casos serão detalhados antes da
-  implementação de cada item promovido.
+- **Fora do escopo atual deste plano:** nenhum PB já promovido; evoluções futuras exigem refinamento.
 
 ## 3. Estratégia de testes
 
@@ -1541,6 +1540,54 @@ PB-11 e PB-22 validados; agrupamento no estado `clustered`; flag do recurso cont
 
 ---
 
+### PB-24 — Balanceamento entre subgrupos
+
+#### Objetivo da validação
+Comprovar que a seleção opcional limita a predominância de um subgrupo quando existem alternativas,
+sem promover vetos nem desfazer a justiça, e explica quando o balanceamento alterou a ordem.
+
+#### Requisitos e critérios cobertos
+Critérios 1–4 do PB-24.
+
+#### Pré-condições
+PB-12, PB-16, PB-22 e PB-23 validados; agrupamento `clustered`; flags controláveis no teste.
+
+#### Casos de teste
+##### CT-PB24-01 — Limite de predominância com alternativas suficientes
+- **Tipo:** unitário/motor · **Prioridade:** Alta · **Resultado esperado:** no prefixo alvo, nenhum
+  cluster excede `SUBGROUP_MAX_SHARE` quando o pool seguro oferece representantes suficientes;
+  subgrupos são intercalados deterministicamente. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB24-02 — Melhor esforço quando faltam representantes
+- **Tipo:** unitário/limites · **Prioridade:** Alta · **Resultado esperado:** seleção mantém tamanho e
+  conjunto de candidatas sem falhar; só ultrapassa o limite quando não existem alternativas seguras.
+  · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB24-03 — Rejeição e justiça preservadas
+- **Tipo:** unitário/regressão · **Prioridade:** Alta · **Resultado esperado:** balanceamento ocorre
+  depois de `evaluate_candidate_fairness`/`elevate_least_represented`, não promove candidatas com veto
+  e não altera scores nem o conjunto já selecionado pela justiça. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB24-04 — Funcionalidade opcional e configurável
+- **Tipo:** configuração/regressão · **Prioridade:** Alta · **Resultado esperado:** flag falsa por
+  padrão; desligada, preserva exatamente os três modos existentes; ligada, respeita o limite entre
+  0,5 e 1 configurado. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB24-05 — Aplicação persistida e explicada
+- **Tipo:** integração/API · **Prioridade:** Alta · **Resultado esperado:** quando a ordem é alterada,
+  o run persiste `subgroup_balancing_applied=true` e a explicação agregada informa o balanceamento;
+  quando não aplicado, a explicação não aparece. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB24-06 — Estados sem subgrupos, entradas inválidas e determinismo
+- **Tipo:** unitário/robustez · **Prioridade:** Média · **Resultado esperado:** clustering ausente,
+  insuficiente ou único mantém a ordem; tamanho/limite inválidos são rejeitados; mesma entrada produz
+  mesma saída e metadados. · **Automatizável:** Sim · **Status:** Não executado
+
+---
+
 ## Apêndice — Rastreabilidade PB × critérios × casos
 
 | PB | Sprint | Nº de casos individuais | Testes integrados |
@@ -1568,5 +1615,4 @@ PB-11 e PB-22 validados; agrupamento no estado `clustered`; flag do recurso cont
 | PB-21 | 5 | 6 (CT-PB21-01..06) | a definir no fechamento da Sprint 5 |
 | PB-22 | 5 | 6 (CT-PB22-01..06) | a definir no fechamento da Sprint 5 |
 | PB-23 | 5 | 6 (CT-PB23-01..06) | a definir no fechamento da Sprint 5 |
-
-**PB-24:** seus casos serão elaborados antes da implementação do item promovido.
+| PB-24 | 5 | 6 (CT-PB24-01..06) | a definir no fechamento da Sprint 5 |

@@ -57,7 +57,8 @@ App de "negociação musical" para grupos. Nome interno do motor: **Preference N
 - Grupos persistentes.
 - Endpoints descontinuados do Spotify.
 - Lyrics Theme Classifier em produção (fica como extra acadêmico/offline/opcional).
-- Modo Ponte Musical e balanceamento entre subgrupos (arquitetura prevista no pós-MVP).
+- Geração externa de novas candidatas especificamente para subgrupos (o pós-MVP atual balanceia o
+  pool já autorizado e disponível).
 - Aprendizado (Learning to Rank, bandits, perfis persistentes) — só roadmap.
 
 ### 3.1 Limites e restrições operacionais (fechados do MVP)
@@ -103,7 +104,7 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **[MVP] music_sessions**: id · code(uniq) · host_user_id · occasion · description · mode · status(open/**generating**/completed) · spotify_playlist_id · spotify_playlist_url · created_at · expires_at(**24h**)
 **[MVP] music_session_members**: session_id · user_id · role(host/member) · joined_at — PK(session_id,user_id) evita duplicidade
 **[MVP] user_music_snapshots**: id · user_id · time_range · top_tracks_json · top_artists_json · fetched_at
-**[MVP] playlist_runs**: id · music_session_id · status(**running/completed/failed**) · compatibility_score · fairness_score · spotify_playlist_id · spotify_playlist_url · llm_context_json · explanation_json · error_message · created_at
+**[MVP] playlist_runs**: id · music_session_id · status(**running/completed/failed**) · compatibility_score · fairness_score · spotify_playlist_id · spotify_playlist_url · llm_context_json · explanation_json · **subgroup_balancing_applied** · error_message · created_at
 **[MVP] playlist_run_tracks**: id · playlist_run_id · spotify_track_id · spotify_uri · track_name · artist_name · score · reason · position · source · **match_confidence** · **discard_reason**(nullable: not_found/unavailable_in_market/low_match/no_uri/artist_cap) · **is_bridge**
 **[MVP] vibe_check_answers**: id · session_id · user_id · answers_json · derived_preferences_json · created_at
 **[MVP] track_context_cache**: id · spotify_track_id · track_name · artist_name · lastfm_track_tags_json · lastfm_artist_tags_json · spotify_artist_genres_json · context_scores_json · source · confidence · fetched_at
@@ -141,12 +142,13 @@ Guardas: `generate` exige **host**; todas as rotas de sala exigem **membro** (se
 9. Score de **grupo**; opcionalmente marcar faixas aceitas por múltiplos subgrupos como pontes.
 10. Aplicar `rejection_penalty`.
 11. Aplicar **fairness constraints** (representação mínima por membro).
-12. Selecionar faixas finais.
-13. **Playlist Experience Sequencer**.
-14. **Resolver faixas via Spotify Search com o token do HOST** (garante market do host); checar **disponibilidade no mercado**; descartar sem URI válida/indisponível/low_match, gravando `discard_reason`. Aplicar cap de 2/artista.
-15. Criar playlist **privada** no Spotify do host + add tracks.
-16. Salvar `playlist_runs` + `playlist_run_tracks` (com `reason`, `source`, `position`, `match_confidence`, `discard_reason`).
-17. Marcar `run.completed`, `session.status = completed`; retornar resultado com explicações.
+12. Opcionalmente balancear o prefixo final entre subgrupos, sem promover vetos.
+13. Selecionar faixas finais.
+14. **Playlist Experience Sequencer**.
+15. **Resolver faixas via Spotify Search com o token do HOST** (garante market do host); checar **disponibilidade no mercado**; descartar sem URI válida/indisponível/low_match, gravando `discard_reason`. Aplicar cap de 2/artista.
+16. Criar playlist **privada** no Spotify do host + add tracks.
+17. Salvar `playlist_runs` + `playlist_run_tracks` (com `reason`, `source`, `position`, `match_confidence`, `discard_reason`).
+18. Marcar `run.completed`, `session.status = completed`; retornar resultado com explicações.
 
 **Track Matching (Spotify Search):** normalizar título/artista; tratar variantes (`remastered`, `live`, `acoustic`, `sped up`, `deluxe`, `radio edit`); exigir **confiança mínima de match**; em ambiguidade preferir o **mais popular**; salvar `match_confidence` + `source`.
 
@@ -215,7 +217,7 @@ perfis temporários autorizados e forma componentes determinísticos com limiar 
 distingue evidência insuficiente, grupo único e subgrupos distintos; contém somente IDs de membros,
 IDs de cluster e similaridades, sem persistir ou replicar dados musicais brutos. Cada candidata fica
 associada transitoriamente aos clusters de seus membros de origem. Identificação de faixas-ponte e
-balanceamento permanecem nos PB-23/PB-24 e não alteram o ranking no PB-22.
+balanceamento são tratados separadamente nos PB-23/PB-24 e não alteram o ranking no PB-22.
 
 **[PB-23] Faixas-ponte:** com `BRIDGE_TRACKS_ENABLED=true`, cada candidata recebe a média de aceitação
 de cada cluster usando os componentes de afinidade dos scores individuais do PB-11. Popularidade e
@@ -225,7 +227,14 @@ cluster, preservando uma leitura conservadora entre subgrupos. A marcação não
 candidatas: é persistida em
 `playlist_run_tracks.is_bridge`, exposta no resultado e apresentada com justificativa agregada. A
 flag é `false` por padrão, portanto os modos existentes permanecem inalterados quando desabilitada.
-Balanceamento ou alternância entre subgrupos continua reservado ao PB-24.
+O balanceamento ou alternância entre subgrupos é tratado pelo PB-24 abaixo.
+
+**[PB-24] Balanceamento entre subgrupos:** com `SUBGROUP_BALANCING_ENABLED=true`, o motor reordena
+somente as candidatas já avaliadas por rejeição e justiça. O prefixo de até 30 faixas alterna o
+cluster menos representado e tenta respeitar `SUBGROUP_MAX_SHARE=0.60`; faixas com veto não são
+promovidas. Quando o pool seguro não possui alternativas suficientes, mantém tamanho e qualidade por
+melhor esforço, podendo exceder o teto. A aplicação real é persistida no run e explicada de forma
+agregada no resultado. Com a flag desligada, os três modos preservam a ordem histórica.
 
 ## 14. Modos de consenso
 
@@ -354,7 +363,8 @@ cp .env.example .env
 
 O `.env` é ignorado pelo Git. Os **defaults locais já funcionam** para banco e caches
 (`DATABASE_URL`, `MUSIC_SNAPSHOT_TTL_DAYS=7`, `SPOTIFY_TOP_ITEMS_LIMIT=50`,
-`DISCOVERY_MODE_ENABLED=false`, `BRIDGE_TRACKS_ENABLED=false` e
+`DISCOVERY_MODE_ENABLED=false`, `BRIDGE_TRACKS_ENABLED=false`,
+`SUBGROUP_BALANCING_ENABLED=false`, `SUBGROUP_MAX_SHARE=0.60` e
 `LASTFM_CACHE_TTL_DAYS=30`) e para o LLM local
 (`OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=llama3.1:8b` — requer o Ollama instalado e
 o modelo baixado com `ollama pull llama3.1:8b`; sem ele, o fallback determinístico assume). As chaves

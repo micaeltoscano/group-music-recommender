@@ -35,6 +35,9 @@ DISCOVERY_EXPLANATION = (
     "os critérios de rejeição e justiça."
 )
 BRIDGE_EXPLANATION = "Faixas-ponte aproximam subgrupos sem expor preferências individuais."
+SUBGROUP_BALANCE_EXPLANATION = (
+    "O balanceamento entre subgrupos limitou a predominância de um único gosto musical."
+)
 
 
 def _parse_source(raw: str | None) -> list[int]:
@@ -174,6 +177,8 @@ def finalize_run_metrics(db: Session, run: PlaylistRun) -> None:
     room = db.get(MusicSession, run.session_id)
     if room is not None and room.mode == "Descoberta":
         metrics["why_items"].append(DISCOVERY_EXPLANATION)
+    if run.subgroup_balancing_applied:
+        metrics["why_items"].append(SUBGROUP_BALANCE_EXPLANATION)
 
     run.compatibility_score = metrics["compatibility_score"]
     run.fairness_score = metrics["fairness_score"]
@@ -245,6 +250,11 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
 
     if room.mode == "Descoberta" and DISCOVERY_EXPLANATION not in why_items:
         why_items = [*why_items, DISCOVERY_EXPLANATION]
+    if (
+        run.subgroup_balancing_applied
+        and SUBGROUP_BALANCE_EXPLANATION not in why_items
+    ):
+        why_items = [*why_items, SUBGROUP_BALANCE_EXPLANATION]
 
     representation = [
         MemberRepresentation(

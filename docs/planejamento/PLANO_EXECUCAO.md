@@ -145,7 +145,7 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 2 | Núcleo do motor de negociação (PNE) | PB-09, PB-10, PB-11, PB-12, PB-13 | 24 | Validação integrada pendente |
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
-| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — PB-21/22/23 VALIDADOS; PB-24 A-FAZER (Sprint não validada)** |
+| Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **Em andamento — três primeiros validados; último aguardando QA (Sprint não validada)** |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
 - **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
@@ -1632,16 +1632,54 @@ as validações integradas pendentes das Sprints 1–4.
   `clustered`; estados insuficiente/único não produzem pontes. O resultado expõe somente o booleano e
   uma explicação agregada, sem IDs/scores dos clusters. Nenhuma candidata recebe bônus nesta história.
 - **Bloqueios:** nenhum técnico.
-- **Próxima ação exata:** QA executa `CT-PB23-01..06`, com atenção ao limiar entre um/dois clusters,
-  à mutação com flag desligada, à persistência após matching e à privacidade do resultado. Não iniciar
-  PB-24 antes do veredito `VALIDADO`.
+- **Próxima ação exata:** encerrado pelo QA; o portão para PB-24 foi liberado.
 
 #### PB-24 — Balanceamento entre subgrupos
 
-- **Status:** A-FAZER
+- **Status:** AGUARDANDO-QA — balanceamento determinístico e opt-in aplicado depois de rejeição e
+  justiça; limita a participação de cada cluster no prefixo final quando existem alternativas
+  seguras, preserva scores/conjunto ranqueado e usa melhor esforço quando o pool é insuficiente.
 - **Objetivo:** alternar representantes dos subgrupos preservando consenso e justiça.
-- **Dependências:** PB-12, PB-16, PB-22 e PB-23.
-- **Próxima ação exata:** aguardar PB-23 `VALIDADO`.
+- **Dependências:** PB-12, PB-16, PB-22 e PB-23 — todas `VALIDADO`.
+- **Critérios de aceitação:**
+  1. O prefixo final de até 30 faixas limita cada cluster a `SUBGROUP_MAX_SHARE=0.60` quando há
+     alternativas seguras e intercala primeiro o cluster menos representado.
+  2. A etapa roda depois da penalização de rejeição e da elevação por justiça, não recalcula scores,
+     não remove candidatas do conjunto ranqueado e não promove ao prefixo faixas com score individual
+     de veto (≤ 0,05).
+  3. `SUBGROUP_BALANCING_ENABLED=false` por padrão preserva exatamente a ordem dos modos Democrático,
+     Festa Segura e Descoberta; o teto é configurável no intervalo de 0,5 a 1.
+  4. Quando a ordem realmente muda, o run persiste `subgroup_balancing_applied=true` e o resultado
+     inclui uma explicação agregada, sem expor IDs ou afinidades dos clusters.
+- **Plano implementado:** módulo puro `subgroup_balance.py` seleciona deterministicamente o cluster
+  menos representado e mantém desempate pela ordem original. Candidatas de múltiplos clusters são
+  atribuídas ao cluster menos representado; candidatas neutras não pressionam o teto. Sem opções
+  suficientes, o prefixo é completado na ordem original para preservar tamanho e qualidade.
+- **Arquivos criados:** `backend/app/engine/subgroup_balance.py`,
+  `backend/tests/test_pb24_subgroup_balance.py` e
+  `backend/alembic/versions/0016_pb24_subgroup_balance.py`.
+- **Arquivos alterados:** configuração/env/Compose; candidata e pipeline de geração; modelo e serviço
+  de resultado; README; planos de execução e testes. Nenhuma mudança visual foi necessária porque a
+  explicação usa a lista de justificativas existente.
+- **Migração:** `0016_pb24_subgroup_balance` adiciona
+  `playlist_runs.subgroup_balancing_applied BOOLEAN NOT NULL DEFAULT false`; downgrade remove a
+  coluna. Upgrade/downgrade/upgrade aprovados em schema temporário isolado carimbado em `0015`; SQL
+  offline PostgreSQL também aprovado.
+- **Testes obrigatórios detalhados:** `CT-PB24-01..06` no `PLANO_TESTES.md`, deixados como
+  `Não executado` até a validação independente.
+- **Resultado dos testes técnicos:** foco PB-24 **14 passed / 0 failed**; regressão relacionada
+  PB-12/PB-16/PB-19/PB-22/PB-23/PB-24 **103 passed / 0 failed**; suíte backend completa
+  **365 passed / 6 skipped / 0 failed**; `compileall`, `pip check`, build Vite (**46 módulos**),
+  migração reversível, SQL PostgreSQL e `git diff --check` aprovados. A cadeia histórica completa não
+  roda em SQLite por uma revisão antiga usar `DEFAULT now()`; a revisão do PB-24 foi validada
+  isoladamente. `ruff` continua indisponível no ambiente virtual.
+- **Riscos/limitações:** o teto é aplicado por melhor esforço: pode ser excedido se faltarem
+  candidatas seguras de outros clusters. O limiar de veto 0,05 e o teto 0,60 são heurísticas iniciais.
+  O balanceador não busca músicas externas nem persiste composição/IDs de clusters.
+- **Bloqueios:** nenhum técnico.
+- **Próxima ação exata:** QA executa `CT-PB24-01..06`, com atenção à escassez de alternativas, à não
+  promoção de vetos, à preservação dos três modos com flag desligada, à migração reversível e à
+  explicação condicional. Não encerrar a Sprint 5 antes do veredito `VALIDADO` e da validação integrada.
 
 Detalhes e critérios de aceitação em `../produto/BACKLOG_PRODUTO.md` (§10, PB-21 a PB-24).
 
@@ -1703,38 +1741,38 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB23`.
-- **PB em andamento:** PB-23 `AGUARDANDO-QA` — identificação de faixas-ponte implementada.
-- **Último resultado concluído:** avaliação por cluster opt-in, marcação no ranking sem promoção,
-  persistência reversível e selo/explicação no resultado. Suíte completa
-  **336 passed / 6 skipped / 0 failed**; build Vite aprovado.
-- **Onde parou:** implementação e testes técnicos do PB-23 concluídos; handoff para QA.
-- **Próxima ação exata:** QA executa `CT-PB23-01..06`. Se `REPROVADO`, o Dev corrige somente PB-23;
-  se `VALIDADO`, pode iniciar PB-24. As validações integradas das Sprints 1–4 permanecem pendentes e
-  não foram promovidas a concluídas pela abertura operacional da Sprint 5.
+- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB24`.
+- **PB em andamento:** PB-24 `AGUARDANDO-QA` — balanceamento entre subgrupos implementado.
+- **Último resultado concluído:** reordenação opt-in posterior à justiça, limite configurável por
+  cluster, melhor esforço na escassez e explicação condicional persistida. Suíte completa
+  **365 passed / 6 skipped / 0 failed**; build Vite aprovado.
+- **Onde parou:** implementação e testes técnicos do último PB da Sprint 5 concluídos; handoff para QA.
+- **Próxima ação exata:** QA executa `CT-PB24-01..06`. Se `REPROVADO`, o Dev corrige somente PB-24;
+  se `VALIDADO`, inicia-se a validação integrada da Sprint 5. As validações integradas das Sprints
+  1–4 permanecem pendentes e não foram promovidas a concluídas pela abertura operacional da Sprint 5.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb23_bridge_tracks.py -o addopts='' -q
+  APP_ENV=test .venv/bin/pytest tests/test_pb24_subgroup_balance.py -o addopts='' -q
   APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
   .venv/bin/alembic upgrade head
   cd ../frontend && npm run build
   ```
-- **Bloqueios:** nenhum técnico no PB-23. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
+- **Bloqueios:** nenhum técnico no PB-24. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
   pela exceção explícita do usuário.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 11 testes focados; 103 relacionados; suíte completa
-  336 passed / 6 skipped; build Vite, `compileall`, `pip check` e migração reversível.
-- [x] Comparei o comportamento real com os critérios existentes. — aceitação por múltiplos clusters,
-  marcação, opt-in sem regressão e indicação no resultado cobertos.
-- [x] Atualizei status sem declarar validação independente. — PB-23 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — limiar 0,25, score conservador e cadeia SQLite antiga.
+- [x] Rodei as verificações relevantes. — 14 testes focados; 103 relacionados; suíte completa
+  365 passed / 6 skipped; build Vite, `compileall`, `pip check` e migração reversível.
+- [x] Comparei o comportamento real com os critérios existentes. — predominância, melhor esforço,
+  preservação de vetos/justiça, opt-in e explicação condicional cobertos.
+- [x] Atualizei status sem declarar validação independente. — PB-24 `AGUARDANDO-QA`.
+- [x] Registrei decisões ou bloqueios novos. — teto 0,60, veto 0,05 e cadeia SQLite antiga.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — README, planos de testes/execução e diário de retomada.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit do PB-23 — incluído no handoff desta sessão.
+- [x] Commit do PB-24 — incluído no handoff desta sessão.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

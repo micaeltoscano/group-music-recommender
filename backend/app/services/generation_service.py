@@ -30,6 +30,7 @@ from app.engine.context_scoring import (
 from app.engine.fairness import elevate_least_represented, evaluate_candidate_fairness
 from app.engine.scoring import calculate_candidate_diversity_score, calculate_group_score
 from app.engine.sequencer import SequencerTrack, sequence_tracks
+from app.engine.subgroup_balance import balance_subgroup_candidates
 from app.engine.taste import UserTasteProfile
 from app.engine.vibe_scoring import (
     VibePreferences,
@@ -398,6 +399,8 @@ def _rank_candidates(
     vibe_preferences: VibePreferences | None = None,
     taste_clusters: TasteClusteringResult | None = None,
     bridge_tracks_enabled: bool = False,
+    subgroup_balancing_enabled: bool = False,
+    subgroup_max_share: float = 0.60,
 ) -> list[CandidateTrack]:
     """Ordena candidatas por consenso, contexto e Vibe Check opcional."""
     mode_key = ROOM_MODE_KEYS.get(room_mode or "Democrático", "democratic")
@@ -449,6 +452,27 @@ def _rank_candidates(
     scored.sort(key=lambda item: item["penalized_score"], reverse=True)
     target_size = min(50, len(scored))
     selected = elevate_least_represented(scored, target_size, len(profiles))
+    if subgroup_balancing_enabled:
+        balance = balance_subgroup_candidates(
+            selected,
+            taste_clusters,
+            target_size=min(MAX_PLAYLIST_TRACKS, len(selected)),
+            max_cluster_share=subgroup_max_share,
+        )
+        selected = list(balance.ranked_candidates)
+        allocation_by_candidate = {
+            allocation.candidate_id: allocation.cluster_id
+            for allocation in balance.allocations
+        }
+        for item in selected:
+            candidate = item["candidate"]
+            candidate.subgroup_balancing_applied = balance.applied
+            candidate.balanced_cluster_id = allocation_by_candidate.get(candidate.id)
+    else:
+        for item in selected:
+            candidate = item["candidate"]
+            candidate.subgroup_balancing_applied = False
+            candidate.balanced_cluster_id = None
     return [item["candidate"] for item in selected]
 
 
@@ -544,7 +568,13 @@ async def execute_generation(
             vibe_preferences,
             taste_clusters=taste_clusters,
             bridge_tracks_enabled=settings.bridge_tracks_enabled,
+            subgroup_balancing_enabled=settings.subgroup_balancing_enabled,
+            subgroup_max_share=settings.subgroup_max_share,
         )
+        run.subgroup_balancing_applied = any(
+            candidate.subgroup_balancing_applied for candidate in ranked_candidates
+        )
+        db.commit()
 
         host = db.get(User, host_id)
         if host is None:
