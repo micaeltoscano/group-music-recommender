@@ -183,7 +183,11 @@ export default function Room({ user }) {
         })
         return
       }
-      setRoom(response.body)
+      setRoom((current) => ({
+        ...current,
+        ...response.body,
+        members: current?.members || response.body.members,
+      }))
       setContextDraft({
         occasion: response.body.occasion || '',
         description: response.body.description || '',
@@ -210,7 +214,11 @@ export default function Room({ user }) {
         })
         return
       }
-      setRoom(response.body)
+      setRoom((current) => ({
+        ...current,
+        ...response.body,
+        members: current?.members || response.body.members,
+      }))
       setSettingsFeedback({ type: 'success', message: `Modo ${mode} selecionado.` })
     } catch {
       setSettingsFeedback({ type: 'error', message: 'Conexão perdida ao salvar o modo.' })

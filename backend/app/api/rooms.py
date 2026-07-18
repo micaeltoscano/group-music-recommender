@@ -38,6 +38,12 @@ from app.services.room_service import (
 
 router = APIRouter()
 
+LEGACY_ROOM_RESPONSE_EXCLUDE = {
+    "generation": True,
+    "vibe_summary": True,
+    "members": {"__all__": {"vibe_status": True}},
+}
+
 
 def _room_response(db: Session, room: MusicSession) -> RoomResponse:
     member_rows = list_room_members(db, room.id)
@@ -106,7 +112,12 @@ def _room_response(db: Session, room: MusicSession) -> RoomResponse:
     )
 
 
-@router.post("", response_model=RoomResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=RoomResponse,
+    response_model_exclude=LEGACY_ROOM_RESPONSE_EXCLUDE,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_music_room(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -123,7 +134,10 @@ def create_music_room(
     return _room_response(db, room)
 
 
-@router.post("/{code}/join", response_model=RoomResponse)
+@router.post(
+    "/{code}/join",
+    response_model=RoomResponse,
+)
 def join_music_room(
     code: str,
     current_user: dict = Depends(get_current_user),
@@ -176,7 +190,11 @@ def _raise_room_update_error(exc: Exception) -> None:
     raise exc
 
 
-@router.put("/{code}/context", response_model=RoomResponse)
+@router.put(
+    "/{code}/context",
+    response_model=RoomResponse,
+    response_model_exclude=LEGACY_ROOM_RESPONSE_EXCLUDE,
+)
 def set_music_room_context(
     code: str,
     payload: RoomContextUpdate,
@@ -197,7 +215,11 @@ def set_music_room_context(
     return _room_response(db, room)
 
 
-@router.put("/{code}/mode", response_model=RoomResponse)
+@router.put(
+    "/{code}/mode",
+    response_model=RoomResponse,
+    response_model_exclude=LEGACY_ROOM_RESPONSE_EXCLUDE,
+)
 def set_music_room_mode(
     code: str,
     payload: RoomModeUpdate,

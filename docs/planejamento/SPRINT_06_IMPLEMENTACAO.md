@@ -163,7 +163,18 @@ ausência/pulo continuará neutro para o motor.
 
 ## 10. Validação técnica integrada da Sprint
 
-A preencher ao fim da implementação.
+- Backend completo: `395 passed, 6 skipped, 12 warnings` em `12.87s`. Os seis casos pulados já são
+  marcados como exploratórios/dependentes de ambiente; os avisos são de APIs depreciadas em testes
+  históricos e não representam falha funcional.
+- Frontend: `npm run build` concluído, 46 módulos transformados e bundle de produção emitido.
+- Banco: cadeia Alembic linear, com um único head em `0018_pb29_vibe_status`.
+- Compatibilidade: a primeira execução integral revelou contratos históricos que exigem payload
+  exato ao criar/editar sala. Esses comandos mantiveram o formato antigo; os metadados novos ficam
+  no polling autenticado, e `join`/`GET` compartilham o mesmo estado de membros.
+- Segurança: integrações externas permaneceram mockadas; nenhum segredo, token ou resposta privada
+  foi adicionado ao Git ou aos contratos coletivos.
+- Estado do Git ao concluir: branch `feat/SPRINT06/stabilization`, sem push ou merge.
+- Esta seção é evidência técnica do implementador, não aprovação independente de QA.
 
 ## 11. Commits
 
@@ -171,4 +182,5 @@ A preencher ao fim da implementação.
 - PB-26 — `53c59f3 feat(PB-26): adicionar pool contextual hibrido`.
 - PB-27 — `5504680 feat(PB-27): compartilhar progresso da geracao`.
 - PB-28 — `c57179c feat(PB-28): alinhar login ao design`.
-- PB-29 — a registrar após o commit.
+- PB-29 — `46df4a9 feat(PB-29): compartilhar status do vibe check`.
+- Compatibilidade integrada — registrada no commit final deste documento.
