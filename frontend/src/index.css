@@ -403,8 +403,8 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
   background: var(--bg);
 }
 .generation-progress span {
-  display: block; width: 45%; height: 100%; border-radius: inherit; background: var(--accent);
-  animation: generation-progress 1.5s ease-in-out infinite alternate;
+  display: block; height: 100%; border-radius: inherit; background: var(--accent);
+  transition: width 0.35s ease;
 }
 .generation-log {
   min-height: 230px; margin-top: 28px; padding: 22px; border-radius: var(--radius-btn);
@@ -412,17 +412,15 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 }
 .generation-log p { margin: 0; }
 .generation-log p span { color: var(--dim); }
+.generation-log p.pending { color: var(--dim); }
+.generation-log p.done { color: var(--muted-2); }
+.generation-log p.active { color: var(--accent-2); }
 .generation-log i {
   display: inline-block; width: 9px; height: 16px; margin-top: 4px;
   background: var(--accent); animation: generation-cursor 1s step-end infinite;
 }
 .generation-panel > small {
   display: block; margin-top: 18px; color: var(--muted-2); font-size: 0.65rem; line-height: 1.6;
-}
-
-@keyframes generation-progress {
-  from { width: 28%; transform: translateX(0); }
-  to { width: 72%; transform: translateX(38%); }
 }
 
 @keyframes generation-cursor {

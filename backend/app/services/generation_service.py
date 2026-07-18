@@ -52,6 +52,17 @@ ROOM_MODE_KEYS = {
     "Festa Segura": "safe_party",
     "Descoberta": "discovery",
 }
+GENERATION_STAGES = {
+    "starting": 0,
+    "interpreting_context": 8,
+    "collecting_tastes": 20,
+    "discovering_context": 40,
+    "ranking": 55,
+    "matching_spotify": 70,
+    "creating_playlist": 90,
+    "finalizing": 97,
+    "completed": 100,
+}
 
 
 class GenerationConflictError(Exception):
@@ -114,12 +125,33 @@ def start_generation(db: Session, code: str, host_id: int) -> PlaylistRun:
     return run
 
 
+def update_generation_progress(
+    db: Session,
+    run_id: uuid.UUID,
+    stage: str,
+) -> PlaylistRun:
+    """Persiste um estágio público real sem permitir regressão percentual."""
+
+    if stage not in GENERATION_STAGES:
+        raise ValueError(f"Estágio de geração desconhecido: {stage}")
+    run = db.query(PlaylistRun).filter(PlaylistRun.id == run_id).one()
+    next_percent = GENERATION_STAGES[stage]
+    if next_percent < run.progress_percent:
+        return run
+    run.progress_stage = stage
+    run.progress_percent = next_percent
+    db.commit()
+    return run
+
+
 def complete_generation(db: Session, run_id: uuid.UUID) -> None:
     """Marca a execução como completed, calcula as métricas do resultado e libera a sala."""
     from app.services.result_service import finalize_run_metrics
 
     run = db.query(PlaylistRun).with_for_update().filter(PlaylistRun.id == run_id).one()
     run.status = "completed"
+    run.progress_stage = "completed"
+    run.progress_percent = 100
 
     # Calcula compatibilidade/fairness/explicações a partir das faixas correspondidas
     # e persiste no próprio run, para o endpoint de resultado apenas ler (PB-16).
@@ -136,6 +168,7 @@ def fail_generation(db: Session, run_id: uuid.UUID, error_message: str) -> None:
     run = db.query(PlaylistRun).with_for_update().filter(PlaylistRun.id == run_id).one()
     run.status = "failed"
     run.error_message = error_message
+    run.progress_stage = "failed"
 
     room = db.query(MusicSession).with_for_update().filter(MusicSession.id == run.session_id).one()
     room.status = "open"
@@ -552,6 +585,7 @@ async def execute_generation(
     try:
         run = db.query(PlaylistRun).filter(PlaylistRun.id == run_id).one()
         room = db.query(MusicSession).filter(MusicSession.id == run.session_id).one()
+        update_generation_progress(db, run_id, "interpreting_context")
         member_ids = [
             row.user_id
             for row in (
@@ -571,6 +605,7 @@ async def execute_generation(
         llm_context = await llm_client.interpret_context(room.occasion, room.description)
         run.llm_context_json = json.dumps(llm_context.model_dump())
         db.commit()
+        update_generation_progress(db, run_id, "collecting_tastes")
 
         profiles: list[UserTasteProfile] = []
         track_snapshots: list[tuple[int, dict[str, Any]]] = []
@@ -604,6 +639,7 @@ async def execute_generation(
         # da faixa → artista e cai para os gêneros já anexados acima (ou
         # consenso), persistindo fonte/confiança e reutilizando cache válido.
         candidates = await enrich_candidates_context(db, candidates)
+        update_generation_progress(db, run_id, "discovering_context")
         context_criteria = ContextCriteria(
             occasion=llm_context.occasion,
             mood=llm_context.mood,
@@ -617,6 +653,7 @@ async def execute_generation(
             context_criteria,
         )
         candidates.extend(contextual_candidates)
+        update_generation_progress(db, run_id, "ranking")
         vibe_answers = (
             db.query(VibeCheckAnswer)
             .filter(
@@ -654,8 +691,10 @@ async def execute_generation(
         if host is None:
             raise RuntimeError("Host da sala não encontrado.")
         host_token = await spotify_client.get_valid_access_token(db, host_id)
+        update_generation_progress(db, run_id, "matching_spotify")
         await resolve_candidates(db, run_id, ranked_candidates, host_token)
 
+        update_generation_progress(db, run_id, "creating_playlist")
         playlist_name = f"Vibe Check — {room.occasion or room.code}"[:100]
         member_label = "1 integrante" if len(member_ids) == 1 else f"{len(member_ids)} integrantes"
         await create_spotify_playlist_for_run(
@@ -666,6 +705,7 @@ async def execute_generation(
             playlist_name,
             f"Playlist privada criada pelo Vibe Check para {member_label}.",
         )
+        update_generation_progress(db, run_id, "finalizing")
         complete_generation(db, run_id)
         db.refresh(run)
         return run

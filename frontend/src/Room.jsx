@@ -9,6 +9,16 @@ const MODE_DESCRIPTIONS = {
   'Festa Segura': 'hits conhecidos, baixa rejeição',
   Descoberta: 'mais novidade e diversidade, preservando justiça',
 }
+const GENERATION_STEPS = [
+  { stage: 'starting', percent: 0, label: 'Preparando a execução compartilhada…' },
+  { stage: 'interpreting_context', percent: 8, label: 'Interpretando o contexto definido pelo host…' },
+  { stage: 'collecting_tastes', percent: 20, label: 'Coletando os perfis musicais do grupo…' },
+  { stage: 'discovering_context', percent: 40, label: 'Descobrindo faixas adequadas à ocasião…' },
+  { stage: 'ranking', percent: 55, label: 'Aplicando consenso, Vibe Check e justiça…' },
+  { stage: 'matching_spotify', percent: 70, label: 'Confirmando disponibilidade no Spotify…' },
+  { stage: 'creating_playlist', percent: 90, label: 'Criando a playlist privada do host…' },
+  { stage: 'finalizing', percent: 97, label: 'Finalizando resultado e explicações…' },
+]
 
 function EqualizerMark() {
   return (
@@ -103,6 +113,14 @@ export default function Room({ user }) {
   const consensusModes = availableModes.map(
     (name) => ({ name, description: MODE_DESCRIPTIONS[name] || '' }),
   )
+  const generation = room?.generation
+  const generationRunning = generation?.status === 'running' || room?.status === 'generating'
+
+  useEffect(() => {
+    if (generation?.status === 'completed') {
+      navigate(`/rooms/${code}/result`, { replace: true })
+    }
+  }, [code, generation?.status, navigate])
 
   useEffect(() => {
     if (!room || contextDirty) return
@@ -225,10 +243,9 @@ export default function Room({ user }) {
     }
   }
 
-  if (room && generating) {
-    const memberLabel = room.members.length === 1
-      ? 'Coletando top tracks e artistas do host…'
-      : `Coletando top tracks e artistas dos ${room.members.length} membros…`
+  if (room && (generationRunning || (generating && generation?.status !== 'failed'))) {
+    const progress = generation?.progress_percent ?? 2
+    const activeStage = generation?.stage ?? 'starting'
     return (
       <main className="room-shell">
         <header className="product-header">
@@ -251,18 +268,31 @@ export default function Room({ user }) {
               <h1>Negociando a playlist…</h1>
               <strong>EM CURSO</strong>
             </div>
-            <div className="generation-progress" aria-label="Geração em andamento">
-              <span />
+            <div
+              className="generation-progress"
+              role="progressbar"
+              aria-label="Geração em andamento"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={progress}
+            >
+              <span style={{ width: `${progress}%` }} />
             </div>
             <div className="generation-log">
-              <p><span>$</span> {memberLabel}</p>
-              <p><span>$</span> Montando e pontuando o conjunto de candidatas…</p>
-              <p><span>$</span> Aplicando consenso, rejeição e justiça…</p>
-              <p><span>$</span> Correspondendo faixas disponíveis no Spotify…</p>
-              <p><span>$</span> Criando playlist privada na conta do host…</p>
+              {GENERATION_STEPS.map((step) => (
+                <p
+                  className={step.stage === activeStage ? 'active' : progress > step.percent ? 'done' : 'pending'}
+                  key={step.stage}
+                >
+                  <span>{progress > step.percent ? '✓' : step.stage === activeStage ? '$' : '·'}</span>{' '}
+                  {step.label}
+                </p>
+              ))}
               <i aria-hidden="true" />
             </div>
-            <small>Você pode gerar sozinho ou com o grupo. Esta etapa pode levar alguns instantes.</small>
+            <small>
+              Todos os integrantes acompanham este progresso. Somente o host pode iniciar ou repetir.
+            </small>
           </div>
         </section>
       </main>
@@ -431,6 +461,12 @@ export default function Room({ user }) {
                 </p>
               )}
 
+              {generation?.status === 'failed' && (
+                <p className="settings-feedback error" role="alert">
+                  {generation.error_message || 'A geração falhou. O host pode tentar novamente.'}
+                </p>
+              )}
+
               <div className="polling-status compact" role={error ? 'alert' : 'status'}>
                 <span className={error ? 'polling-dot polling-dot-error' : 'polling-dot'} />
                 <div>
@@ -450,7 +486,13 @@ export default function Room({ user }) {
                   disabled={generating || room.status === 'generating' || savingContext || savingMode}
                   onClick={generatePlaylist}
                 >
-                  <span>{room.status === 'generating' ? 'GERAÇÃO EM ANDAMENTO' : 'GERAR PLAYLIST'}</span>
+                  <span>
+                    {room.status === 'generating'
+                      ? 'GERAÇÃO EM ANDAMENTO'
+                      : generation?.status === 'failed'
+                        ? 'TENTAR NOVAMENTE'
+                        : 'GERAR PLAYLIST'}
+                  </span>
                   <span aria-hidden="true">▶▶</span>
                 </button>
               )}

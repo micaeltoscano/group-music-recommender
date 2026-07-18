@@ -77,6 +77,25 @@ class RoomMemberResponse(BaseModel):
         return value.astimezone(timezone.utc)
 
 
+class RoomGenerationResponse(BaseModel):
+    """Estado agregado da última execução, compartilhável com a sala."""
+
+    run_id: UUID
+    status: Literal["running", "completed", "failed"]
+    stage: str
+    progress_percent: int
+    error_message: str | None
+    playlist_url: str | None
+    updated_at: datetime
+
+    @field_validator("updated_at")
+    @classmethod
+    def updated_at_is_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+
 class RoomResponse(BaseModel):
     """Estado inicial de uma sala recém-criada."""
 
@@ -89,6 +108,7 @@ class RoomResponse(BaseModel):
     created_at: datetime
     expires_at: datetime
     members: list[RoomMemberResponse]
+    generation: RoomGenerationResponse | None = None
 
     @field_validator("created_at", "expires_at")
     @classmethod
@@ -109,6 +129,8 @@ class PlaylistRunResponse(BaseModel):
     error_message: str | None
     spotify_playlist_id: str | None
     spotify_playlist_url: str | None
+    progress_stage: str
+    progress_percent: int
     created_at: datetime
     updated_at: datetime
 

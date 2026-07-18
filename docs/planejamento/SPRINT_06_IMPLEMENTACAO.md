@@ -28,8 +28,8 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 |---:|---|---|---|
 | 1 | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
 | 2 | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
-| 3 | PB-27 | Acompanhamento compartilhado da geração | EM IMPLEMENTAÇÃO |
-| 4 | PB-28 | Conformidade visual do Login/Landing | A FAZER |
+| 3 | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
+| 4 | PB-28 | Conformidade visual do Login/Landing | EM IMPLEMENTAÇÃO |
 | 5 | PB-29 | Estado compartilhado e privado do Vibe Check | A FAZER |
 
 ## 4. Restrições transversais
@@ -103,13 +103,27 @@ mantém a capacidade de iniciar ou repetir.
 
 ### Evidências e execução
 
-A preencher ao concluir o PB.
+- A execução persiste estágio e percentual monotônico em `playlist_runs`; a migração
+  `0017_pb27_generation_progress` adiciona os dois campos com defaults retrocompatíveis.
+- O pipeline publica oito marcos reais: interpretação, coleta, descoberta, ranking, matching,
+  criação, finalização e conclusão. Falhas usam um estado próprio e mantêm o último percentual.
+- `GET /rooms/{code}` entrega somente o estado agregado da última execução a integrantes da sala:
+  ID, estágio, percentual, resultado/erro sanitizado e data. Tops, respostas, clusters e tokens não
+  entram no payload.
+- Host e participantes entram na mesma tela ao observar a execução em `running`; o progresso usa
+  `progressbar` acessível, o resultado abre automaticamente e a falha volta ao lobby.
+- A ação de iniciar/repetir continua renderizada apenas para o host e a autorização 403 do backend
+  foi mantida na regressão.
+- Testes: `14 passed` na suíte de progresso, geração e host-only; `npm run build` concluído.
+- Migração: `0017_pb27_generation_progress.py`.
 
 ## 8. PB-28 — Conformidade visual do Login/Landing
 
 ### Objetivo
 
-A preencher antes da implementação.
+Reconstruir Login/Landing em React a partir do design obrigatório, usando os tokens visuais do
+projeto, mantendo OAuth funcional, foco de teclado, estados de carregamento/erro e comportamento
+responsivo.
 
 ### Evidências e execução
 
@@ -132,4 +146,5 @@ A preencher ao fim da implementação.
 ## 11. Commits
 
 - PB-25 — `5d38e83 feat(PB-25): tornar matching Spotify resiliente`.
-- PB-26 — a registrar após o commit.
+- PB-26 — `53c59f3 feat(PB-26): adicionar pool contextual hibrido`.
+- PB-27 — a registrar após o commit.

@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.db.models import MusicSession
+from app.db.models import MusicSession, PlaylistRun
 from app.db.session import get_db
 from app.schemas.rooms import (
     ConsensusModesResponse,
     PlaylistRunResponse,
+    RoomGenerationResponse,
     RoomContextUpdate,
     RoomMemberResponse,
     RoomModeUpdate,
@@ -48,6 +49,25 @@ def _room_response(db: Session, room: MusicSession) -> RoomResponse:
         )
         for membership, user in list_room_members(db, room.id)
     ]
+    latest_run = (
+        db.query(PlaylistRun)
+        .filter(PlaylistRun.session_id == room.id)
+        .order_by(PlaylistRun.created_at.desc(), PlaylistRun.id.desc())
+        .first()
+    )
+    generation = (
+        RoomGenerationResponse(
+            run_id=latest_run.id,
+            status=latest_run.status,
+            stage=latest_run.progress_stage,
+            progress_percent=latest_run.progress_percent,
+            error_message=latest_run.error_message,
+            playlist_url=latest_run.spotify_playlist_url,
+            updated_at=latest_run.updated_at,
+        )
+        if latest_run is not None
+        else None
+    )
     return RoomResponse(
         id=room.id,
         code=room.code,
@@ -58,6 +78,7 @@ def _room_response(db: Session, room: MusicSession) -> RoomResponse:
         created_at=room.created_at,
         expires_at=room.expires_at,
         members=members,
+        generation=generation,
     )
 
 

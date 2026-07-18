@@ -275,6 +275,12 @@ class PlaylistRun(Base):
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    progress_stage: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="starting", server_default="starting"
+    )
+    progress_percent: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     spotify_playlist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     spotify_playlist_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     # Métricas agregadas da execução (PB-16). Calculadas na conclusão do run a
