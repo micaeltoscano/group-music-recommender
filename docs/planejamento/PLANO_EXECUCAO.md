@@ -1434,18 +1434,24 @@ Atualizar esta seção ao encerrar cada sessão.
   forma independente: reprodutor QA intocado `tests/test_s3_integration_qa.py` → 5 passed;
   sondagem adversarial `tests/test_s3_vibe_scoring_qa.py` → 6 passed; suíte completa **217 passed /
   6 skipped / 0 failed**. Defeito fechado.
-- **Onde parou:** ciclo integrado aprovado na parte automatizável; resta só a demo e2e real.
-- **Próxima ação exata:** conduzir a demonstração e2e **real** (`CT-S3-INT-01`) com conta Spotify
-  Premium (criar playlist variando a ocasião) e então emitir `SPRINT 3 CONCLUÍDA — INCREMENTO
-  VALIDADO`. Requer credenciais/contas autorizadas (Development Mode, ≤5 usuários).
+- **Onde parou:** ciclo integrado aprovado na parte automatizável; resta só a demo e2e real. Sessão
+  interrompida por limite de requisições da API (retomar depois). Intenção do time: seguir para a
+  Sprint 4 na próxima sessão.
+- **Próxima ação exata (na retomada, nesta ordem):**
+  1. Conduzir a demonstração e2e **real** (`CT-S3-INT-01`) com conta Spotify Premium (criar playlist
+     variando a ocasião) e emitir `SPRINT 3 CONCLUÍDA — INCREMENTO VALIDADO`. Requer credenciais/
+     contas autorizadas (Development Mode, ≤5 usuários).
+  2. Resolver a **dívida processual** antes de abrir a Sprint 4: assinar as validações integradas
+     pendentes das Sprints 1 e 2 (`CT-S1-INT-*`, `CT-S2-INT-*` + regressão) — nunca executadas.
+     Só então a Sprint 4 (PB-03, PB-18, PB-19, PB-20) pode iniciar.
 - **Comando/teste para retomada:**
   ```bash
   cd backend
   APP_ENV=test .venv/bin/pytest tests/test_s3_integration_qa.py tests/test_s3_vibe_scoring_qa.py -q
   APP_ENV=test .venv/bin/pytest -q   # regressão completa
   ```
-- **Bloqueios:** nenhum de código. Encerramento formal do incremento aguarda a demonstração e2e real
-  `CT-S3-INT-01` (ambiente/contas Spotify).
+- **Bloqueios:** nenhum de código. (a) Encerramento formal da Sprint 3 aguarda a demo e2e real
+  `CT-S3-INT-01`; (b) abertura da Sprint 4 aguarda as validações integradas das Sprints 1–3.
 
 ## 16. Checklist de encerramento de sessão
 
