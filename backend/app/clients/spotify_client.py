@@ -250,7 +250,15 @@ async def create_playlist(
     description: str = "",
     public: bool = False,
 ) -> dict:
-    """Cria uma nova playlist para o usuário no Spotify."""
+    """Cria uma nova playlist para o usuário dono do `access_token`.
+
+    Usa `POST /me/playlists` (não `/users/{id}/playlists`): o Spotify passou a
+    recusar o endpoint com id explícito na URL com 403 Forbidden para apps mais
+    novos, mesmo com o usuário autorizado e o token válido. `/me/playlists`
+    sempre cria a playlist para o dono do token autenticado, que é o
+    comportamento desejado aqui (`user_spotify_id` é mantido no parâmetro só
+    para compatibilidade da assinatura e não é mais usado na chamada).
+    """
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
@@ -262,7 +270,7 @@ async def create_playlist(
     }
     async with AsyncClient() as client:
         response = await client.post(
-            f"{SPOTIFY_API_BASE}/users/{user_spotify_id}/playlists",
+            f"{SPOTIFY_API_BASE}/me/playlists",
             headers=headers,
             json=payload,
         )
@@ -277,10 +285,16 @@ async def add_items_to_playlist(
     playlist_id: str,
     uris: list[str],
 ) -> dict:
-    """Adiciona itens a uma playlist existente."""
+    """Adiciona itens a uma playlist existente.
+
+    Usa `POST /playlists/{id}/items` (não `/tracks`): o Spotify passou a
+    recusar `/tracks` com 403 Forbidden para apps novos/em Development Mode —
+    confirmado empiricamente (mesmo token/escopo/playlist, só a rota muda o
+    resultado de 403 para 201). `/items` é o substituto atual.
+    """
     if not uris:
         return {}
-        
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
@@ -290,7 +304,7 @@ async def add_items_to_playlist(
     }
     async with AsyncClient() as client:
         response = await client.post(
-            f"{SPOTIFY_API_BASE}/playlists/{playlist_id}/tracks",
+            f"{SPOTIFY_API_BASE}/playlists/{playlist_id}/items",
             headers=headers,
             json=payload,
         )
