@@ -1636,9 +1636,15 @@ as validações integradas pendentes das Sprints 1–4.
 
 #### PB-24 — Balanceamento entre subgrupos
 
-- **Status:** AGUARDANDO-QA — balanceamento determinístico e opt-in aplicado depois de rejeição e
-  justiça; limita a participação de cada cluster no prefixo final quando existem alternativas
-  seguras, preserva scores/conjunto ranqueado e usa melhor esforço quando o pool é insuficiente.
+- **Status:** VALIDADO (QA 2026-07-18) — CT-PB24-01..06 verificados independentemente. Teto por
+  cluster respeitado com alternativas; **saída é permutação exata da entrada** (não perde/duplica);
+  **veto fora do prefixo não é puxado para dentro** (verificação reforçada da fronteira do
+  best-effort); flag off preserva a ordem nos 3 modos; None/single/insufficient → ordem preservada;
+  share fora de [0,5;1] e size negativo → ValueError; determinismo. Sondagem QA
+  `backend/tests/test_pb24_subgroup_balance_qa.py` (14 casos) + Dev (14) verdes; suíte completa 379
+  passed / 6 skipped / 0 failed. Migração `0016` reversível. Sem defeitos; uma observação de clareza
+  registrada (best-effort conta veto pré-existente como representante, sem impacto funcional).
+  Relatório: [`docs/relatorios-testes/PB-24.md`](../relatorios-testes/PB-24.md).
 - **Objetivo:** alternar representantes dos subgrupos preservando consenso e justiça.
 - **Dependências:** PB-12, PB-16, PB-22 e PB-23 — todas `VALIDADO`.
 - **Critérios de aceitação:**

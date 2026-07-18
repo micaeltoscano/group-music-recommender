@@ -1557,34 +1557,34 @@ PB-12, PB-16, PB-22 e PB-23 validados; agrupamento `clustered`; flags controláv
 - **Tipo:** unitário/motor · **Prioridade:** Alta · **Resultado esperado:** no prefixo alvo, nenhum
   cluster excede `SUBGROUP_MAX_SHARE` quando o pool seguro oferece representantes suficientes;
   subgrupos são intercalados deterministicamente. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB24-02 — Melhor esforço quando faltam representantes
 - **Tipo:** unitário/limites · **Prioridade:** Alta · **Resultado esperado:** seleção mantém tamanho e
   conjunto de candidatas sem falhar; só ultrapassa o limite quando não existem alternativas seguras.
-  · **Automatizável:** Sim · **Status:** Não executado
+  · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB24-03 — Rejeição e justiça preservadas
 - **Tipo:** unitário/regressão · **Prioridade:** Alta · **Resultado esperado:** balanceamento ocorre
   depois de `evaluate_candidate_fairness`/`elevate_least_represented`, não promove candidatas com veto
   e não altera scores nem o conjunto já selecionado pela justiça. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB24-04 — Funcionalidade opcional e configurável
 - **Tipo:** configuração/regressão · **Prioridade:** Alta · **Resultado esperado:** flag falsa por
   padrão; desligada, preserva exatamente os três modos existentes; ligada, respeita o limite entre
-  0,5 e 1 configurado. · **Automatizável:** Sim · **Status:** Não executado
+  0,5 e 1 configurado. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB24-05 — Aplicação persistida e explicada
 - **Tipo:** integração/API · **Prioridade:** Alta · **Resultado esperado:** quando a ordem é alterada,
   o run persiste `subgroup_balancing_applied=true` e a explicação agregada informa o balanceamento;
   quando não aplicado, a explicação não aparece. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado (QA 2026-07-18)
 
 ##### CT-PB24-06 — Estados sem subgrupos, entradas inválidas e determinismo
 - **Tipo:** unitário/robustez · **Prioridade:** Média · **Resultado esperado:** clustering ausente,
   insuficiente ou único mantém a ordem; tamanho/limite inválidos são rejeitados; mesma entrada produz
-  mesma saída e metadados. · **Automatizável:** Sim · **Status:** Não executado
+  mesma saída e metadados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18)
 
 ---
 
