@@ -1355,26 +1355,26 @@ feedback; logout/remoção como fluxo transversal de privacidade.
 #### Casos de integração
 ##### CT-S4-INT-01 — Last.fm melhora o contexto sem quebrar o fluxo
 - **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** tags enriquecem o scoring;
-  falha do Last.fm cai na cascata. · **Automatizável:** Parcialmente · **Status:** Não executado
+  falha do Last.fm cai na cascata. · **Automatizável:** Parcialmente · **Status:** Aprovado (QA 2026-07-18) — geração conclui com Last.fm mockado (cache `source=lastfm_track_tags`, conf. 0.95) e também quando o Last.fm falha (cascata para gêneros/consenso)
 
 ##### CT-S4-INT-02 — Sequenciador aplicado à playlist real
 - **Tipo:** e2e · **Prioridade:** Média · **Resultado esperado:** ordem final coerente na playlist
-  criada. · **Automatizável:** Não · **Status:** Não executado
+  criada. · **Automatizável:** Não · **Status:** Pendente (diferido) — demonstração e2e real com conta Spotify; lógica validada no PB-19 (unit/integração mockada)
 
 ##### CT-S4-INT-03 — Feedback associado à execução real
 - **Tipo:** integração · **Prioridade:** Média · **Resultado esperado:** feedback persistido e vinculado
-  corretamente. · **Automatizável:** Sim · **Status:** Não executado
+  corretamente. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18) — após geração real, feedback por faixa e geral persistidos e vinculados ao run/usuário corretos
 
 #### Casos de regressão
 ##### CT-S4-INT-04 — Regressão completa das Sprints 1–3
 - **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** fluxo principal e motor continuam
-  aprovados. · **Automatizável:** Sim · **Status:** Não executado
+  aprovados. · **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18) — suíte completa 292 passed / 6 skipped / 0 failed
 
 #### Casos de falha
 ##### CT-S4-INT-05 — Logout durante fluxo ativo
 - **Tipo:** segurança/recuperação · **Prioridade:** Alta · **Cenário:** usuário faz logout no meio do
   uso. · **Resultado esperado:** sessão invalidada; ações seguintes negadas; sem estado inconsistente. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado (QA 2026-07-18) — logout remove a sessão; result/me/feedback com o mesmo token → 401; nada persiste
 
 #### Verificações de segurança
 Logout invalida sessão; remoção não expõe terceiros; nenhum segredo em logs/testes.
@@ -1393,7 +1393,12 @@ completa verde; documentação e roteiro de demo prontos.
 `pytest` completo; varredura de segredos; README/roteiro; capturas do fluxo; cache/feedback persistidos.
 
 #### Resultado da Sprint
-Pendente.
+**EM VALIDAÇÃO — e2e real diferida (QA 2026-07-18).** PBs individuais (PB-03/18/19/20) VALIDADOS; a
+parte automatizável do ciclo integrado passou: CT-S4-INT-01 (Last.fm + cascata), INT-03 (feedback no
+run real), INT-04 (regressão 292 passed / 6 skipped / 0 failed) e INT-05 (logout mid-flow) Aprovados.
+**CT-S4-INT-02** (sequenciador na playlist real) fica diferido por exigir conta Spotify. Assinatura
+`SPRINT 4 CONCLUÍDA` só após a demo e2e real. Relatório:
+[`docs/relatorios-testes/SPRINT-04-INTEGRADO.md`](../relatorios-testes/SPRINT-04-INTEGRADO.md).
 
 ---
 
