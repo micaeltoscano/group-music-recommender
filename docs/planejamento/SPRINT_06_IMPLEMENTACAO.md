@@ -1,5 +1,11 @@
 # Sprint 6 — Estabilização e evolução contextual
 
+> **Finalidade deste arquivo:** handoff técnico para a pessoa responsável pela documentação e pelo
+> planejamento oficial do projeto. Ele registra o que foi implementado, por que cada mudança ocorreu,
+> quais decisões foram tomadas, como verificar o comportamento e o que ainda não está resolvido.
+> As marcações `CONCLUÍDO TECNICAMENTE` e `AGUARDANDO-QA` são evidências do implementador, não
+> aprovação independente nem autorização para reescrever o histórico das Sprints 1–5.
+
 ## 1. Registro da exceção processual
 
 Em 2026-07-18, o proprietário do projeto autorizou explicitamente o Agente Implementador a executar
@@ -24,13 +30,17 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 
 ## 3. Escopo e ordem
 
-| Ordem | Item | Objetivo | Estado do implementador |
-|---:|---|---|---|
-| 1 | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
-| 2 | PB-26 | Pool contextual híbrido | CORREÇÃO CONCLUÍDA TECNICAMENTE |
-| 3 | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
-| 4 | PB-28 | Conformidade visual do Login/Landing | CONCLUÍDO TECNICAMENTE |
-| 5 | PB-29 | Estado compartilhado e privado do Vibe Check | CONCLUÍDO TECNICAMENTE |
+| Ordem | Classificação | Item | Objetivo | Estado do implementador |
+|---:|---|---|---|---|
+| 1 | Evolução | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
+| 2 | Evolução | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
+| 3 | Evolução | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
+| 4 | Evolução | PB-28 | Conformidade visual do Login/Landing | CONCLUÍDO TECNICAMENTE |
+| 5 | Evolução | PB-29 | Estado compartilhado e privado do Vibe Check | CONCLUÍDO TECNICAMENTE |
+| 6 | Compatibilidade | Sprint 6 | Preservar payloads históricos de criação/edição de sala | CONCLUÍDO TECNICAMENTE |
+| 7 | Correção | PB-26 | Fazer tags específicas e metadados próprios afetarem o contexto | AGUARDANDO-QA |
+| 8 | Correção | PB-16/PB-21 | Retorno ao lobby, tela de resultado e Descoberta visível | AGUARDANDO-QA |
+| 9 | Correção | PB-26/PB-16 | Priorizar intenção explícita e explicar âncoras habituais | AGUARDANDO-QA |
 
 ## 4. Restrições transversais
 
@@ -163,9 +173,12 @@ ausência/pulo continuará neutro para o motor.
 
 ## 10. Validação técnica integrada da Sprint
 
-- Backend completo: `395 passed, 6 skipped, 12 warnings` em `12.87s`. Os seis casos pulados já são
-  marcados como exploratórios/dependentes de ambiente; os avisos são de APIs depreciadas em testes
-  históricos e não representam falha funcional.
+- Estado final após evoluções e correções: `405 passed, 6 skipped, 12 warnings` em `12.72s`. Os seis
+  casos pulados já são marcados como exploratórios/dependentes de ambiente; os avisos são de APIs
+  depreciadas em testes históricos e não representam falha funcional.
+- O checkpoint de `395 passed` citado durante a implementação corresponde ao término inicial dos
+  PBs 25–29. Os totais `400`, `402` e `405` das seções seguintes mostram a adição progressiva das
+  regressões; não são resultados contraditórios.
 - Frontend: `npm run build` concluído, 46 módulos transformados e bundle de produção emitido.
 - Banco: cadeia Alembic linear, com um único head em `0018_pb29_vibe_status`.
 - Compatibilidade: a primeira execução integral revelou contratos históricos que exigem payload
@@ -178,12 +191,21 @@ ausência/pulo continuará neutro para o motor.
 
 ## 11. Commits
 
-- PB-25 — `5d38e83 feat(PB-25): tornar matching Spotify resiliente`.
-- PB-26 — `53c59f3 feat(PB-26): adicionar pool contextual hibrido`.
-- PB-27 — `5504680 feat(PB-27): compartilhar progresso da geracao`.
-- PB-28 — `c57179c feat(PB-28): alinhar login ao design`.
-- PB-29 — `46df4a9 feat(PB-29): compartilhar status do vibe check`.
-- Compatibilidade integrada — registrada no commit final deste documento.
+| Ordem | Commit | Conteúdo |
+|---:|---|---|
+| 1 | `5d38e83 feat(PB-25): tornar matching Spotify resiliente` | Reuso de ID/URI e interrupção em 429 |
+| 2 | `53c59f3 feat(PB-26): adicionar pool contextual hibrido` | Last.fm por tag/similar e composição com Tops |
+| 3 | `5504680 feat(PB-27): compartilhar progresso da geracao` | Progresso persistido e tela comum para a sala |
+| 4 | `c57179c feat(PB-28): alinhar login ao design` | Reconstrução visual do Login/Landing |
+| 5 | `46df4a9 feat(PB-29): compartilhar status do vibe check` | Estados pending/answered/skipped e privacidade |
+| 6 | `4513a8c fix(sprint-6): preservar contratos de sala` | Compatibilidade dos payloads históricos |
+| 7 | `cfcec7f fix(PB-26): corrigir aderencia ao contexto` | Tags específicas, enriquecimento e energia |
+| 8 | `52527ec fix(PB-16): corrigir resultado e retorno ao lobby` | Resultado, métrica de descoberta e retorno |
+| 9 | `06eef11 docs(sprint-06): registrar correcoes de lobby e resultado` | Registro documental da correção anterior |
+| 10 | `1af62fe fix(PB-26): priorizar intencao explicita no ranking` | Peso de contexto, oferta específica e explicação |
+| 11 | `13af508 docs(sprint-06): registrar prioridade do contexto` | Registro documental do ajuste de ranking |
+
+O commit que concluir este handoff deve ser lido como atualização documental, sem mudança de código.
 
 ## 12. Correção de regressão do PB-26 — aderência ao contexto específico
 
@@ -312,11 +334,12 @@ no PB-21.
 
 ### Caso reproduzido
 
-Para `festa punk bem pesadona`, o LLM interpretou energia alta e a tag `punk`, mas a última execução
-concluída selecionou 21 âncoras do Top e apenas seis faixas Last.fm em 27. Quatro descobertas eram
-punk; duas passaram apenas por sinais amplos de energia/rock. A sala tinha um único participante e
-`subgroup_balancing_applied=false`, portanto a diluição não foi causada pelo balanceamento entre
-membros.
+Para `festa punk bem pesadona`, o LLM interpretou energia alta e a tag `punk`. Uma execução selecionou
+21 âncoras do Top e apenas seis faixas Last.fm em 27; quatro descobertas eram punk e duas passaram por
+sinais amplos de energia/rock. Uma execução posterior chegou a 14 descobertas em 29 faixas, mas ainda
+incluiu Tops incompatíveis com o pedido, como ANAVITÓRIA. A sala tinha um único participante e
+`subgroup_balancing_applied=false`; portanto, a diluição não foi causada pelo balanceamento entre
+membros, e sim pela composição fixa com Tops e pelo peso insuficiente do contexto.
 
 ### Causa e decisão de produto
 
@@ -326,9 +349,9 @@ membros.
   quatro candidatas diretas antes do ranking.
 - No modo Descoberta, contexto representava 10% do score coletivo. A afinidade com um Top pessoal
   podia superar uma faixa nova muito mais aderente à descrição.
-- O Top continua útil como âncora de familiaridade, mas passa a ser critério secundário: primeiro vem
-  a aderência à intenção explícita; entre opções aderentes, afinidade, justiça, veto e diversidade
-  continuam decidindo.
+- O Top continua útil como âncora de familiaridade. O contexto passa a ter peso maior no ranking,
+  especialmente dentro de cada origem, enquanto afinidade, justiça, veto e diversidade continuam
+  decidindo. Isso melhora a ordem, mas não transforma a descrição em filtro obrigatório.
 
 ### Correções implementadas
 
@@ -363,3 +386,213 @@ membros.
 - `backend/app/services/result_service.py`
 - `backend/tests/test_pb16_resultado_qa.py`
 - `backend/tests/test_pb26_contextual_pool.py`
+
+### Limite deliberadamente não removido
+
+O compositor híbrido ainda busca 50% de contexto e preserva pelo menos 40% de âncoras dos Tops quando
+há material das duas origens. Portanto, aumentar o peso para 30% e ampliar a oferta específica reduz
+o problema, mas não garante que todas as âncoras pessoais obedeçam literalmente à descrição. Se o
+produto quiser uma garantia como “nenhuma MPB em uma solicitação estritamente punk”, isso deve virar
+uma nova decisão planejada: piso mínimo de aderência também para Tops, participação de âncoras dinâmica
+ou um modo de contexto estrito. Esta Sprint não introduziu filtro rígido para evitar falha de geração
+quando Last.fm não fornece pelo menos 20 faixas válidas.
+
+## 15. Guia de incorporação na documentação oficial
+
+### 15.1. Como classificar estas mudanças
+
+Este documento não decide em qual Sprint oficial cada alteração deve aparecer. A recomendação para
+quem mantém o planejamento é separar **evolução funcional** de **correção descoberta por uso real**:
+
+| Bloco | Classificação sugerida | Rastreabilidade recomendada |
+|---|---|---|
+| PB-25 a PB-29 | Histórias da Sprint 6 | Manter os números e critérios descritos nas seções 5–9 |
+| Compatibilidade de sala | Correção transversal da Sprint 6 | Associar a PB-27/PB-29 sem alterar contratos históricos |
+| Primeira correção contextual | Correção do PB-26 | Referenciar a evidência `festa punk rock pesada` |
+| Resultado e retorno ao lobby | Correção de PB-16 com ativação do PB-21 | Registrar como dívida encontrada na Sprint 6 |
+| Novo peso de contexto | Ajuste de produto do PB-26 | Registrar a mudança de 10% para 30% e seu limite residual |
+
+Se a equipe optar por mover uma correção para outra Sprint, deve manter uma referência cruzada para
+este arquivo e para o commit original. Não se recomenda reescrever os critérios ou status históricos
+das Sprints anteriores, nem declarar `VALIDADO` sem a atuação do responsável por QA.
+
+### 15.2. Fluxo funcional resultante
+
+1. O host cria a sala e continua sendo o único autorizado a editar ocasião, descrição e modo ou
+   iniciar uma geração.
+2. Cada membro entra na sala e responde, pula ou edita apenas o próprio Vibe Check. O lobby mostra
+   somente `pending`, `answered` ou `skipped` e os totais agregados.
+3. Ao gerar, todos os membros passam a observar a mesma execução e os mesmos estágios pelo polling;
+   somente o host vê a ação de iniciar/repetir.
+4. O Ollama recebe somente ocasião e descrição e produz contexto estruturado. Tops, respostas
+   individuais, tokens e clusters nunca entram nesse prompt. Falha ou resposta inválida ativa o
+   fallback determinístico.
+5. Snapshots Spotify já armazenados formam as âncoras pessoais. Candidatas nativas reutilizam ID/URI
+   e não fazem Search novamente. O cache de Top 50 `medium_term` por sete dias é uma dependência
+   anterior preservada pela Sprint 6; por isso uma geração não pede novamente os Tops ainda válidos.
+6. Quando Last.fm está configurado, tags contextuais e similares ampliam o pool. Cada faixa externa
+   é enriquecida com metadados próprios; não herda gênero da semente.
+7. O motor puro calcula afinidade, consenso, Vibe Check, contexto, novidade, diversidade, veto e
+   justiça. No modo Descoberta, contexto vale 30% do score coletivo, mas a composição ainda preserva
+   uma parcela de Tops.
+8. Apenas candidatas externas passam por matching textual no Spotify. Um 429 interrompe o lote e
+   devolve falha recuperável, em vez de transformar o restante em falsos descartes.
+9. O sequenciador aplica limite de duas faixas por artista, seleciona de 20 a 30 faixas, organiza o
+   fluxo e cria uma playlist privada na conta Spotify do host.
+10. Todos os membros chegam ao mesmo resultado. O retorno ao lobby ignora somente o redirecionamento
+    da execução que o usuário acabou de deixar; uma execução futura continua abrindo automaticamente.
+
+### 15.3. Contratos HTTP relevantes
+
+Todos os endpoints abaixo exigem autenticação. Rotas de sala também verificam associação do usuário à
+sala quando aplicável.
+
+| Endpoint | Mudança ou semântica após a Sprint 6 |
+|---|---|
+| `GET /rooms/consensus-modes` | Lista modos habilitados; `Descoberta` só aparece com a feature flag ativa |
+| `GET /rooms/{code}` | Inclui `generation`, `members[].vibe_status` e `vibe_summary` para polling coletivo |
+| `POST /rooms` | Mantém o payload histórico, excluindo os metadados novos por compatibilidade |
+| `PUT /rooms/{code}/context` | Host-only; mantém o payload histórico por compatibilidade |
+| `PUT /rooms/{code}/mode` | Host-only; rejeita modos desabilitados e mantém o payload histórico |
+| `POST /rooms/{code}/generate` | Host-only; inicia execução assíncrona e responde `202` |
+| `GET /rooms/{code}/vibe-check` | Retorna perguntas, status e somente a resposta do próprio usuário |
+| `POST /rooms/{code}/vibe-check` | Faz upsert de uma resposta `answered` |
+| `POST /rooms/{code}/vibe-check/skip` | Registra `skipped` com valores privados nulos |
+| `GET /rooms/{code}/result` | Acrescenta `discovery_percentage` e explicações agregadas de familiaridade |
+
+O objeto agregado `generation` contém `run_id`, `status`, `stage`, `progress_percent`, erro sanitizado,
+URL da playlist e data de atualização. O resumo do Vibe Check contém apenas `total`, `pending`,
+`answered` e `skipped`. Nenhum desses contratos expõe os valores individuais dos demais membros.
+
+### 15.4. Persistência e migrações
+
+- `0017_pb27_generation_progress` adiciona `playlist_runs.progress_stage` e
+  `playlist_runs.progress_percent`, ambos não nulos e retrocompatíveis.
+- `0018_pb29_vibe_status` adiciona `vibe_check_answers.status` com default histórico `answered` e
+  torna `energy`, `valence` e `popularity` anuláveis para representar `skipped` sem inventar valores.
+- A cadeia final permanece linear e o head é `0018_pb29_vibe_status`.
+- Pool contextual, correções de ranking, nova métrica de descoberta e explicações do resultado são
+  derivados de dados existentes; não exigiram novas tabelas ou colunas.
+- Resultados antigos não são reordenados. A explicação de familiaridade pode ser acrescentada durante
+  a leitura porque é calculada pela origem já persistida das faixas.
+
+### 15.5. Semântica das métricas do resultado
+
+| Métrica/tela | Origem real | Observação para documentação |
+|---|---|---|
+| Satisfação do grupo | `compatibility_score` | Percentual de faixas com dois ou mais contribuidores; em sala de uma pessoa tende a 0 por definição |
+| Representação mínima | Menor percentual em `representation` | Mede presença individual, não aprovação emocional |
+| Descobertas | `discovery_percentage` | Percentual final de faixas com proveniência persistida `lastfm:` |
+| Justiça do grupo | `fairness_score` | Índice de Jain sobre a distribuição de contribuições |
+| Repertório habitual | `100 - discovery_percentage` | Tops usados como âncoras pessoais; não significa que toda âncora atende literalmente à descrição |
+
+O protótipo visual mostrava “rejeições evitadas”, mas o sistema não persiste um número auditável com
+essa semântica. A implementação não fabricou essa métrica: o quarto cartão usa justiça real. A barra
+de navegação de estados e o painel “Tweaks” vistos no protótipo são ferramentas de desenvolvimento e
+não foram incluídos na interface do produto.
+
+### 15.6. Configuração e dependências operacionais
+
+| Variável/componente | Default versionado | Papel |
+|---|---|---|
+| `DISCOVERY_MODE_ENABLED` | `false` | Habilita o terceiro modo no contrato e no lobby |
+| `LASTFM_API_KEY` | ausente | Habilita descoberta e enriquecimento; sem chave, mantém fallback nos Tops |
+| `LASTFM_TIMEOUT_SECONDS` | `5` | Limite de espera por consulta Last.fm |
+| `LASTFM_CACHE_TTL_DAYS` | `30` | Reutilização do enriquecimento contextual |
+| `CONTEXTUAL_POOL_SHARE` | `0.50` | Participação-alvo de contexto, limitada a 60% |
+| `CONTEXTUAL_POOL_TAG_COUNT` | `3` | Quantidade máxima de tags consultadas |
+| `CONTEXTUAL_POOL_SEED_COUNT` | `5` | Quantidade de Tops usados como sementes de similares |
+| `CONTEXTUAL_POOL_TRACKS_PER_SOURCE` | `4` | Oferta genérica; a primeira tag específica pode usar até `8` |
+| `CONTEXTUAL_POOL_MAX_CANDIDATES` | `32` | Teto de candidatas externas por execução |
+| `OLLAMA_MODEL` | `llama3.1:8b` | Modelo local que interpreta o texto do host |
+
+No ambiente local usado na validação, o `.env` ignorado pelo Git possui a flag Descoberta ativa e as
+credenciais necessárias, sem que seus valores sejam documentados ou versionados. O default do
+repositório continua seguro e opt-in.
+
+A integração Last.fm utilizada aqui é somente leitura e usa uma chave da aplicação, sem OAuth por
+integrante. Os métodos relevantes são descoberta por tag/similaridade e enriquecimento por tags de
+faixa/artista; a chave nunca entra nos contratos de API nem nos testes.
+
+O `docker-compose.yml` contém `db`, `backend` e `frontend`; **não contém um container Ollama**. O
+backend Docker usa `http://host.docker.internal:11434` para alcançar um Ollama iniciado no host. Se
+o serviço local não estiver ativo ou o modelo não estiver instalado, o fallback assume. Portanto,
+não se deve documentar que “Ollama sobe com o Docker” enquanto o Compose não for alterado.
+
+O ngrok foi usado apenas como apoio operacional para OAuth durante desenvolvimento. O endereço é
+efêmero e não faz parte do código: ao trocar o túnel, é necessário alinhar a URL cadastrada no Spotify
+com `SPOTIFY_REDIRECT_URI`, `FRONTEND_URL`, CORS e a base usada pelo frontend. Nenhuma URL temporária,
+chave, secret ou token deve entrar na documentação versionada.
+
+### 15.7. Arquivos alterados por área
+
+Entre a base da Sprint 5 (`dff685d`) e o código funcional final (`1af62fe`), foram alterados 31
+arquivos, com aproximadamente 3 mil linhas adicionadas. Os pontos principais são:
+
+- Integrações: `backend/app/clients/lastfm_client.py` e o cliente Spotify já existente consumido pelo
+  serviço de geração.
+- Motor puro: `backend/app/engine/candidates.py`, `context_scoring.py`, `contextual_pool.py` e
+  `weights.py`.
+- Serviços: `context_enrichment_service.py`, `contextual_pool_service.py`, `generation_service.py` e
+  `result_service.py`.
+- API/contratos: `backend/app/api/rooms.py`, `api/vibe_check.py`, `schemas/rooms.py` e
+  `schemas/vibe_check.py`.
+- Banco: `backend/app/db/models.py` e migrações `0017`/`0018`.
+- Frontend: `Login.jsx`, `Room.jsx`, `VibeCheck.jsx`, `Result.jsx`, `apiClient.js` e `index.css`.
+- Regressões novas: testes dos PBs 25, 26, 27 e 29, além de resultado/navegação da Sprint 6.
+
+### 15.8. Decisões que devem permanecer explícitas
+
+- Host-only é regra de autorização no backend, não apenas ocultação visual.
+- Resposta de Vibe Check é privada; somente estado e totais são coletivos.
+- O LLM interpreta texto, mas não escolhe a playlist e não recebe perfis musicais.
+- Last.fm amplia o pool; Spotify continua sendo a fonte de disponibilidade e o destino da playlist.
+- Falha de Last.fm ou Ollama é aberta; falha/rate limit do Spotify pode impedir aquela execução.
+- A descrição influencia o ranking, mas atualmente não é filtro absoluto.
+- Descoberta, faixa-ponte e balanceamento de subgrupos possuem flags independentes. No ambiente
+  validado, apenas Descoberta foi explicitamente ativada.
+- A playlist é privada e criada na conta do host.
+- Nenhum resultado existente é recalculado quando pesos ou regras mudam; é preciso gerar novamente.
+
+### 15.9. Limitações e possíveis histórias futuras
+
+1. **Aderência estrita opcional:** decidir se Tops fora do contexto devem ser excluídos quando há uma
+   tag específica, com fallback seguro se não restarem 20 faixas.
+2. **Participação dinâmica de Tops:** substituir o piso fixo por uma proporção baseada na confiança e
+   na quantidade de candidatas aderentes.
+3. **Métrica de rejeições evitadas:** só exibir após definir e persistir uma fórmula auditável e
+   compatível com privacidade.
+4. **Ollama no Compose:** adicionar serviço, volume do modelo e healthcheck se a equipe quiser startup
+   realmente conjunto; hoje ele é dependência do host.
+5. **Teste E2E real:** validar OAuth, Last.fm, Ollama e criação Spotify em ambiente controlado, pois os
+   testes automatizados usam mocks deliberadamente.
+6. **Calibração com múltiplos membros:** repetir contextos específicos com perfis divergentes para
+   avaliar representação, veto e aderência simultaneamente.
+7. **Satisfação de sala individual:** decidir se `compatibility_score=0` para uma pessoa deve continuar
+   sendo exibido como satisfação, já que a fórmula mede gosto compartilhado.
+
+### 15.10. Roteiro de validação para QA ou documentação
+
+1. Aplicar migrações e confirmar head `0018_pb29_vibe_status`.
+2. Subir banco, backend e frontend; confirmar healthchecks.
+3. Ativar Descoberta, autenticar e confirmar os três modos no lobby.
+4. Entrar com host e membro; verificar que somente o host edita contexto/modo e gera.
+5. Responder e pular Vibe Check em usuários diferentes; confirmar badges sem expor respostas.
+6. Gerar e observar ambos os navegadores mudarem para progresso e resultado.
+7. Conferir retorno ao lobby sem redirecionamento imediato ao resultado antigo.
+8. Repetir `festa punk bem pesadona`; inspecionar contexto estruturado, proveniência e seleção. Não
+   assumir aderência absoluta enquanto o piso de Tops existir.
+9. Desligar Last.fm e Ollama separadamente; confirmar fallbacks e ausência de vazamento de dados.
+10. Simular Spotify 429; confirmar interrupção do lote, erro recuperável e sala novamente aberta.
+11. Executar `(cd backend && DISCOVERY_MODE_ENABLED=false APP_ENV=test .venv/bin/pytest -o addopts='' -q)`.
+12. Executar `(cd frontend && npm run build)` e `git diff --check` na raiz.
+
+### 15.11. Estado de entrega deste handoff
+
+- Branch: `feat/SPRINT06/stabilization`.
+- Base anterior: `dff685d`, término integrado da Sprint 5.
+- Último commit funcional da Sprint 6: `1af62fe`.
+- Não houve push ou merge como parte da implementação registrada neste documento.
+- Estado final verificado antes deste handoff: `405 passed`, `6 skipped`, zero falhas; frontend com 46
+  módulos transformados; Docker local com banco, backend e frontend saudáveis.
+- Correções das seções 12–14 permanecem `AGUARDANDO-QA` até validação independente.
