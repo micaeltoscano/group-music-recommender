@@ -1,175 +1,237 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { api } from './apiClient'
+
+function EqualizerMark() {
+  return (
+    <span className="equalizer-mark" aria-hidden="true">
+      <i />
+      <i />
+      <i />
+      <i />
+    </span>
+  )
+}
+
+function phaseAt(index, total) {
+  if (index === 0) return 'AQUECIMENTO'
+  if (index === Math.max(1, Math.floor(total * 0.34))) return 'PICO'
+  if (index === Math.max(2, Math.floor(total * 0.72))) return 'FECHAMENTO'
+  return null
+}
+
+function gradeFor(score) {
+  if (score >= 95) return 'A+'
+  if (score >= 85) return 'A−'
+  if (score >= 75) return 'B+'
+  if (score >= 65) return 'B'
+  return 'C'
+}
 
 export function Result() {
   const { code } = useParams()
   const navigate = useNavigate()
-
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
-  const [whyOpen, setWhyOpen] = useState(false)
+  const [whyOpen, setWhyOpen] = useState(true)
 
   useEffect(() => {
+    let active = true
+
     async function load() {
-      const res = await api.getRoomResult(code)
-      if (res.ok) {
-        setResult(res.body)
-      } else {
-        setError(res.body?.detail || 'Erro ao carregar resultados.')
+      try {
+        const response = await api.getRoomResult(code)
+        if (!active) return
+        if (response.ok) {
+          setResult(response.body)
+          setError(null)
+        } else {
+          setError(response.body?.detail || 'Erro ao carregar resultados.')
+        }
+      } catch {
+        if (active) setError('Conexão perdida ao carregar o resultado.')
+      } finally {
+        if (active) setLoading(false)
       }
-      setLoading(false)
     }
+
     load()
+    return () => { active = false }
   }, [code])
 
-  if (loading) {
-    return (
-      <div className="layout-content">
-        <div style={{ padding: '72px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          Carregando resultado...
-        </div>
-      </div>
-    )
+  const minimumRepresentation = useMemo(() => {
+    if (!result?.representation?.length) return 0
+    return Math.min(...result.representation.map((member) => member.percentage))
+  }, [result])
+
+  const returnToRoom = () => {
+    navigate(`/rooms/${code}`, {
+      state: { stayForRunId: String(result?.run_id || '') },
+    })
   }
 
-  if (error) {
+  if (loading || error) {
     return (
-      <div className="layout-content">
-        <div style={{ padding: '72px 24px', textAlign: 'center', color: 'var(--error)' }}>
-          {error}
-          <div style={{ marginTop: '20px' }}>
-            <button className="btn" onClick={() => navigate(`/rooms/${code}`)}>VOLTAR PARA SALA</button>
+      <main className="result-shell">
+        <header className="product-header">
+          <div className="product-brand">
+            <EqualizerMark />
+            <div>
+              <strong>VIBE CHECK</strong>
+              <span>NEGOCIE. VOTE. CURTA JUNTO.</span>
+            </div>
           </div>
-        </div>
-      </div>
+          <span className="room-header-code pill">SALA <strong>{code?.toUpperCase()}</strong></span>
+          <span className="eyebrow">VC-01 · GROUP PLAYLIST SYSTEM</span>
+        </header>
+        <section className={`result-state ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
+          <p>{error || 'CARREGANDO RESULTADO…'}</p>
+          {error && <button className="btn btn-outline" onClick={returnToRoom}>VOLTAR PARA SALA</button>}
+        </section>
+      </main>
     )
   }
 
   const {
-    playlist_url,
-    compatibility_score,
-    fairness_score,
+    playlist_url: playlistUrl,
+    compatibility_score: compatibilityScore,
+    fairness_score: fairnessScore,
+    discovery_percentage: discoveryPercentage,
     representation,
     tracks,
-    why_items
+    why_items: whyItems,
   } = result
-
-  // Cores dinâmicas para a representação
-  const colors = ['#a8ae6d', '#ff5b1c', '#f2ecdb', '#5b5945', '#8b8871']
-
+  const grade = gradeFor(fairnessScore)
   const metrics = [
-    { label: 'COMPATIBILIDADE', value: `${compatibility_score}%`, note: 'Alinhamento geral' },
-    { label: 'FAIRNESS SCORE', value: `${fairness_score}%`, note: 'Justiça na distribuição' },
-    { label: 'TAMANHO', value: `${tracks.length}`, note: 'Faixas selecionadas' },
-    { label: 'MEMBROS', value: `${representation.length}`, note: 'Representados na playlist' }
+    { label: 'SATISFAÇÃO DO GRUPO', value: `${compatibilityScore}%`, note: 'afinidade compartilhada' },
+    { label: 'REPRESENTAÇÃO MÍNIMA', value: `${minimumRepresentation}%`, note: 'ninguém fica invisível' },
+    { label: 'DESCOBERTAS', value: `${discoveryPercentage}%`, note: 'faixas fora dos Tops' },
+    { label: 'JUSTIÇA DO GRUPO', value: `${fairnessScore}%`, note: 'distribuição equilibrada' },
   ]
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 24px 120px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '28px', marginBottom: '32px' }}>
-        <div style={{ width: '96px', height: '96px', background: 'var(--accent)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"Chakra Petch", sans-serif', fontWeight: 700, fontSize: '44px', color: 'var(--bg-main)' }}>A−</div>
-        <div>
-          <div style={{ fontFamily: '"Chakra Petch", sans-serif', fontWeight: 700, fontSize: '34px', lineHeight: 1 }}>ÓTIMO VIBE!</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>Grupo alinhado e satisfeito. Playlist criada no Spotify.</div>
-        </div>
-        <div style={{ flex: 1 }}></div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-outline" onClick={() => navigate(`/rooms/${code}/feedback`)}>DAR FEEDBACK</button>
-          {playlist_url && (
-            <a href={playlist_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-              <button className="btn" style={{ fontWeight: 600 }}>ABRIR NO SPOTIFY ▶</button>
-            </a>
-          )}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
-        {metrics.map((mt, i) => (
-          <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '22px' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.16em', color: 'var(--text-subtle)' }}>{mt.label}</div>
-            <div style={{ fontFamily: '"Chakra Petch", sans-serif', fontWeight: 700, fontSize: '34px', color: 'var(--text-main)', marginTop: '8px' }}>{mt.value}</div>
-            <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px' }}>{mt.note}</div>
+    <main className="result-shell">
+      <header className="product-header">
+        <div className="product-brand">
+          <EqualizerMark />
+          <div>
+            <strong>VIBE CHECK</strong>
+            <span>NEGOCIE. VOTE. CURTA JUNTO.</span>
           </div>
-        ))}
-      </div>
+        </div>
+        <span className="room-header-code pill">
+          <i aria-hidden="true" /> SALA <strong>{code?.toUpperCase()}</strong>
+        </span>
+        <span className="eyebrow">VC-01 · GROUP PLAYLIST SYSTEM</span>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px', alignItems: 'start' }}>
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '18px', padding: '28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div style={{ fontSize: '11px', letterSpacing: '0.18em', color: 'var(--text-subtle)' }}>PLAYLIST FINAL · {tracks.length} FAIXAS</div>
-            <div style={{ fontSize: '11px', color: 'var(--success)' }}>SEQUENCIADA POR FLUXO</div>
+      <section className="result-content">
+        <button className="result-back-link" type="button" onClick={returnToRoom}>
+          ← VOLTAR PARA SALA
+        </button>
+
+        <div className="result-hero">
+          <div className="result-grade" aria-label={`Nota de justiça ${grade}`}>{grade}</div>
+          <div className="result-hero-copy">
+            <h1>ÓTIMO VIBE!</h1>
+            <p>Grupo alinhado. Playlist criada no Spotify com contexto e justiça.</p>
           </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {tracks.map((t, idx) => {
-              const cBy = t.contributed_by.length > 0 ? t.contributed_by.join(', ') : 'Grupo';
-              return (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 14px', background: 'var(--bg-main)', borderRadius: '10px' }}>
-                  <span style={{ width: '22px', fontSize: '12px', color: 'var(--text-subtle)' }}>{idx + 1}</span>
-                  <div style={{ width: '38px', height: '38px', flex: 'none', borderRadius: '8px', background: 'repeating-linear-gradient(45deg, var(--accent) 0px, var(--accent) 4px, var(--bg-main) 4px, var(--bg-main) 8px)', opacity: 0.9 }}></div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '13.5px', fontWeight: 500 }}>{t.name}</span>
-                      {t.is_bridge && <span className="bridge-track-pill">FAIXA-PONTE</span>}
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-subtle)', marginTop: '2px' }}>{t.artist} · via {cBy}</div>
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '180px', textAlign: 'right', lineHeight: 1.4 }}>{t.reason}</div>
-                </div>
-              )
-            })}
+          <div className="result-actions">
+            <button
+              className="result-feedback-button"
+              type="button"
+              onClick={() => navigate(`/rooms/${code}/feedback`)}
+            >
+              DAR FEEDBACK
+            </button>
+            {playlistUrl && (
+              <a className="result-spotify-button" href={playlistUrl} target="_blank" rel="noreferrer">
+                ABRIR NO SPOTIFY <span aria-hidden="true">▶</span>
+              </a>
+            )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '18px', padding: '28px' }}>
-            <div style={{ fontSize: '11px', letterSpacing: '0.18em', color: 'var(--text-subtle)', marginBottom: '20px' }}>REPRESENTAÇÃO POR MEMBRO</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {representation.map((r, i) => {
-                const color = colors[i % colors.length];
+        <div className="result-metrics" aria-label="Métricas da playlist">
+          {metrics.map((metric) => (
+            <article className="result-metric-card" key={metric.label}>
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+              <small>{metric.note}</small>
+            </article>
+          ))}
+        </div>
+
+        <div className="result-grid">
+          <section className="result-playlist-card">
+            <div className="result-section-heading">
+              <span>PLAYLIST FINAL · {tracks.length} FAIXAS</span>
+              <strong>SEQUENCIADA POR FLUXO</strong>
+            </div>
+            <div className="result-track-list">
+              {tracks.map((track, index) => {
+                const phase = phaseAt(index, tracks.length)
+                const contributors = track.contributed_by.length > 0
+                  ? track.contributed_by.join(', ')
+                  : 'descoberta contextual'
                 return (
-                  <div key={r.user_id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
-                      <span>{r.display_name}</span>
-                      <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{r.percentage}%</span>
-                    </div>
-                    <div style={{ height: '7px', background: 'var(--bg-main)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: color, borderRadius: '99px', width: `${r.percentage}%` }}></div>
-                    </div>
+                  <div key={`${track.track_id || track.name}-${index}`}>
+                    {phase && <p className="result-phase">▙ {phase}</p>}
+                    <article className="result-track">
+                      <span className="result-track-number">{String(index + 1).padStart(2, '0')}</span>
+                      <span className={`result-track-art art-${(index % 4) + 1}`} aria-hidden="true" />
+                      <div className="result-track-copy">
+                        <strong>{track.name}</strong>
+                        <span>{track.artist} · via {contributors}</span>
+                      </div>
+                      <p>{track.reason}</p>
+                      <span className={track.is_bridge ? 'result-track-tag bridge' : 'result-track-tag'}>
+                        {track.is_bridge ? 'PONTE' : 'SELECIONADA'}
+                      </span>
+                    </article>
                   </div>
                 )
               })}
             </div>
-          </div>
-          
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '18px', padding: '28px' }}>
-            <button 
-              onClick={() => setWhyOpen(!whyOpen)} 
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', background: 'transparent', border: 'none', color: 'var(--text-main)', fontFamily: '"IBM Plex Mono", monospace', fontSize: '13px', fontWeight: 600, cursor: 'pointer', padding: 0, letterSpacing: '0.04em' }}
-            >
-              <span>POR QUE ESSA PLAYLIST É JUSTA?</span>
-              <span style={{ color: 'var(--accent)' }}>{whyOpen ? '−' : '+'}</span>
-            </button>
-            
-            {whyOpen && why_items && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
-                {why_items.map((w, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '10px', fontSize: '12px', lineHeight: 1.6, color: 'var(--text-main)' }}>
-                    <span style={{ color: 'var(--success)' }}>✓</span><span>{w}</span>
+          </section>
+
+          <aside className="result-sidebar">
+            <section className="result-side-card">
+              <h2>REPRESENTAÇÃO POR MEMBRO</h2>
+              <div className="result-representation-list">
+                {representation.map((member, index) => (
+                  <div className={`result-representation member-color-${(index % 5) + 1}`} key={member.user_id}>
+                    <div>
+                      <span>{member.display_name || 'Integrante'}</span>
+                      <strong>{member.percentage}%</strong>
+                    </div>
+                    <span className="result-representation-track">
+                      <i style={{ width: `${member.percentage}%` }} />
+                    </span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-          
-          <button className="btn-outline" style={{ padding: '16px', borderStyle: 'dashed', fontSize: '12px' }} onClick={() => navigate(`/rooms/${code}`)}>
-            ↻ VOLTAR PARA SALA
-          </button>
+            </section>
+
+            <section className="result-side-card result-why-card">
+              <button type="button" onClick={() => setWhyOpen((open) => !open)} aria-expanded={whyOpen}>
+                <span>POR QUE ESSA PLAYLIST É JUSTA?</span>
+                <strong>{whyOpen ? '−' : '+'}</strong>
+              </button>
+              {whyOpen && (
+                <ul>
+                  {(whyItems || []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              )}
+            </section>
+
+            <button className="result-return-button" type="button" onClick={returnToRoom}>
+              <span aria-hidden="true">↻</span> VOLTAR PARA SALA
+            </button>
+          </aside>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }

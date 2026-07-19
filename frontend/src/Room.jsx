@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from './apiClient'
 
 const POLLING_INTERVAL_MS = 4000
@@ -47,6 +47,7 @@ function formatRemaining(expiresAt, now) {
 export default function Room({ user }) {
   const { code } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [room, setRoom] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -123,10 +124,12 @@ export default function Room({ user }) {
       : 'RESPONDER VIBE CHECK'
 
   useEffect(() => {
-    if (generation?.status === 'completed') {
+    const stayedRunId = location.state?.stayForRunId
+    const isExplicitReturn = stayedRunId && String(generation?.run_id) === String(stayedRunId)
+    if (generation?.status === 'completed' && !isExplicitReturn) {
       navigate(`/rooms/${code}/result`, { replace: true })
     }
-  }, [code, generation?.status, navigate])
+  }, [code, generation?.run_id, generation?.status, location.state, navigate])
 
   useEffect(() => {
     if (!room || contextDirty) return

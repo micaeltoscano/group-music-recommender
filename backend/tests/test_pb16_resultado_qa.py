@@ -109,12 +109,12 @@ def mock_db_with_run(session_factory):
         # Criar algumas faixas
         tracks = [
             PlaylistRunTrack(
-                run_id=run.id, candidate_id=uuid.uuid4().hex, name="Track A", artist="Art A", 
+                run_id=run.id, candidate_id="lastfm:discovery-a", name="Track A", artist="Art A",
                 status="matched", match_confidence=1.0, spotify_uri="uri:a", 
                 source=json.dumps([u1.id, u2.id])
             ),
             PlaylistRunTrack(
-                run_id=run.id, candidate_id=uuid.uuid4().hex, name="Track B", artist="Art B", 
+                run_id=run.id, candidate_id="lastfm:discovery-b", name="Track B", artist="Art B",
                 status="matched", match_confidence=1.0, spotify_uri="uri:b", 
                 source=json.dumps([u2.id, u3.id])
             ),
@@ -156,6 +156,7 @@ def test_pb16_link_playlist_and_metrics(client: TestClient, session_factory, moc
     # CT-PB16-02
     assert "compatibility_score" in data
     assert "fairness_score" in data
+    assert data["discovery_percentage"] == 50
     assert isinstance(data["compatibility_score"], int)
     
     # CT-PB16-03

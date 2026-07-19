@@ -82,6 +82,21 @@ def _reason_for(num_contributors: int, *, is_bridge: bool = False) -> str:
     return "Incluída para reforçar o consenso do grupo."
 
 
+def _discovery_percentage(tracks: list[PlaylistRunTrack]) -> int:
+    """Percentual final de faixas vindas do pool contextual da Last.fm.
+
+    O prefixo faz parte do identificador persistido por
+    ``contextual_pool_service`` e permite derivar a métrica sem nova coluna ou
+    chamada externa.
+    """
+    if not tracks:
+        return 0
+    discovered = sum(
+        1 for track in tracks if str(track.candidate_id).startswith("lastfm:")
+    )
+    return round(100 * discovered / len(tracks))
+
+
 def compute_metrics(member_ids: list[int], tracks: list[PlaylistRunTrack]) -> dict:
     """Calcula métricas e explicações a partir das faixas correspondidas.
 
@@ -270,6 +285,7 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
         playlist_url=run.spotify_playlist_url,
         compatibility_score=compatibility_score,
         fairness_score=fairness_score,
+        discovery_percentage=_discovery_percentage(tracks),
         representation=representation,
         tracks=track_results,
         why_items=why_items,

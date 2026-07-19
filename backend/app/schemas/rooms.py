@@ -180,6 +180,7 @@ class RoomResultResponse(BaseModel):
     playlist_url: str | None
     compatibility_score: int
     fairness_score: int
+    discovery_percentage: int
     representation: list[MemberRepresentation]
     tracks: list[TrackResultResponse]
     why_items: list[str]
