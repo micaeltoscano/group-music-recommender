@@ -27,7 +27,7 @@ intactos para preservar a linha de base acadêmica e a rastreabilidade.
 | Ordem | Item | Objetivo | Estado do implementador |
 |---:|---|---|---|
 | 1 | PB-25 | Resiliência e eficiência da integração Spotify | CONCLUÍDO TECNICAMENTE |
-| 2 | PB-26 | Pool contextual híbrido | CONCLUÍDO TECNICAMENTE |
+| 2 | PB-26 | Pool contextual híbrido | CORREÇÃO CONCLUÍDA TECNICAMENTE |
 | 3 | PB-27 | Acompanhamento compartilhado da geração | CONCLUÍDO TECNICAMENTE |
 | 4 | PB-28 | Conformidade visual do Login/Landing | CONCLUÍDO TECNICAMENTE |
 | 5 | PB-29 | Estado compartilhado e privado do Vibe Check | CONCLUÍDO TECNICAMENTE |
@@ -184,3 +184,61 @@ ausência/pulo continuará neutro para o motor.
 - PB-28 — `c57179c feat(PB-28): alinhar login ao design`.
 - PB-29 — `46df4a9 feat(PB-29): compartilhar status do vibe check`.
 - Compatibilidade integrada — registrada no commit final deste documento.
+
+## 12. Correção de regressão do PB-26 — aderência ao contexto específico
+
+### Estado
+
+`AGUARDANDO-QA` — correção implementada e verificada tecnicamente pelo Agente Implementador em
+2026-07-18; a aprovação independente não foi presumida.
+
+### Evidência de uso real
+
+Uma geração com a descrição `um clima de festa punk bem rockzao pesado` comprovou que o Ollama
+produziu `tags_positive=[punk, rock]`, energia alta e restrição a faixas suaves, mas o PB-26
+converteu a busca somente para `party`, `dance` e `pop`. Das 30 faixas finais, 13 vieram dos Tops,
+15 de similares e apenas duas da busca por tag. Similares herdavam tags da semente e rótulos amplos
+como `rock` faziam faixas lentas parecerem energéticas.
+
+### Causa e correção
+
+- Tags positivas específicas agora ocupam primeiro o limite de busca. O caso reproduzido gera
+  `punk`, `rock`, `party`; contextos genéricos continuam produzindo `party`, `dance`, `pop`.
+- Candidatas `lastfm_similar` não herdam mais gêneros ou tags da semente. Cada uma passa pela cascata
+  faixa → artista → gêneros → consenso do PB-18 antes do ranking.
+- A tag usada em `tag.getTopTracks` permanece como evidência confiável mesmo se o enriquecimento
+  adicional falhar; falhas externas continuam abertas e não interrompem a geração.
+- O scoring separa rótulos completos de tokens: `post-punk` não satisfaz literalmente `punk` e
+  `dream pop` não vira automaticamente música de festa.
+- Energia alta passou a exigir sinais mais fortes (`hard rock`, `metal`, `hardcore`, `energetic`,
+  `punk` isolado); `slow`, `dreamy`, `ethereal`, `melancholy`, `ballad` e equivalentes indicam baixa
+  energia. Restrições como `suave` agora penalizam todo o tema calmo.
+- Tops continuam como âncoras pessoais e o peso de contexto dos modos não foi aumentado; vetos,
+  justiça, representação e fallbacks anteriores foram preservados.
+
+### Evidências técnicas
+
+- Regressão determinística: `The Pretender` obteve `context_score=0.7156`, `Go Slowly` obteve
+  `0.1206` e `Evangeline` obteve `0.0` para o contexto reproduzido; o limiar contextual é `0.60`.
+- Testes focados de PB-17/PB-18/PB-26: `41 passed / 0 failed`.
+- Integração relacionada de LLM, Last.fm, matching e geração: `68 passed / 0 failed`.
+- Suíte backend completa: `400 passed / 6 skipped / 0 failed`, com 12 avisos históricos.
+- `compileall`, `pip check` e `git diff --check` aprovados; `ruff` não está instalado na venv.
+- Migrações e contratos de API: nenhuma alteração.
+
+### Arquivos da correção
+
+- `backend/app/services/contextual_pool_service.py`
+- `backend/app/services/context_enrichment_service.py`
+- `backend/app/services/generation_service.py`
+- `backend/app/engine/context_scoring.py`
+- `backend/tests/test_pb26_contextual_pool.py`
+- `backend/tests/test_pb26_context_regression.py`
+
+### Risco residual e validação esperada
+
+O primeiro uso de uma faixa similar pode realizar consultas adicionais ao Last.fm; execuções
+seguintes reutilizam `track_context_cache`, e falhas mantêm o fallback. O QA deve repetir o caso
+`festa punk rock pesada`, confirmar a prioridade `punk/rock`, a ausência de herança em similares e
+a regressão completa. Uma playlist já criada não é recalculada retroativamente; é necessário gerar
+uma nova execução.

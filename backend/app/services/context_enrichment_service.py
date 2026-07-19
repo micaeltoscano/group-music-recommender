@@ -167,9 +167,20 @@ def _persist(
 
 def _apply(candidate: CandidateTrack, result: ContextEnrichment) -> CandidateTrack:
     raw_data = dict(candidate.raw_data)
-    raw_data["context_tags"] = list(result.selected_tags)
-    raw_data["context_source"] = result.source
-    raw_data["context_confidence"] = result.confidence
+    trusted_discovery_tags = (
+        _normalise(raw_data.get("discovery_tags", []))
+        if candidate.origin == "lastfm_tag"
+        else ()
+    )
+    raw_data["context_tags"] = list(
+        dict.fromkeys((*trusted_discovery_tags, *result.selected_tags))
+    )
+    if trusted_discovery_tags and result.source == CONSENSUS_SOURCE:
+        raw_data["context_source"] = "lastfm_tag"
+        raw_data["context_confidence"] = 0.9
+    else:
+        raw_data["context_source"] = result.source
+        raw_data["context_confidence"] = result.confidence
     return CandidateTrack(
         candidate.id,
         raw_data,

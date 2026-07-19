@@ -44,7 +44,6 @@ _THEME_KEYWORDS: Mapping[str, frozenset[str]] = {
             "house",
             "pagode",
             "party",
-            "pop",
             "reggaeton",
             "samba",
             "sertanejo",
@@ -72,12 +71,19 @@ _THEME_KEYWORDS: Mapping[str, frozenset[str]] = {
             "acoustic",
             "acustica",
             "ambient",
+            "ballad",
             "calma",
             "calmo",
             "chill",
+            "dream",
+            "dream pop",
+            "dreamy",
+            "ethereal",
             "meditation",
             "relax",
             "sleep",
+            "slow",
+            "soft",
             "suave",
             "tranquila",
             "tranquilo",
@@ -94,7 +100,17 @@ _THEME_KEYWORDS: Mapping[str, frozenset[str]] = {
             "romantico",
         }
     ),
-    "sad": frozenset({"melancolica", "melancolico", "sad", "triste", "tristeza"}),
+    "sad": frozenset(
+        {
+            "melancolica",
+            "melancolico",
+            "melancholic",
+            "melancholy",
+            "sad",
+            "triste",
+            "tristeza",
+        }
+    ),
     "heavy": frozenset(
         {"agitada", "agitado", "hardcore", "metal", "pesada", "pesado", "punk", "rock"}
     ),
@@ -105,26 +121,31 @@ _HIGH_ENERGY = frozenset(
     {
         "animada",
         "animado",
+        "aggressive",
         "dance",
         "danca",
         "edm",
         "electronic",
         "eletronica",
+        "energetic",
         "forro",
         "funk",
         "hardcore",
+        "hard rock",
+        "heavy",
+        "heavy rock",
         "hip hop",
         "house",
         "metal",
         "pagode",
-        "pop",
-        "punk",
+        "party",
+        "punk rock",
         "reggaeton",
-        "rock",
         "samba",
         "sertanejo",
         "techno",
         "trap",
+        "upbeat",
     }
 )
 _LOW_ENERGY = frozenset(
@@ -132,6 +153,7 @@ _LOW_ENERGY = frozenset(
         "acoustic",
         "acustica",
         "ambient",
+        "ballad",
         "calma",
         "calmo",
         "chill",
@@ -140,29 +162,24 @@ _LOW_ENERGY = frozenset(
         "instrumental",
         "jazz",
         "lofi",
+        "melancholic",
+        "melancholy",
         "meditation",
         "piano",
+        "sad",
         "sleep",
+        "slow",
+        "soft",
         "suave",
+        "dream",
+        "dream pop",
+        "dreamy",
+        "ethereal",
     }
 )
 _TARGET_ENERGY = {"baixa": 0.2, "media": 0.55, "alta": 0.9}
 _STOP_WORDS = frozenset(
     {"a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "o", "os", "para", "pra"}
-)
-_ABSTRACT_NEGATIVE_TERMS = frozenset(
-    {
-        "agitada",
-        "agitado",
-        "explicita",
-        "explicito",
-        "melancolica",
-        "melancolico",
-        "pesada",
-        "pesado",
-        "triste",
-        "tristeza",
-    }
 )
 
 
@@ -210,12 +227,35 @@ def _candidate_terms(candidate: CandidateTrack) -> set[str]:
     return _terms(values)
 
 
+def _candidate_labels(candidate: CandidateTrack) -> set[str]:
+    """Rótulos musicais completos, sem promover pedaços de subgêneros.
+
+    A camada temática ainda pode entender relações amplas, mas a cobertura de
+    uma tag explícita exige o rótulo observado. Assim ``post-punk`` não vira
+    prova literal de ``punk`` e ``dream pop`` não vira ``pop`` por acidente.
+    """
+
+    raw = candidate.raw_data
+    return {
+        normalised
+        for value in (
+            *(raw.get("genres") or []),
+            *(raw.get("context_tags") or []),
+        )
+        if (normalised := _normalize(value))
+    }
+
+
 def _contains_any(candidate_terms: set[str], requested_terms: set[str]) -> bool:
     return bool(candidate_terms & requested_terms)
 
 
 def _candidate_energy(terms: set[str]) -> float:
     high = not _HIGH_ENERGY.isdisjoint(terms)
+    # ``post-punk`` e outros subgêneros são quebrados em tokens por
+    # ``_terms``. Punk isolado é um sinal de energia; post-punk, sozinho, não.
+    if "punk" in terms and "post punk" not in terms:
+        high = True
     low = not _LOW_ENERGY.isdisjoint(terms)
     if high and not low:
         return 0.9
@@ -234,14 +274,20 @@ def calculate_context_score(candidate: CandidateTrack, criteria: ContextCriteria
     """
 
     candidate_terms = _candidate_terms(candidate)
+    candidate_labels = _candidate_labels(candidate)
     candidate_themes = _themes(candidate_terms)
 
     positive_terms = _terms(
         (criteria.occasion, criteria.mood, *criteria.tags_positive)
     )
+    explicit_positive_tags = {
+        normalised
+        for tag in criteria.tags_positive
+        if (normalised := _normalize(tag))
+    }
     negative_terms = _terms((*criteria.tags_negative, *criteria.avoid))
     positive_themes = _themes(positive_terms)
-    negative_themes = _themes(negative_terms & _ABSTRACT_NEGATIVE_TERMS)
+    negative_themes = _themes(negative_terms)
 
     direct_positive = _contains_any(candidate_terms, positive_terms)
     if positive_themes:
@@ -251,8 +297,15 @@ def calculate_context_score(candidate: CandidateTrack, criteria: ContextCriteria
         alignment = 1.0
     else:
         alignment = 0.5
-    if direct_positive:
-        alignment = max(alignment, 0.9)
+    if explicit_positive_tags:
+        explicit_coverage = (
+            len(candidate_labels & explicit_positive_tags)
+            / len(explicit_positive_tags)
+        )
+        # Temas preservam sinônimos (festa -> dance), enquanto a cobertura
+        # explícita impede que um rótulo amplo como ``rock`` satisfaça sozinho
+        # um pedido mais específico como ``punk + rock``.
+        alignment = (alignment * 0.5) + (explicit_coverage * 0.5)
 
     target_energy = _TARGET_ENERGY.get(_normalize(criteria.energy), 0.55)
     energy_affinity = 1.0 - abs(_candidate_energy(candidate_terms) - target_energy)

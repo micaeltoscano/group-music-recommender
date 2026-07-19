@@ -26,6 +26,11 @@ _THEME_TERMS: dict[str, frozenset[str]] = {
     "romantic": frozenset({"amor", "date", "romance", "romantica"}),
     "workout": frozenset({"academia", "corrida", "treino", "workout"}),
 }
+_GENERIC_DISCOVERY_TAGS = frozenset(
+    tag
+    for theme_tags in _THEME_TAGS.values()
+    for tag in theme_tags
+)
 
 
 def _normalise(value: object) -> str:
@@ -45,22 +50,29 @@ def _candidate_identity(candidate: CandidateTrack) -> tuple[str, str]:
 
 
 def context_discovery_tags(criteria: ContextCriteria, *, limit: int = 3) -> tuple[str, ...]:
-    """Traduz o contexto livre em poucas tags estáveis aceitas pelo Last.fm."""
+    """Traduz o contexto em tags estáveis sem apagar a intenção específica.
+
+    Tags explícitas que não são apenas sinônimos genéricos da ocasião
+    (por exemplo ``punk``/``rock`` em uma festa) ocupam o limite primeiro. A
+    ocasião ainda completa a consulta com tags amplas quando houver espaço.
+    """
 
     requested = _normalise(
         " ".join((criteria.occasion, criteria.mood, *criteria.tags_positive))
     )
     terms = set(requested.split())
-    tags: list[str] = []
+    explicit_tags = [
+        normalised
+        for tag in criteria.tags_positive
+        if (normalised := _normalise(tag))
+    ]
+    tags: list[str] = [
+        tag for tag in explicit_tags if tag not in _GENERIC_DISCOVERY_TAGS
+    ]
     for theme, theme_terms in _THEME_TERMS.items():
         if terms & theme_terms:
             tags.extend(_THEME_TAGS[theme])
-    if not tags:
-        tags.extend(
-            _normalise(tag)
-            for tag in criteria.tags_positive
-            if _normalise(tag)
-        )
+    tags.extend(explicit_tags)
     if not tags and _normalise(criteria.occasion):
         tags.append(_normalise(criteria.occasion))
     return tuple(dict.fromkeys(tags))[:limit]
@@ -107,14 +119,18 @@ def _external_candidate(
     seed: CandidateTrack | None = None,
 ) -> CandidateTrack:
     digest = hashlib.sha256(f"{artist.casefold()}\0{name.casefold()}".encode()).hexdigest()[:24]
-    inherited_genres = list(seed.raw_data.get("genres") or []) if seed else []
+    # ``tag.getTopTracks`` comprova apenas a tag consultada. Já uma faixa
+    # similar não comprovou possuir os gêneros/tags da semente e precisa ser
+    # enriquecida com seus próprios metadados antes do ranking.
+    trusted_discovery_tags = tuple(dict.fromkeys(context_tags)) if origin == "lastfm_tag" else ()
     raw_data = {
         "name": name,
         "artists": [{"name": artist}],
-        "genres": sorted(set(inherited_genres) | set(context_tags)),
-        "context_tags": list(dict.fromkeys(context_tags)),
+        "genres": [],
+        "context_tags": list(trusted_discovery_tags),
+        "discovery_tags": list(trusted_discovery_tags),
         "context_source": origin,
-        "context_confidence": 0.9 if origin == "lastfm_tag" else 0.8,
+        "context_confidence": 0.9 if trusted_discovery_tags else 0.0,
         # Valor neutro, ligeiramente acima do limiar que historicamente significa
         # rejeição. Ausência no Top não equivale a veto explícito.
         "popularity": 60,
@@ -186,7 +202,6 @@ async def discover_context_candidates(
             )
         except Exception:  # noqa: BLE001 - descoberta nunca bloqueia geração.
             continue
-        seed_tags = tuple(seed.raw_data.get("context_tags") or ()) + tags
         for track in tracks:
             identity = _identity(track.name, track.artist)
             if identity in seen:
@@ -197,7 +212,7 @@ async def discover_context_candidates(
                     track.name,
                     track.artist,
                     origin="lastfm_similar",
-                    context_tags=seed_tags,
+                    context_tags=(),
                     source_user_ids=set(seed.source_user_ids),
                     seed=seed,
                 )

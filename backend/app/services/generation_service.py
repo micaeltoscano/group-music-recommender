@@ -677,6 +677,14 @@ async def execute_generation(
             candidates,
             context_criteria,
         )
+        if contextual_candidates:
+            # Descobertas por similaridade não herdam tags da semente. Cada
+            # faixa externa recebe seus próprios metadados antes de pontuar;
+            # falhas continuam caindo na cascata do PB-18.
+            contextual_candidates = await enrich_candidates_context(
+                db,
+                contextual_candidates,
+            )
         candidates.extend(contextual_candidates)
         update_generation_progress(db, run_id, "ranking")
         vibe_preferences = load_vibe_preferences(

@@ -22,6 +22,13 @@ PARTY = ContextCriteria(
     energy="alta",
     tags_positive=("dance", "party"),
 )
+PUNK_ROCK_PARTY = ContextCriteria(
+    occasion="Festa",
+    mood="bobo/animada",
+    energy="alta",
+    tags_positive=("punk", "rock"),
+    avoid=("demais suave",),
+)
 
 
 def _candidate(
@@ -61,6 +68,10 @@ def test_party_context_maps_to_stable_lastfm_tags():
     assert context_discovery_tags(PARTY) == ("party", "dance", "pop")
 
 
+def test_specific_genres_precede_generic_occasion_tags():
+    assert context_discovery_tags(PUNK_ROCK_PARTY) == ("punk", "rock", "party")
+
+
 def test_discovery_combines_tag_and_personal_similar_without_duplicates():
     anchors = [
         _candidate("anchor-1", name="Known", genres=("pop",), source={1}),
@@ -91,8 +102,14 @@ def test_discovery_combines_tag_and_personal_similar_without_duplicates():
     assert identities == {("Dance Floor", "DJ One"), ("New Similar", "Band Two")}
     assert {item.origin for item in discovered} == {"lastfm_tag", "lastfm_similar"}
     personal = next(item for item in discovered if item.origin == "lastfm_similar")
+    by_tag = next(item for item in discovered if item.origin == "lastfm_tag")
     assert personal.source_user_ids in ({1}, {2})
     assert personal.raw_data["discovery_seed"].startswith("anchor-")
+    assert personal.raw_data["genres"] == []
+    assert personal.raw_data["context_tags"] == []
+    assert personal.raw_data["discovery_tags"] == []
+    assert by_tag.raw_data["context_tags"] == ["party"]
+    assert by_tag.raw_data["discovery_tags"] == ["party"]
     assert tag_call.await_count == 3
     assert similar_call.await_count == 2
 
