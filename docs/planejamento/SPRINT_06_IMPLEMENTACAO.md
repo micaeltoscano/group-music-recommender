@@ -302,3 +302,64 @@ uma nova execução.
 O `.env` local recebeu `DISCOVERY_MODE_ENABLED=true` e `APP_ENV=production`. O arquivo permanece
 ignorado pelo Git. O default versionado continua `false`, preservando o rollout controlado definido
 no PB-21.
+
+## 14. Correção de intenção explícita — contexto antes do Top no modo Descoberta
+
+### Estado
+
+`AGUARDANDO-QA` — correção implementada e verificada tecnicamente pelo Agente Implementador em
+2026-07-18; uma playlist existente não é modificada retroativamente.
+
+### Caso reproduzido
+
+Para `festa punk bem pesadona`, o LLM interpretou energia alta e a tag `punk`, mas a última execução
+concluída selecionou 21 âncoras do Top e apenas seis faixas Last.fm em 27. Quatro descobertas eram
+punk; duas passaram apenas por sinais amplos de energia/rock. A sala tinha um único participante e
+`subgroup_balancing_applied=false`, portanto a diluição não foi causada pelo balanceamento entre
+membros.
+
+### Causa e decisão de produto
+
+- `punk`, `energética` e `animada` consumiam igualmente o limite de três consultas, embora as duas
+  últimas sejam descritores de energia, não gêneros específicos.
+- A consulta direta de cada tag trazia somente quatro músicas; logo, `punk` podia oferecer no máximo
+  quatro candidatas diretas antes do ranking.
+- No modo Descoberta, contexto representava 10% do score coletivo. A afinidade com um Top pessoal
+  podia superar uma faixa nova muito mais aderente à descrição.
+- O Top continua útil como âncora de familiaridade, mas passa a ser critério secundário: primeiro vem
+  a aderência à intenção explícita; entre opções aderentes, afinidade, justiça, veto e diversidade
+  continuam decidindo.
+
+### Correções implementadas
+
+- O motor separa tags musicais específicas de adjetivos de energia. O caso reproduzido consulta
+  `punk`, `party` e `dance`, em vez de `punk`, `energetica` e `animada`.
+- A primeira tag específica recebe até o dobro da oferta configurada (oito com o default atual), sem
+  aumentar consultas genéricas nem ultrapassar o teto de dez por chamada e 32 candidatas externas.
+- No modo Descoberta, o peso do contexto passou de 10% para 30%. Os demais componentes foram
+  rebalanceados mantendo soma 100%; rejeições e justiça continuam aplicados depois do score.
+- “Por que essa playlist é justa?” agora mostra o percentual real de faixas vindas do repertório
+  habitual e explica: elas são âncoras de familiaridade; a descrição prioriza o contexto, mas não
+  substitui integralmente os gostos dos participantes.
+- A explicação também é acrescentada ao consultar resultados antigos que ainda não a tenham no
+  snapshot persistido, usando a origem real das faixas e sem migração.
+
+### Evidências técnicas
+
+- Regressão do caso: uma candidata punk aderente supera um Top pessoal conhecido de MPB/acústico no
+  modo Descoberta.
+- A intenção `punk, energética, animada` produz uma tag específica (`punk`) e limites de consulta
+  `8, 4, 4` para `punk`, `party` e `dance`.
+- Testes focados de PB-16/PB-21/PB-26: `23 passed / 0 failed`.
+- Suíte backend completa: `405 passed / 6 skipped / 0 failed`, com 12 avisos históricos.
+- Frontend: bundle de produção aprovado, com 46 módulos transformados.
+- Nenhuma migração, segredo ou chamada externa foi adicionada aos testes.
+
+### Arquivos da correção
+
+- `backend/app/engine/context_scoring.py`
+- `backend/app/engine/weights.py`
+- `backend/app/services/contextual_pool_service.py`
+- `backend/app/services/result_service.py`
+- `backend/tests/test_pb16_resultado_qa.py`
+- `backend/tests/test_pb26_contextual_pool.py`
