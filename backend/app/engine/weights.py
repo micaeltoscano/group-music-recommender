@@ -64,11 +64,14 @@ CONSENSUS_MODES = {
             "novelty": 0.30,
         },
         "group": {
-            "average_score": 0.35,
-            "min_score": 0.25,
-            "coverage": 0.15,
-            "context": 0.10,
-            "diversity": 0.15,
+            # No modo Descoberta, a descrição é o critério principal. A
+            # afinidade pessoal decide entre opções aderentes, mas não deve
+            # promover um Top irrelevante acima do gênero pedido pelo host.
+            "average_score": 0.25,
+            "min_score": 0.15,
+            "coverage": 0.10,
+            "context": 0.30,
+            "diversity": 0.20,
         },
         # Rejeições fortes continuam derrubando a faixa, mesmo com novidade alta.
         "rejection_penalty": 0.75,

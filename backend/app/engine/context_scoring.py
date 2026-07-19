@@ -181,6 +181,28 @@ _TARGET_ENERGY = {"baixa": 0.2, "media": 0.55, "alta": 0.9}
 _STOP_WORDS = frozenset(
     {"a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "o", "os", "para", "pra"}
 )
+_GENERIC_INTENT_TAGS = frozenset(
+    {
+        "agitada",
+        "agitado",
+        "alegre",
+        "alta",
+        "animada",
+        "animado",
+        "energia",
+        "energetic",
+        "energetica",
+        "energetico",
+        "frenetica",
+        "frenetico",
+        "intensa",
+        "intenso",
+        "media",
+        "pesada",
+        "pesado",
+        "upbeat",
+    }
+)
 
 
 def _normalize(value: object) -> str:
@@ -244,6 +266,23 @@ def _candidate_labels(candidate: CandidateTrack) -> set[str]:
         )
         if (normalised := _normalize(value))
     }
+
+
+def specific_context_tags(criteria: ContextCriteria) -> tuple[str, ...]:
+    """Extrai gêneros/temas explícitos, removendo apenas adjetivos de energia.
+
+    O LLM pode devolver ``punk, energética, animada`` como tags positivas. Só
+    ``punk`` representa, nesse caso, uma intenção musical específica que deve
+    receber mais oferta e peso no ranking.
+    """
+    return tuple(
+        dict.fromkeys(
+            normalised
+            for tag in criteria.tags_positive
+            if (normalised := _normalize(tag))
+            and normalised not in _GENERIC_INTENT_TAGS
+        )
+    )
 
 
 def _contains_any(candidate_terms: set[str], requested_terms: set[str]) -> bool:

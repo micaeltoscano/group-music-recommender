@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 from app.clients.lastfm_client import LastFmTrack
 from app.engine.candidates import CandidateTrack
-from app.engine.context_scoring import ContextCriteria
+from app.engine.context_scoring import ContextCriteria, specific_context_tags
 from app.engine.contextual_pool import blend_contextual_candidates
 from app.engine.taste import UserTasteProfile
 from app.services.contextual_pool_service import (
@@ -28,6 +28,12 @@ PUNK_ROCK_PARTY = ContextCriteria(
     energy="alta",
     tags_positive=("punk", "rock"),
     avoid=("demais suave",),
+)
+PUNK_WITH_MOOD_TAGS = ContextCriteria(
+    occasion="Festa",
+    mood="frenética",
+    energy="alta",
+    tags_positive=("punk", "energética", "animada"),
 )
 
 
@@ -70,6 +76,29 @@ def test_party_context_maps_to_stable_lastfm_tags():
 
 def test_specific_genres_precede_generic_occasion_tags():
     assert context_discovery_tags(PUNK_ROCK_PARTY) == ("punk", "rock", "party")
+
+
+def test_energy_adjectives_do_not_consume_specific_tag_queries():
+    assert specific_context_tags(PUNK_WITH_MOOD_TAGS) == ("punk",)
+    assert context_discovery_tags(PUNK_WITH_MOOD_TAGS) == ("punk", "party", "dance")
+
+
+def test_specific_tag_receives_more_candidates_than_generic_queries():
+    anchor = _candidate("anchor", source={1})
+    with (
+        patch("app.services.contextual_pool_service.lastfm_client.is_configured", return_value=True),
+        patch(
+            "app.services.contextual_pool_service.lastfm_client.get_tag_top_tracks",
+            new=AsyncMock(return_value=[]),
+        ) as tag_call,
+        patch(
+            "app.services.contextual_pool_service.lastfm_client.get_similar_tracks",
+            new=AsyncMock(return_value=[]),
+        ),
+    ):
+        asyncio.run(discover_context_candidates([anchor], PUNK_WITH_MOOD_TAGS))
+
+    assert [call.kwargs["limit"] for call in tag_call.await_args_list] == [8, 4, 4]
 
 
 def test_discovery_combines_tag_and_personal_similar_without_duplicates():
@@ -208,3 +237,46 @@ def test_party_ranking_is_not_limited_to_sad_top50():
     first_thirty = ranked[:30]
     assert sum(item.origin.startswith("lastfm_") for item in first_thirty) == 15
     assert sum(item.origin == "spotify_top" for item in first_thirty) == 15
+
+
+def test_discovery_context_outweighs_irrelevant_personal_top():
+    profile = UserTasteProfile(
+        1,
+        {
+            "items": [
+                {
+                    "id": "familiar",
+                    "artists": [{"id": "artist-familiar"}],
+                }
+            ]
+        },
+        {
+            "items": [
+                {
+                    "id": "artist-familiar",
+                    "genres": ["mpb"],
+                }
+            ]
+        },
+    )
+    familiar_but_irrelevant = _candidate(
+        "familiar",
+        name="Balada conhecida",
+        genres=("mpb", "acoustic"),
+        source={1},
+    )
+    requested_punk = _candidate(
+        "requested-punk",
+        name="Faixa punk",
+        genres=("punk", "punk rock"),
+        origin="lastfm_tag",
+    )
+
+    ranked = _rank_candidates(
+        [familiar_but_irrelevant, requested_punk],
+        [profile],
+        "Descoberta",
+        PUNK_WITH_MOOD_TAGS,
+    )
+
+    assert [candidate.id for candidate in ranked] == ["requested-punk", "familiar"]

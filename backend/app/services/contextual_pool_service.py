@@ -10,7 +10,11 @@ from collections.abc import Iterable
 from app.clients import lastfm_client
 from app.config import settings
 from app.engine.candidates import CandidateTrack
-from app.engine.context_scoring import ContextCriteria, calculate_context_score
+from app.engine.context_scoring import (
+    ContextCriteria,
+    calculate_context_score,
+    specific_context_tags,
+)
 
 _THEME_TAGS: dict[str, tuple[str, ...]] = {
     "party": ("party", "dance", "pop"),
@@ -67,7 +71,9 @@ def context_discovery_tags(criteria: ContextCriteria, *, limit: int = 3) -> tupl
         if (normalised := _normalise(tag))
     ]
     tags: list[str] = [
-        tag for tag in explicit_tags if tag not in _GENERIC_DISCOVERY_TAGS
+        tag
+        for tag in specific_context_tags(criteria)
+        if tag not in _GENERIC_DISCOVERY_TAGS
     ]
     for theme, theme_terms in _THEME_TERMS.items():
         if terms & theme_terms:
@@ -159,11 +165,23 @@ async def discover_context_candidates(
     discovered: list[CandidateTrack] = []
     tags = context_discovery_tags(criteria, limit=settings.contextual_pool_tag_count)
 
+    specific_tags = {
+        tag
+        for tag in specific_context_tags(criteria)
+        if tag not in _GENERIC_DISCOVERY_TAGS
+    }
     for tag in tags:
+        # A intenção explícita é a consulta de maior valor. Com o default de
+        # quatro faixas por fonte, ``punk`` antes só podia oferecer quatro
+        # candidatas diretas; dobrar apenas essa consulta aumenta cobertura
+        # sem inflar as buscas genéricas nem o teto total do pool.
+        query_limit = settings.contextual_pool_tracks_per_source
+        if tag in specific_tags:
+            query_limit = min(query_limit * 2, 10)
         try:
             tracks = await lastfm_client.get_tag_top_tracks(
                 tag,
-                limit=settings.contextual_pool_tracks_per_source,
+                limit=query_limit,
             )
         except Exception:  # noqa: BLE001 - a fonte é opcional e falha aberta.
             continue

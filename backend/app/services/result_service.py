@@ -40,6 +40,15 @@ SUBGROUP_BALANCE_EXPLANATION = (
 )
 
 
+def _familiarity_explanation(tracks: list[PlaylistRunTrack]) -> str:
+    familiar = 100 - _discovery_percentage(tracks)
+    return (
+        f"{familiar}% das faixas vieram do repertório habitual do grupo. "
+        "Elas funcionam como âncoras de familiaridade: a descrição prioriza o contexto, "
+        "mas não substitui integralmente os gostos dos participantes."
+    )
+
+
 def _parse_source(raw: str | None) -> list[int]:
     """Interpreta o campo `source` (JSON com ids dos contribuintes). Tolera lixo."""
     if not raw:
@@ -142,6 +151,7 @@ def compute_metrics(member_ids: list[int], tracks: list[PlaylistRunTrack]) -> di
         cobertura,
         f"{compatibility_score}% das faixas agradam a mais de um integrante.",
         justica,
+        _familiarity_explanation(tracks),
         "Limite de 2 faixas por artista aplicado na seleção.",
     ]
     if any(track.is_bridge for track in tracks):
@@ -265,6 +275,9 @@ def build_room_result(db: Session, room: MusicSession, run: PlaylistRun) -> Room
 
     if room.mode == "Descoberta" and DISCOVERY_EXPLANATION not in why_items:
         why_items = [*why_items, DISCOVERY_EXPLANATION]
+    familiarity_explanation = _familiarity_explanation(tracks)
+    if not any("âncoras de familiaridade" in item for item in why_items):
+        why_items = [*why_items, familiarity_explanation]
     if (
         run.subgroup_balancing_applied
         and SUBGROUP_BALANCE_EXPLANATION not in why_items

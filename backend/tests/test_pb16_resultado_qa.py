@@ -157,6 +157,10 @@ def test_pb16_link_playlist_and_metrics(client: TestClient, session_factory, moc
     assert "compatibility_score" in data
     assert "fairness_score" in data
     assert data["discovery_percentage"] == 50
+    assert any(
+        item.startswith("50% das faixas vieram do repertório habitual")
+        for item in data["why_items"]
+    )
     assert isinstance(data["compatibility_score"], int)
     
     # CT-PB16-03
