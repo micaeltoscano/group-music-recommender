@@ -242,3 +242,63 @@ seguintes reutilizam `track_context_cache`, e falhas mantêm o fallback. O QA de
 `festa punk rock pesada`, confirmar a prioridade `punk/rock`, a ausência de herança em similares e
 a regressão completa. Uma playlist já criada não é recalculada retroativamente; é necessário gerar
 uma nova execução.
+
+## 13. Correções de lobby e resultado — retorno, Descoberta e aderência visual
+
+### Estado
+
+`AGUARDANDO-QA` — correções implementadas e verificadas tecnicamente pelo Agente Implementador em
+2026-07-18; este registro não altera os planejamentos históricos nem presume aprovação independente.
+
+### Problemas reproduzidos e causas
+
+- O botão de voltar do resultado navegava para a sala, mas o polling encontrava a última execução
+  concluída e redirecionava imediatamente para o resultado. A rota mudava duas vezes, dando a
+  impressão de que o botão não funcionava.
+- O modo Descoberta já existia sob feature flag, porém `DISCOVERY_MODE_ENABLED` não estava definido
+  no ambiente Docker local e o valor seguro padrão é `false`; por isso o contrato do lobby omitia o
+  terceiro modo.
+- A tela de resultado usava uma composição simplificada com estilos inline e não reproduzia a
+  hierarquia da referência de design: cabeçalho do produto, hero, métricas, playlist por fases,
+  representação lateral e explicabilidade.
+
+### Correções implementadas
+
+- O resultado envia para a sala o identificador da execução que o usuário escolheu deixar. A sala
+  ignora o redirecionamento apenas para essa execução concluída; uma geração futura, com outro
+  `run_id`, continua abrindo o novo resultado automaticamente.
+- O ambiente Docker local foi configurado com `DISCOVERY_MODE_ENABLED=true`, sem versionar segredos
+  ou remover o opt-in do produto. Em execução, o backend confirmou os modos `Democrático`,
+  `Festa Segura` e `Descoberta`.
+- A tela foi recomposta com os tokens existentes e classes responsivas, seguindo a referência oficial
+  sem incluir a barra de navegação e o painel de tweaks exclusivos do protótipo de desenvolvimento.
+- O cartão “Descobertas” usa dado real: percentual das faixas finais cujo identificador persistido tem
+  origem `lastfm:`. A métrica é derivada das faixas já salvas, sem migração e sem nova chamada externa.
+- Não foi exibido um contador fictício de “rejeições evitadas”, pois o pipeline atual não persiste uma
+  métrica auditável equivalente. O quarto cartão apresenta a justiça real já calculada pelo motor.
+
+### Evidências técnicas
+
+- Testes focados de resultado, Descoberta e regressões de interface: `11 passed / 0 failed`.
+- Suíte backend completa com a flag desligada para preservar o contrato histórico do MVP:
+  `402 passed / 6 skipped / 0 failed`, com 12 avisos históricos.
+- O comportamento com a flag ligada permanece coberto pelos testes do PB-21 e foi confirmado no
+  container: `discovery_mode_enabled=True` e três modos disponíveis.
+- Frontend: `npm run build` concluído, 46 módulos transformados e bundle de produção emitido.
+- `git diff --check` aprovado após a implementação; nenhuma migração de banco foi necessária.
+
+### Arquivos da correção
+
+- `frontend/src/Result.jsx`
+- `frontend/src/Room.jsx`
+- `frontend/src/index.css`
+- `backend/app/schemas/rooms.py`
+- `backend/app/services/result_service.py`
+- `backend/tests/test_pb16_resultado_qa.py`
+- `backend/tests/test_s6_result_ui_regressions.py`
+
+### Configuração local não versionada
+
+O `.env` local recebeu `DISCOVERY_MODE_ENABLED=true` e `APP_ENV=production`. O arquivo permanece
+ignorado pelo Git. O default versionado continua `false`, preservando o rollout controlado definido
+no PB-21.
