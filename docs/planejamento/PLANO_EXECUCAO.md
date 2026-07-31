@@ -1903,9 +1903,10 @@ limites que preservam contexto e justiça.
 
 #### PB-33 — Perfil ponderado e seleção limitada de candidatas
 
-- **Status:** REPROVADO — QA independente em 2026-07-31 aprovou CT-PB33-01/02/03/05/06 e reprovou
-  CT-PB33-04. `DEF-PB33-01` (Alta): biblioteca 500×50 resulta em peso agregado 112,5×22,5; o membro
-  maior conserva 5× mais voz. Evidência focada: `25 passed, 1 failed`. Relatório: `PB-33.md`.
+- **Status:** AGUARDANDO-QA — `DEF-PB33-01` corrigido com orçamento de voz normalizado para soma 1
+  por perfil, preservando separadamente o peso absoluto da preferência. Reprodutor e regressão
+  focada: `26 passed`; regressão completa: `457 passed, 6 skipped`, mantendo apenas as duas falhas
+  preexistentes fora da PB-33 (PB-02/PB-06).
 - **Objetivo:** diferenciar preferência forte de repertório ocasional antes do ranking coletivo.
 - **Dependências:** PB-32.
 - **Plano de implementação:** modelo puro de sinal ponderado; pesos default `1.00/0.85/0.65/0.45/0.35`;
@@ -2018,11 +2019,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** PB-33 `REPROVADO`; PB-34 permanece bloqueado.
-- **Último resultado concluído:** QA executou 26 testes focados: `25 passed, 1 failed`; CT-PB33-04
-  revelou peso agregado 5× maior para a biblioteca de 500 faixas.
-- **Onde parou:** `DEF-PB33-01` aberto; demais CTs aprovados.
-- **Próxima ação exata:** Dev normaliza a contribuição total por pessoa e reenvia PB-33 ao QA.
+- **PB em andamento:** nenhum; PB-33 `AGUARDANDO-QA` após correção do `DEF-PB33-01`.
+- **Último resultado concluído:** Dev normalizou a voz por perfil; `26 passed` focados e reprodutor
+  QA verde. Regressão completa: `457 passed, 6 skipped`, com falhas antigas PB-02/PB-06.
+- **Onde parou:** força absoluta e orçamento coletivo separados, prontos para revalidação.
+- **Próxima ação exata:** QA revalida somente PB-33; PB-34 continua no portão.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

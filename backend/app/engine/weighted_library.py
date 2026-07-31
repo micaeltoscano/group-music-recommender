@@ -79,7 +79,10 @@ class WeightedTasteProfile:
 @dataclass(frozen=True)
 class ContributorWeight:
     user_id: int
+    # Parcela do orçamento individual (a soma por pessoa é 1).
     weight: float
+    # Força absoluta da origem, preservada para explicação/afinidade.
+    preference_weight: float
 
 
 @dataclass(frozen=True)
@@ -212,8 +215,13 @@ def merge_weighted_candidates(
     profiles: Iterable[WeightedTasteProfile],
 ) -> tuple[WeightedCandidate, ...]:
     """Deduplica o pool coletivo preservando peso de cada contribuidor."""
+    ordered_profiles = sorted(profiles, key=lambda item: item.user_id)
     by_track: dict[str, dict[int, WeightedTrack]] = {}
-    for profile in sorted(profiles, key=lambda item: item.user_id):
+    profile_totals = {
+        profile.user_id: sum(track.weight for track in profile.tracks)
+        for profile in ordered_profiles
+    }
+    for profile in ordered_profiles:
         for track in profile.tracks:
             by_track.setdefault(track.spotify_track_id, {})[profile.user_id] = track
 
@@ -227,8 +235,15 @@ def merge_weighted_candidates(
             WeightedCandidate(
                 track=representative,
                 contributors=tuple(
-                    ContributorWeight(user_id, contributions[user_id].weight)
+                    ContributorWeight(
+                        user_id=user_id,
+                        weight=round(
+                            contributions[user_id].weight / profile_totals[user_id], 12
+                        ),
+                        preference_weight=contributions[user_id].weight,
+                    )
                     for user_id in sorted(contributions)
+                    if profile_totals[user_id] > 0
                 ),
             )
         )

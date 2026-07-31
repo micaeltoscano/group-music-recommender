@@ -129,12 +129,24 @@ def test_ct_pb33_04_biblioteca_500_nao_da_mais_peso_por_pessoa_que_biblioteca_50
         if item.track.spotify_track_id == "Shared"
     )
     affinity = calculate_weighted_group_affinity(candidate, [large, small])
+    candidates = merge_weighted_candidates([large, small])
+    voice_totals = {
+        user_id: sum(
+            contribution.weight
+            for item in candidates
+            for contribution in item.contributors
+            if contribution.user_id == user_id
+        )
+        for user_id in (10, 20)
+    }
 
     assert len(large.tracks) == 250
     assert len(small.tracks) == 50
-    assert affinity.individual_scores == (0.45, 0.45)
-    assert affinity.average == 0.45
+    assert voice_totals == pytest.approx({10: 1.0, 20: 1.0})
+    assert affinity.individual_scores == pytest.approx((0.004, 0.02))
+    assert affinity.average == 0.012
     assert affinity.coverage == 1.0
+    assert {item.preference_weight for item in candidate.contributors} == {0.45}
 
 
 def test_ct_pb33_05_playlist_nao_equivale_a_top_em_afinidade_e_compatibilidade():
