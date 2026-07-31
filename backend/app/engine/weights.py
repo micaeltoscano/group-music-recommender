@@ -1,5 +1,13 @@
 """Pesos configuráveis para o cálculo de pontuação (PB-11) e Modos de Consenso (PB-12)."""
 
+LIBRARY_SOURCE_WEIGHTS = {
+    "top:short_term": 1.00,
+    "top:medium_term": 0.85,
+    "top:long_term": 0.65,
+    "playlist:owned": 0.45,
+    "playlist:collaborative": 0.35,
+}
+
 DEFAULT_INDIVIDUAL_WEIGHTS = {
     "track_affinity": 0.4,
     "artist_affinity": 0.3,
