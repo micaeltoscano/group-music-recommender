@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-30..34 VALIDADO; Sprint 7 pronta para validação integrada.
+- **Estado da implementação:** PB-34 VALIDADO; PB-35 refinado e A-FAZER.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -112,8 +112,9 @@ Evidências múltiplas podem reforçar o sinal com bônus limitado, mas o peso f
 | 3 | PB-32 | Sincronização incremental e resiliente | 5 | PB-31 `VALIDADO` |
 | 4 | PB-33 | Perfil ponderado e seleção de candidatas | 8 | PB-32 `VALIDADO` |
 | 5 | PB-34 | Integração e observabilidade | 3 | PB-33 `VALIDADO` |
+| 6 | PB-35 | Logout visível na Home | 2 | PB-34 `VALIDADO` |
 
-**Total:** 24 pontos.
+**Total:** 26 pontos.
 
 Não antecipar modelos, endpoints ou telas pertencentes ao PB seguinte. Migrações devem partir do
 head real no momento de cada PB e permanecer lineares.
@@ -281,9 +282,32 @@ fallback histórico de Tops.
 
 Commit `feat(PB-34): ...`, status `AGUARDANDO-QA` e parada no portão.
 
-## 10. Validação integrada da Sprint
+## 10. PB-35 — Logout visível na Home
 
-Executar somente após PB-30..34 estarem individualmente `VALIDADO`:
+### Objetivo
+
+Permitir que a pessoa encerre somente a sessão atual e troque de conta diretamente pela Home.
+
+### Escopo de implementação
+
+1. Adicionar botão “Sair” ao cabeçalho existente, sem tela ou modal novo.
+2. Consumir `POST /auth/logout` e limpar o estado autenticado somente após sucesso.
+3. Redirecionar para `/login` sem recarregamento manual.
+4. Exibir loading e falha sanitizada, mantendo a sessão/interface em erro.
+5. Preservar conta, biblioteca, salas e demais dados; logout não é exclusão.
+6. Manter navegação por teclado e layout desktop/mobile.
+
+### Testes obrigatórios
+
+`CT-PB35-01..05`, build frontend e regressões de autenticação/Home.
+
+### Saída obrigatória
+
+Commit `feat(PB-35): ...`, status `AGUARDANDO-QA` e parada no portão.
+
+## 11. Validação integrada da Sprint
+
+Executar somente após PB-30..35 estarem individualmente `VALIDADO`:
 
 1. `CT-S7-INT-01` — três usuários sincronizam e geram; biblioteca `<=500` e pool `<=250`.
 2. `CT-S7-INT-02` — cache fresco e sync incremental reduzem chamadas.
@@ -294,7 +318,7 @@ Executar somente após PB-30..34 estarem individualmente `VALIDADO`:
 
 ### Critérios de encerramento
 
-- [ ] PB-30..34 `VALIDADO` individualmente.
+- [ ] PB-30..35 `VALIDADO` individualmente.
 - [ ] Nenhum usuário possui mais de 500 faixas únicas.
 - [ ] Nenhuma geração recebe mais de 250 candidatas por usuário.
 - [ ] Cache fresco produz zero chamada Spotify.
@@ -357,6 +381,7 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 | PB-32 | — | — | — | — | `docs/relatorios-testes/PB-32.md` |
 | PB-33 | — | — | — | — | `docs/relatorios-testes/PB-33.md` |
 | PB-34 | — | — | — | — | `docs/relatorios-testes/PB-34.md` |
+| PB-35 | — | — | — | — | `docs/relatorios-testes/PB-35.md` |
 
 ## 14. Decisões que não podem ser alteradas silenciosamente
 
@@ -373,8 +398,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** iniciar validação integrada da Sprint 7 em fase separada.
-- **Evidência QA:** `49 passed`; `CT-PB34-01..06` aprovados e `DEF-PB34-01` revalidado.
+- **Próximo passo:** Dev inicia somente PB-35.
+- **Evidência de refinamento:** história limitada ao logout da sessão atual; backend já existente.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

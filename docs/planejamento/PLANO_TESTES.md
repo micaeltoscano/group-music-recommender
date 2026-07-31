@@ -24,7 +24,7 @@ guia executável para o agente de implementação e de referência de aceitaçã
 ## 2. Escopo
 
 - **Coberto:** PBs das Sprints 1 a 5; PB-25..29 implementados tecnicamente na Sprint 6 e ainda
-  aguardando validação; e PB-30..34 da Sprint 7 ativa por decisão do Product Owner.
+  aguardando validação; e PB-30..35 da Sprint 7 ativa por decisão do Product Owner.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
   PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
 - **Fora do escopo atual deste plano:** qualquer ampliação acima de 500 faixas por pessoa exige novo
@@ -1939,6 +1939,31 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
   **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; explicação contém somente percentuais
   agregados.
 
+### PB-35 — Logout visível na Home
+
+##### CT-PB35-01 — Ação acessível no cabeçalho
+- **Tipo:** frontend/acessibilidade · **Prioridade:** Alta · **Resultado esperado:** botão “Sair” no
+  cabeçalho da Home, alcançável por teclado e sem tela/modal novo. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+##### CT-PB35-02 — Logout invalida somente a sessão atual
+- **Tipo:** API/autenticação · **Prioridade:** Alta · **Resultado esperado:** `POST /auth/logout`
+  invalida a sessão e expira cookie; conta, biblioteca e salas permanecem. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB35-03 — Sucesso retorna ao login
+- **Tipo:** frontend/fluxo · **Prioridade:** Alta · **Resultado esperado:** estado autenticado é limpo
+  e navegação vai para `/login` sem ação manual. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB35-04 — Falha mantém sessão e informa erro
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** falha não simula logout;
+  mantém Home, reabilita botão e mostra mensagem sanitizada. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB35-05 — Responsividade e regressão
+- **Tipo:** frontend/regressão · **Prioridade:** Média · **Resultado esperado:** cabeçalho permanece
+  utilizável em desktop/mobile; criar/entrar/sincronizar continuam funcionais. · **Automatizável:**
+  Parcialmente · **Status:** Não executado
+
 ### Testes integrados da Sprint 7
 
 ##### CT-S7-INT-01 — Três usuários sincronizam e geram
@@ -1970,7 +1995,7 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
   sem token/nome de playlist/faixas pessoais. · **Automatizável:** Não · **Status:** Não executado
 
 #### Critérios de aprovação da Sprint
-PB-30..34 validados em ordem; CT-S7-INT-01..06 aprovados; limite 500 e pool 250 comprovados nas
+PB-30..35 validados em ordem; CT-S7-INT-01..06 aprovados; limite 500 e pool 250 comprovados nas
 fronteiras; nenhuma regressão, segredo, N+1 por faixa ou defeito alto/bloqueante aberto.
 
 #### Resultado da Sprint
@@ -2016,3 +2041,4 @@ Não iniciada. Planejamento aprovado documentalmente não equivale a implementa�
 | PB-32 | 7 | 6 (CT-PB32-01..06) | CT-S7-INT-* |
 | PB-33 | 7 | 6 (CT-PB33-01..06) | CT-S7-INT-* |
 | PB-34 | 7 | 6 (CT-PB34-01..06) | CT-S7-INT-* |
+| PB-35 | 7 | 5 (CT-PB35-01..05) | CT-S7-INT-* |

@@ -147,12 +147,12 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **PB-21..24 VALIDADOS; integrada automatizável OK (CT-S5-INT-01..03); e2e real diferida** |
 | Sprint 6 | Estabilização e evolução contextual | PB-25, PB-26, PB-27, PB-28, PB-29 | 24 | Em validação paralela — implementação técnica concluída; aguardando QA |
-| Sprint 7 | Biblioteca musical ampliada e eficiente | PB-30, PB-31, PB-32, PB-33, PB-34 | 24 | Em andamento — promovida pelo Product Owner em 2026-07-31 |
+| Sprint 7 | Biblioteca musical ampliada e eficiente | PB-30, PB-31, PB-32, PB-33, PB-34, PB-35 | 26 | Em andamento — promovida pelo Product Owner em 2026-07-31 |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
 - **Sprint ativa:** Sprint 7, promovida por decisão explícita do Product Owner em 2026-07-31 e
   executada conforme [`SPRINT_07_IMPLEMENTACAO.md`](SPRINT_07_IMPLEMENTACAO.md). A Sprint 6 segue em
-  validação paralela, sem dependência bloqueante para PB-30..34. **Próximo PB acionável:** definido
+  validação paralela, sem dependência bloqueante para PB-30..35. **Próximo PB acionável:** definido
   automaticamente pelo campo `Status`
   de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
 - **Exceção processual explícita:** em 2026-07-18, o usuário autorizou avançar para a Sprint 4 sem a
@@ -1773,7 +1773,7 @@ durante a implementação, mas não substituiu o QA: os cinco PBs permanecem `AG
 ## Sprint 7 — Biblioteca musical ampliada e eficiente
 
 > **Estado:** em andamento desde 2026-07-31 por decisão explícita do Product Owner. A validação
-> pendente da Sprint 6 continua rastreada em paralelo, mas deixou de ser dependência de PB-30..34.
+> pendente da Sprint 6 continua rastreada em paralelo, mas deixou de ser dependência de PB-30..35.
 > Permissões reais do Spotify Development Mode e a retenção temporária continuam riscos de entrada.
 
 ### Objetivo da Sprint
@@ -1819,6 +1819,7 @@ limites que preservam contexto e justiça.
 3. PB-32 — Sincronização incremental e resiliente
 4. PB-33 — Perfil ponderado e seleção limitada de candidatas
 5. PB-34 — Integração e observabilidade da biblioteca ampliada
+6. PB-35 — Logout visível na Home
 
 ### Execução dos PBs
 
@@ -1935,6 +1936,19 @@ limites que preservam contexto e justiça.
 - **Migração:** nenhuma prevista além das definidas nos PBs 30–32.
 - **Riscos:** gerar antes do primeiro sync, expor origem privada e bloquear o fluxo em cache stale.
 
+#### PB-35 — Logout visível na Home
+
+- **Status:** A-FAZER — depende de PB-34 `VALIDADO`.
+- **Objetivo:** permitir troca segura de usuário diretamente pela Home.
+- **Dependências:** PB-34.
+- **Plano de implementação:** botão “Sair” no cabeçalho existente; `api.logout()` chama
+  `POST /auth/logout`; App limpa estado autenticado e redireciona para `/login`; loading, erro
+  sanitizado, teclado e responsividade; sem apagar biblioteca ou conta.
+- **Arquivos previstos:** `Home.jsx`, `App.jsx`, `apiClient.js`, `index.css` e testes PB-35.
+- **Testes obrigatórios:** `CT-PB35-01..05`.
+- **Migração:** nenhuma; endpoint backend já existe.
+- **Riscos:** cookie permanecer ativo, logout ser confundido com exclusão e regressão no cabeçalho.
+
 ### Testes integrados da Sprint 7
 
 Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 7". Devem comprovar: três usuários com no
@@ -1944,7 +1958,7 @@ remoção; regressão completa; e uma validação real sanitizada dos novos endp
 
 ### Critérios de encerramento da Sprint 7
 
-- [ ] PB-30..34 `VALIDADO` individualmente, um por vez;
+- [ ] PB-30..35 `VALIDADO` individualmente, um por vez;
 - [ ] nenhuma biblioteca possui mais de 500 faixas únicas;
 - [ ] nenhuma geração recebe mais de 250 candidatas por integrante antes do dedupe global;
 - [ ] sync inicial não faz N+1 por faixa e sync fresco faz zero chamada Spotify;
@@ -2022,10 +2036,10 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-30..34 estão `VALIDADO`.
-- **Último resultado concluído:** QA revalidou PB-34 com `49 passed`; `DEF-PB34-01` encerrado.
-- **Onde parou:** todos os PBs da Sprint 7 aprovados individualmente.
-- **Próxima ação exata:** iniciar em fase separada a validação integrada da Sprint 7.
+- **PB em andamento:** nenhum; PB-34 `VALIDADO` e PB-35 é o próximo acionável.
+- **Último resultado concluído:** Product Owner adicionou PB-35 para logout visível na Home.
+- **Onde parou:** PB-35 refinado e ainda não implementado.
+- **Próxima ação exata:** Dev inicia somente PB-35; validação integrada aguarda seu `VALIDADO`.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

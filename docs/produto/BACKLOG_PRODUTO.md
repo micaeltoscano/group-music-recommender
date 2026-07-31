@@ -752,6 +752,28 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 - **Sprint sugerida:** Sprint 7.
 - **Status inicial:** A fazer.
 
+### PB-35 — Logout visível na Home *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como participante autenticado, quero sair da minha conta pela Home, para trocar de
+  usuário com segurança sem precisar limpar cookies manualmente.
+- **Descrição:** Adicionar uma ação discreta de logout no cabeçalho existente da Home, reutilizando
+  `POST /auth/logout`, invalidando somente a sessão atual e retornando à tela de login.
+- **Critérios de aceitação:**
+  1. A Home deve exibir uma ação “Sair” visível e acessível, integrada ao cabeçalho do design atual.
+  2. Ao confirmar a ação, o frontend deve chamar `POST /auth/logout`; sucesso redireciona para login
+     e remove o usuário autenticado da interface sem recarregamento manual.
+  3. Logout deve invalidar a sessão atual e expirar o cookie, sem excluir conta, biblioteca, salas ou
+     outros dados pessoais.
+  4. Falha de rede/API deve manter a pessoa na Home, reabilitar a ação e mostrar erro sanitizado.
+  5. A ação deve funcionar por teclado, possuir estado de carregamento e permanecer adequada em
+     desktop/mobile sem criar tela ou modal novo.
+- **Prioridade:** Alta.
+- **Estimativa:** 2 pontos.
+- **Dependências:** PB-34.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
 ## 11. Backlog resumido e priorizado
 
 | Ordem | ID | Épico | Item | Prioridade | Pontos | Dependências | Sprint | Status |
@@ -790,6 +812,7 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 | 32 | PB-32 | EP-09 | Sincronização resiliente | Alta | 5 | PB-31 | Sprint 7 | A fazer |
 | 33 | PB-33 | EP-09 | Perfil ponderado e candidatas | Alta | 8 | PB-32 | Sprint 7 | A fazer |
 | 34 | PB-34 | EP-09 | Integração da biblioteca | Alta | 3 | PB-31..33 | Sprint 7 | A fazer |
+| 35 | PB-35 | EP-09 | Logout visível na Home | Alta | 2 | PB-34 | Sprint 7 | A fazer |
 
 > "Qualidade, robustez e documentação" (antigo PB-20) não é mais item do backlog — virou a
 > **Definition of Done**, aplicada a todos os PBs.
@@ -807,7 +830,7 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 - **Sprint 4:** 14 pontos.
 - **Sprint 5 (pós-MVP):** 18 pontos.
 - **Sprint 6 (pós-MVP):** 24 pontos.
-- **Sprint 7 (pós-MVP):** 24 pontos.
+- **Sprint 7 (pós-MVP):** 26 pontos.
 
 ## 12. Definição do Produto Mínimo Viável — MVP
 
