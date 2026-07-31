@@ -1853,7 +1853,7 @@ limites que preservam contexto e justiça.
 
 #### PB-31 — Biblioteca musical limitada a 500 faixas
 
-- **Status:** A-FAZER — liberado após PB-30 `VALIDADO`.
+- **Status:** AGUARDANDO-QA — implementado no commit `04ac876`; validação independente pendente.
 - **Objetivo:** compor e persistir até 500 faixas únicas por pessoa com proveniência completa.
 - **Dependências:** PB-30.
 - **Plano de implementação:** tabelas normalizadas de faixa e vínculo usuário/faixa; sinais de Top
@@ -1865,6 +1865,21 @@ limites que preservam contexto e justiça.
 - **Migração:** reversível, com unicidade `(user_id, spotify_track_id)` e FKs em cascata apenas
   para dados pessoais da biblioteca.
 - **Riscos:** cap incorreto após dedupe, uma playlist dominar o preenchimento e payload excessivo.
+- **Implementação entregue:** compositor puro em `engine/music_library.py`; Tops limitados a 50 por
+  faixa temporal e priorizados; playlists elegíveis preenchidas em round-robin ordenado; dedupe por
+  Spotify ID preserva cada origem/rank, inclusive duplicatas encontradas depois do cap.
+- **Persistência:** snapshot pessoal, faixa mínima e origem normalizada; substituição atômica do
+  snapshot anterior; checks de contagem/posição e unicidade usuário/faixa. Nenhum payload bruto,
+  imagem, álbum ou nome de playlist é persistido.
+- **Arquivos:** `backend/app/engine/music_library.py`, `services/music_library_service.py`, modelos,
+  `privacy_service.py`, migração `0020_pb31_music_library.py` e
+  `tests/test_pb31_music_library.py`.
+- **Evidências do Dev:** `11 passed` focados; `32 passed` relacionados; regressão completa
+  `431 passed, 6 skipped`; build Vite aprovado; `compileall`, `pip check`, Alembic head, migração
+  reversível isolada, SQL PostgreSQL offline e `git diff --check` aprovados.
+- **Critérios pendentes:** nenhum tecnicamente; `CT-PB31-01..06` aguardam QA independente.
+- **Próxima ação:** QA executa `CT-PB31-01..06`, com atenção ao cap após dedupe, justiça do
+  round-robin, atomicidade da substituição e remoção isolada. PB-32 permanece no portão.
 
 #### PB-32 — Sincronização incremental e resiliente
 
@@ -1995,29 +2010,30 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-30 `VALIDADO` e PB-31 é o próximo acionável.
-- **Último resultado concluído:** QA revalidou PB-30 com `12 passed` focados e
-  `420 passed, 6 skipped` na regressão completa.
-- **Onde parou:** inventário mínimo, OAuth/reconsentimento, paginação e erros diferenciados prontos.
-- **Próxima ação exata:** Dev inicia somente PB-31 em nova fase e respeita o próximo portão de QA.
+- **PB em andamento:** PB-31 `AGUARDANDO-QA`; PB-30 permanece `VALIDADO`.
+- **Último resultado concluído:** PB-31 implementado no commit `04ac876`, com `11 passed` focados e
+  `431 passed, 6 skipped` na regressão completa.
+- **Onde parou:** biblioteca pessoal de até 500 faixas, proveniência normalizada, migração `0020` e
+  remoção de dados prontas.
+- **Próxima ação exata:** QA executa `CT-PB31-01..06`; somente após `VALIDADO` iniciar PB-32.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull
   ```
-- **Bloqueios:** nenhum para iniciar PB-31. O spike real permanece reservado à validação integrada e
+- **Bloqueios:** portão de QA do PB-31. O spike real permanece reservado à validação integrada e
   depende das três contas de demonstração autorizadas no app.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — QA final com 12 focados, regressão backend 420/6,
-  build Vite e migração reversível.
+- [x] Rodei as verificações relevantes. — Dev com 11 focados, 32 relacionados, regressão backend
+  431/6, build Vite e migração reversível.
 - [x] Comparei o plano com o backlog e os limites da integração Spotify.
-- [x] Atualizei status após validação independente. — PB-30 `VALIDADO`.
+- [x] Atualizei status sem declarar validação independente. — PB-31 `AGUARDANDO-QA`.
 - [x] Registrei decisões ou bloqueios novos. — teto 500, TTL 7 dias, pool 250 e exceção do Product Owner.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — backlog, planos de execução/testes e mapa de trabalho.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commits do PB-30 — `efb8625` e correção `be45742`.
+- [x] Commit do PB-31 — `04ac876`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 

@@ -104,6 +104,9 @@ Legenda: **[MVP]** essencial · **[FUT]** previsto p/ crescimento.
 **[MVP] music_sessions**: id · code(uniq) · host_user_id · occasion · description · mode · status(open/**generating**/completed) · spotify_playlist_id · spotify_playlist_url · created_at · expires_at(**24h**)
 **[MVP] music_session_members**: session_id · user_id · role(host/member) · joined_at — PK(session_id,user_id) evita duplicidade
 **[MVP] user_music_snapshots**: id · user_id · time_range · top_tracks_json · top_artists_json · fetched_at
+**[PÓS-MVP] user_music_library_snapshots**: id · user_id(uniq) · track_count(0..500) · built_at
+**[PÓS-MVP] user_music_library_tracks**: id · snapshot_id · user_id · spotify_track_id · spotify_uri · track_name · artist_id · artist_name · position(1..500) — único por usuário/faixa
+**[PÓS-MVP] user_music_library_sources**: id · library_track_id · source_type(top/playlist) · source_ref · source_key · source_rank · access_type — preserva origens/ranks sem payload bruto
 **[MVP] playlist_runs**: id · music_session_id · status(**running/completed/failed**) · compatibility_score · fairness_score · spotify_playlist_id · spotify_playlist_url · llm_context_json · explanation_json · **subgroup_balancing_applied** · error_message · created_at
 **[MVP] playlist_run_tracks**: id · playlist_run_id · spotify_track_id · spotify_uri · track_name · artist_name · score · reason · position · source · **match_confidence** · **discard_reason**(nullable: not_found/unavailable_in_market/low_match/no_uri/artist_cap) · **is_bridge**
 **[MVP] vibe_check_answers**: id · session_id · user_id · answers_json · derived_preferences_json · created_at

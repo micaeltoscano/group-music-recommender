@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-30 VALIDADO; PB-31 é o próximo PB acionável.
+- **Estado da implementação:** PB-31 AGUARDANDO-QA após commit `04ac876`.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -353,7 +353,7 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 | PB | Início | Commit | Testes do Dev | Veredito QA | Relatório |
 |---|---|---|---|---|---|
 | PB-30 | 2026-07-31 | `efb8625`, `be45742` | 11 focados; 419/6 regressão | Validado — QA: 12 focados; 420/6 regressão | `docs/relatorios-testes/PB-30.md` |
-| PB-31 | — | — | — | — | `docs/relatorios-testes/PB-31.md` |
+| PB-31 | 2026-07-31 | `04ac876` | 11 focados; 32 relacionados; 431/6 regressão | Aguardando | `docs/relatorios-testes/PB-31.md` |
 | PB-32 | — | — | — | — | `docs/relatorios-testes/PB-32.md` |
 | PB-33 | — | — | — | — | `docs/relatorios-testes/PB-33.md` |
 | PB-34 | — | — | — | — | `docs/relatorios-testes/PB-34.md` |
@@ -373,8 +373,9 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** implementação do PB-31.
-- **Ação inicial:** ler o contrato e `CT-PB31-01..06`, então marcar somente PB-31 em implementação.
+- **Próximo passo:** QA independente do PB-31.
+- **Ação inicial:** executar `CT-PB31-01..06`, revisar migração `0020` e registrar evidências.
 - **Dependência:** PB-30 `VALIDADO` em 2026-07-31.
-- **Portão seguinte:** PB-31 termina em `AGUARDANDO-QA` e exige validação independente.
-- **Proibido na retomada:** antecipar PB-32 ou posteriores.
+- **Se VALIDADO:** iniciar somente PB-32 em uma nova fase.
+- **Se REPROVADO:** corrigir somente PB-31 e devolver a `AGUARDANDO-QA`.
+- **Proibido na retomada:** antecipar PB-32 antes do veredito.
