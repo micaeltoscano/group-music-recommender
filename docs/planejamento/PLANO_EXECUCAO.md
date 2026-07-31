@@ -1938,7 +1938,10 @@ limites que preservam contexto e justiça.
 
 #### PB-35 — Logout visível na Home
 
-- **Status:** A-FAZER — depende de PB-34 `VALIDADO`.
+- **Status:** AGUARDANDO-QA — botão “Sair” acessível no cabeçalho da Home, loading/erro recuperável,
+  `POST /auth/logout`, limpeza do estado autenticado após sucesso e responsividade implementados.
+  `CT-PB35-01..05`: `5 passed`; regressões focadas: `31 passed`; build Vite aprovado; suíte completa:
+  `473 passed, 6 skipped`, mantendo duas falhas preexistentes fora da PB-35 (PB-02/PB-06).
 - **Objetivo:** permitir troca segura de usuário diretamente pela Home.
 - **Dependências:** PB-34.
 - **Plano de implementação:** botão “Sair” no cabeçalho existente; `api.logout()` chama
@@ -2036,10 +2039,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-34 `VALIDADO` e PB-35 é o próximo acionável.
-- **Último resultado concluído:** Product Owner adicionou PB-35 para logout visível na Home.
-- **Onde parou:** PB-35 refinado e ainda não implementado.
-- **Próxima ação exata:** Dev inicia somente PB-35; validação integrada aguarda seu `VALIDADO`.
+- **PB em andamento:** nenhum; PB-35 `AGUARDANDO-QA` no portão obrigatório.
+- **Último resultado concluído:** Dev implementou PB-35 com `5 passed` próprios, `31 passed` focados,
+  build Vite verde e regressão completa em `473 passed, 6 skipped` mais PB-02/PB-06 antigas.
+- **Onde parou:** logout visível pronto para validação independente.
+- **Próxima ação exata:** QA valida somente PB-35; validação integrada aguarda seu `VALIDADO`.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

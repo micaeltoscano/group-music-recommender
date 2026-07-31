@@ -31,7 +31,7 @@ function libraryAge(seconds) {
   return `há ${Math.floor(seconds / 86400)} dia(s)`
 }
 
-export default function Home({ user }) {
+export default function Home({ user, onLogout }) {
   const navigate = useNavigate()
   const [roomCode, setRoomCode] = useState('')
   const [creating, setCreating] = useState(false)
@@ -41,6 +41,26 @@ export default function Home({ user }) {
   const [library, setLibrary] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(true)
   const [libraryError, setLibraryError] = useState('')
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+
+  const logout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    setLogoutError('')
+    try {
+      const response = await api.logout()
+      if (!response.ok) {
+        setLogoutError('Não foi possível sair agora. Tente novamente.')
+        return
+      }
+      onLogout()
+    } catch {
+      setLogoutError('O backend não respondeu. Sua sessão continua ativa.')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   const loadLibrary = async () => {
     setLibraryLoading(true)
@@ -125,8 +145,20 @@ export default function Home({ user }) {
             <span>NEGOCIE. VOTE. CURTA JUNTO.</span>
           </div>
         </div>
-        <span className="eyebrow">VC-01 · GROUP PLAYLIST SYSTEM</span>
+        <div className="home-header-actions">
+          <span className="eyebrow">VC-01 · GROUP PLAYLIST SYSTEM</span>
+          <button
+            className="home-logout-button"
+            type="button"
+            onClick={logout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? 'SAINDO…' : 'SAIR'}
+          </button>
+        </div>
       </header>
+
+      {logoutError && <p className="home-logout-error" role="alert">{logoutError}</p>}
 
       <section className="home-content">
         <div className="greeting-row">

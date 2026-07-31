@@ -133,6 +133,20 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
   display: block; margin-top: 2px; color: var(--dim); font-size: 0.56rem;
   letter-spacing: 0.22em;
 }
+.home-header-actions { display: flex; align-items: center; gap: 22px; }
+.home-logout-button {
+  padding: 8px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-btn);
+  background: transparent; color: var(--muted-2); font: 600 0.66rem var(--font-body);
+  letter-spacing: 0.12em; cursor: pointer;
+}
+.home-logout-button:hover, .home-logout-button:focus-visible {
+  border-color: var(--accent); color: var(--accent); outline: none;
+}
+.home-logout-button:disabled { cursor: wait; opacity: 0.6; }
+.home-logout-error {
+  width: min(880px, calc(100% - 48px)); margin: 14px auto -44px;
+  color: var(--accent-hover); font-size: 0.72rem; text-align: right;
+}
 
 .equalizer-mark { height: 30px; display: flex; align-items: flex-end; gap: 3px; }
 .equalizer-mark i { width: 4px; display: block; background: var(--accent); border-radius: 2px 2px 0 0; }
@@ -794,6 +808,9 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 @media (max-width: 640px) {
   .product-header { padding: 0 20px; }
   .product-header > .eyebrow { display: none; }
+  .home-header-actions > .eyebrow { display: none; }
+  .home-header-actions { gap: 0; }
+  .home-logout-error { width: calc(100% - 40px); margin-bottom: -30px; }
   .login-hero { width: min(100% - 32px, 540px); padding-top: 52px; }
   .login-hero h1 { font-size: clamp(2.35rem, 12vw, 3rem); }
   .login-action-row { align-items: stretch; flex-direction: column; }

@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-34 VALIDADO; PB-35 refinado e A-FAZER.
+- **Estado da implementação:** PB-35 AGUARDANDO-QA após implementação completa.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -398,8 +398,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** Dev inicia somente PB-35.
-- **Evidência de refinamento:** história limitada ao logout da sessão atual; backend já existente.
+- **Próximo passo:** QA valida PB-35 antes da validação integrada da Sprint 7.
+- **Evidência Dev:** `5 passed` próprios, `31 passed` focados e build Vite aprovado.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

@@ -17,6 +17,7 @@ export const api = {
   health: () => requestJson('/health'),
   healthDb: () => requestJson('/health/db'),
   getMe: () => requestJson('/auth/me'),
+  logout: () => requestJson('/auth/logout', { method: 'POST' }),
   getMusicLibrary: () => requestJson('/me/music-library'),
   refreshMusicLibrary: () => requestJson('/me/refresh-music-library', { method: 'POST' }),
   createRoom: () => requestJson('/rooms', { method: 'POST' }),
