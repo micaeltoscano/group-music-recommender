@@ -1920,7 +1920,10 @@ limites que preservam contexto e justiça.
 
 #### PB-34 — Integração e observabilidade da biblioteca ampliada
 
-- **Status:** A-FAZER — depende de PB-33 `VALIDADO`.
+- **Status:** AGUARDANDO-QA — status/refresh sanitizados, Home integrada, biblioteca ponderada no
+  pipeline com fallback Top, identidade Spotify nativa e explicação apenas agregada implementados.
+  `CT-PB34-01..06`: `9 passed`; regressões focadas: `54 passed`; build Vite aprovado; suíte completa:
+  `466 passed, 6 skipped`, mantendo duas falhas preexistentes fora da PB-34 (PB-02/PB-06).
 - **Objetivo:** usar a biblioteca no pipeline sem perder fallback, privacidade ou clareza operacional.
 - **Dependências:** PB-31, PB-32 e PB-33.
 - **Plano de implementação:** `GET/POST /me/music-library`; status na Home existente; carregamento
@@ -2019,10 +2022,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-33 `VALIDADO` e PB-34 é o próximo acionável.
-- **Último resultado concluído:** QA revalidou PB-33 com `26 passed`; `DEF-PB33-01` encerrado.
-- **Onde parou:** perfil ponderado, pool limitado e justiça por orçamento de voz aprovados.
-- **Próxima ação exata:** Dev pode iniciar somente PB-34 em uma nova fase.
+- **PB em andamento:** nenhum; PB-34 `AGUARDANDO-QA` no portão obrigatório.
+- **Último resultado concluído:** Dev implementou PB-34 com `9 passed` próprios, `54 passed` focados
+  e build Vite verde; regressão completa em `466 passed, 6 skipped` mais PB-02/PB-06 preexistentes.
+- **Onde parou:** integração ponta a ponta da biblioteca ampliada pronta para QA.
+- **Próxima ação exata:** QA valida somente PB-34; validação integrada da Sprint aguarda o veredito.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

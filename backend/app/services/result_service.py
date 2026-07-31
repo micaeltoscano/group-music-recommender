@@ -40,6 +40,18 @@ SUBGROUP_BALANCE_EXPLANATION = (
 )
 
 
+def _library_mix_explanation(mix: dict) -> str | None:
+    if not isinstance(mix, dict):
+        return None
+    values = [mix.get(key) for key in ("top", "playlist", "context")]
+    if not all(isinstance(value, int) and 0 <= value <= 100 for value in values):
+        return None
+    return (
+        f"Origens agregadas: {values[0]}% Tops, {values[1]}% playlists e "
+        f"{values[2]}% contexto."
+    )
+
+
 def _familiarity_explanation(tracks: list[PlaylistRunTrack]) -> str:
     familiar = 100 - _discovery_percentage(tracks)
     return (
@@ -199,6 +211,16 @@ def finalize_run_metrics(db: Session, run: PlaylistRun) -> None:
     tracks = _matched_tracks(db, run.id)
     member_ids = _member_ids(db, run.session_id)
     metrics = compute_metrics(member_ids, tracks)
+    previous = None
+    if run.explanation_json:
+        try:
+            previous = json.loads(run.explanation_json)
+        except (TypeError, ValueError):
+            previous = None
+    mix = previous.get("library_mix") if isinstance(previous, dict) else None
+    mix_explanation = _library_mix_explanation(mix)
+    if mix_explanation:
+        metrics["why_items"].append(mix_explanation)
     room = db.get(MusicSession, run.session_id)
     if room is not None and room.mode == "Descoberta":
         metrics["why_items"].append(DISCOVERY_EXPLANATION)
@@ -211,6 +233,7 @@ def finalize_run_metrics(db: Session, run: PlaylistRun) -> None:
         {
             "representation": metrics["representation"],
             "why_items": metrics["why_items"],
+            "library_mix": mix,
         }
     )
 

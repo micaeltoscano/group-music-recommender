@@ -152,6 +152,16 @@ h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; }
 .greeting-row h1 { font-size: 1.5rem; }
 .greeting-row p { margin: 3px 0 0; color: var(--muted-2); font-size: 0.75rem; }
 
+.library-status-card {
+  margin: -18px 0 28px; padding: 16px 20px; display: flex; align-items: center;
+  justify-content: space-between; gap: 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-card); text-align: left;
+}
+.library-status-card .card-kicker { margin-bottom: 5px; }
+.library-status-card p { margin: 0; color: var(--muted); font-size: 0.76rem; }
+.library-status-card strong { color: var(--text); }
+.library-refresh-button { flex: none; padding: 10px 14px; font-size: 0.66rem; }
+
 .user-avatar {
   width: 46px; height: 46px; border-radius: var(--radius-pill); flex: none;
   object-fit: cover; border: 1px solid var(--border);

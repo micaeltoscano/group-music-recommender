@@ -8,7 +8,14 @@ from sqlalchemy.orm import Session
 from app.api.auth import get_current_user
 from app.clients.spotify_client import ReauthenticationRequired
 from app.db.session import get_db
-from app.schemas.music import MusicSnapshotResponse, MusicTimeRange
+from app.schemas.music import MusicLibraryStatusResponse, MusicSnapshotResponse, MusicTimeRange
+from app.services.library_application_service import music_library_status
+from app.services.library_sync_service import (
+    LibrarySyncQuotaExceeded,
+    LibrarySyncRateLimited,
+    LibrarySyncUnavailable,
+    sync_music_library,
+)
 from app.services.music_service import (
     MusicDataRateLimited,
     MusicDataUnavailable,
@@ -17,6 +24,45 @@ from app.services.music_service import (
 )
 
 router = APIRouter()
+
+
+@router.get("/music-library", response_model=MusicLibraryStatusResponse)
+def read_my_music_library(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> MusicLibraryStatusResponse:
+    return music_library_status(db, current_user["id"])
+
+
+@router.post("/refresh-music-library", response_model=MusicLibraryStatusResponse)
+async def refresh_my_music_library(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> MusicLibraryStatusResponse:
+    try:
+        await sync_music_library(db, current_user["id"])
+    except LibrarySyncRateLimited as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"code": exc.code, "message": "Spotify temporariamente limitado."},
+            headers={"Retry-After": str(exc.retry_after)},
+        ) from exc
+    except LibrarySyncQuotaExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": exc.code, "message": "Quota Spotify indisponível no momento."},
+        ) from exc
+    except LibrarySyncUnavailable as exc:
+        http_status = (
+            status.HTTP_401_UNAUTHORIZED
+            if exc.code == "REAUTH_REQUIRED"
+            else status.HTTP_502_BAD_GATEWAY
+        )
+        raise HTTPException(
+            status_code=http_status,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    return music_library_status(db, current_user["id"])
 
 
 def _snapshot_response(result: SnapshotResult) -> MusicSnapshotResponse:

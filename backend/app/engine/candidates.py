@@ -18,6 +18,7 @@ class CandidateTrack:
         subgroup_balancing_applied: bool = False,
         balanced_cluster_id: str | None = None,
         origin: str = "spotify_top",
+        preference_by_user: Dict[int, float] | None = None,
     ):
         self.id = track_id
         self.raw_data = raw_data
@@ -29,6 +30,7 @@ class CandidateTrack:
         self.subgroup_balancing_applied = subgroup_balancing_applied
         self.balanced_cluster_id = balanced_cluster_id
         self.origin = origin
+        self.preference_by_user = preference_by_user or {}
 
 
 class DiscardedTrack:

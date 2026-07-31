@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from './apiClient'
 
@@ -23,6 +23,14 @@ function formatRoomCode(value) {
   return raw.length > 4 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw
 }
 
+function libraryAge(seconds) {
+  if (seconds == null) return 'ainda não sincronizada'
+  if (seconds < 60) return 'sincronizada agora'
+  if (seconds < 3600) return `há ${Math.floor(seconds / 60)} min`
+  if (seconds < 86400) return `há ${Math.floor(seconds / 3600)} h`
+  return `há ${Math.floor(seconds / 86400)} dia(s)`
+}
+
 export default function Home({ user }) {
   const navigate = useNavigate()
   const [roomCode, setRoomCode] = useState('')
@@ -30,6 +38,42 @@ export default function Home({ user }) {
   const [joining, setJoining] = useState(false)
   const [createError, setCreateError] = useState('')
   const [joinError, setJoinError] = useState('')
+  const [library, setLibrary] = useState(null)
+  const [libraryLoading, setLibraryLoading] = useState(true)
+  const [libraryError, setLibraryError] = useState('')
+
+  const loadLibrary = async () => {
+    setLibraryLoading(true)
+    setLibraryError('')
+    try {
+      const response = await api.getMusicLibrary()
+      if (!response.ok) throw new Error('status')
+      setLibrary(response.body)
+    } catch {
+      setLibraryError('Não foi possível consultar seu repertório agora.')
+    } finally {
+      setLibraryLoading(false)
+    }
+  }
+
+  const refreshLibrary = async () => {
+    setLibraryLoading(true)
+    setLibraryError('')
+    try {
+      const response = await api.refreshMusicLibrary()
+      if (!response.ok) {
+        setLibraryError(response.body?.detail?.message || 'Sincronização indisponível agora.')
+        return
+      }
+      setLibrary(response.body)
+    } catch {
+      setLibraryError('O backend não respondeu durante a sincronização.')
+    } finally {
+      setLibraryLoading(false)
+    }
+  }
+
+  useEffect(() => { loadLibrary() }, [])
 
   const createRoom = async () => {
     setCreating(true)
@@ -96,6 +140,31 @@ export default function Home({ user }) {
             <p>Conectado via Spotify · pronto para criar uma sessão</p>
           </div>
         </div>
+
+        <section className="library-status-card" aria-live="polite">
+          <div>
+            <p className="card-kicker">SEU REPERTÓRIO</p>
+            {libraryLoading ? (
+              <p>Consultando biblioteca…</p>
+            ) : libraryError ? (
+              <p className="form-error" role="alert">{libraryError}</p>
+            ) : (
+              <p>
+                <strong>{library?.track_count || 0} músicas</strong>
+                {' · '}{libraryAge(library?.age_seconds)}
+                {library?.stale ? ' · atualização recomendada' : ''}
+              </p>
+            )}
+          </div>
+          <button
+            className="btn btn-outline library-refresh-button"
+            type="button"
+            onClick={refreshLibrary}
+            disabled={libraryLoading}
+          >
+            {library?.state === 'missing' ? 'SINCRONIZAR' : 'ATUALIZAR'}
+          </button>
+        </section>
 
         <div className="room-actions-grid">
           <section className="room-action-card" aria-labelledby="create-room-title">

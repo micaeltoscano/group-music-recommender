@@ -28,3 +28,18 @@ class MusicSnapshotResponse(BaseModel):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
+
+
+class MusicLibraryOriginCounts(BaseModel):
+    top: int
+    playlist: int
+
+
+class MusicLibraryStatusResponse(BaseModel):
+    state: Literal["missing", "ready", "stale"]
+    track_count: int
+    age_seconds: int | None
+    stale: bool
+    warning_code: str | None = None
+    retry_after: int | None = None
+    origins: MusicLibraryOriginCounts

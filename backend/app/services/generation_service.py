@@ -41,6 +41,7 @@ from app.engine.vibe_scoring import (
 from app.engine.weights import CONSENSUS_MODES, VIBE_CHECK_INFLUENCE
 from app.services.context_enrichment_service import enrich_candidates_context
 from app.services.contextual_pool_service import discover_context_candidates
+from app.services.library_application_service import load_library_generation_data
 from app.services.music_service import get_or_refresh_snapshot
 from app.services.room_service import RoomHostRequiredError, RoomNotFoundError
 
@@ -641,28 +642,47 @@ async def execute_generation(
         profiles: list[UserTasteProfile] = []
         track_snapshots: list[tuple[int, dict[str, Any]]] = []
         artist_genres: dict[str, set[str]] = {}
-        for member_id in member_ids:
-            snapshot_result = await get_or_refresh_snapshot(
-                db,
-                member_id,
-                time_range="medium_term",
-            )
-            snapshot = snapshot_result.snapshot
-            tracks_payload = {"items": snapshot.top_tracks_json}
-            artists_payload = {"items": snapshot.top_artists_json}
-            profiles.append(UserTasteProfile(member_id, tracks_payload, artists_payload))
-            track_snapshots.append((member_id, tracks_payload))
-            for artist in snapshot.top_artists_json:
-                if not isinstance(artist, dict) or not artist.get("id"):
-                    continue
-                artist_genres.setdefault(str(artist["id"]), set()).update(
-                    genre.strip().lower()
-                    for genre in artist.get("genres", [])
-                    if isinstance(genre, str) and genre.strip()
+        library_data = load_library_generation_data(db, member_ids)
+        if library_data is not None:
+            for weighted_profile in library_data.profiles:
+                items = [
+                    {
+                        "id": track.spotify_track_id,
+                        "uri": track.spotify_uri,
+                        "name": track.track_name,
+                        "artists": [
+                            {"id": track.artist_id, "name": track.artist_name}
+                        ] if track.artist_id or track.artist_name else [],
+                    }
+                    for track in weighted_profile.tracks
+                ]
+                payload = {"items": items}
+                profiles.append(UserTasteProfile(weighted_profile.user_id, payload, {"items": []}))
+                track_snapshots.append((weighted_profile.user_id, payload))
+            candidates = list(library_data.candidates)
+        else:
+            for member_id in member_ids:
+                snapshot_result = await get_or_refresh_snapshot(
+                    db,
+                    member_id,
+                    time_range="medium_term",
                 )
+                snapshot = snapshot_result.snapshot
+                tracks_payload = {"items": snapshot.top_tracks_json}
+                artists_payload = {"items": snapshot.top_artists_json}
+                profiles.append(UserTasteProfile(member_id, tracks_payload, artists_payload))
+                track_snapshots.append((member_id, tracks_payload))
+                for artist in snapshot.top_artists_json:
+                    if not isinstance(artist, dict) or not artist.get("id"):
+                        continue
+                    artist_genres.setdefault(str(artist["id"]), set()).update(
+                        genre.strip().lower()
+                        for genre in artist.get("genres", [])
+                        if isinstance(genre, str) and genre.strip()
+                    )
+            candidates, _ = generate_candidate_pool(track_snapshots)
 
         taste_clusters = cluster_taste_profiles(profiles)
-        candidates, _ = generate_candidate_pool(track_snapshots)
         if not candidates:
             raise InsufficientTracksError("Nenhuma faixa candidata foi encontrada nos snapshots.")
         candidates = enrich_candidate_genres(candidates, artist_genres)
@@ -710,6 +730,28 @@ async def execute_generation(
             subgroup_max_share=settings.subgroup_max_share,
             contextual_pool_enabled=bool(contextual_candidates),
             contextual_pool_share=settings.contextual_pool_share,
+        )
+        explanation_sample = ranked_candidates[:MAX_PLAYLIST_TRACKS]
+        origin_counts = {"top": 0, "playlist": 0, "context": 0}
+        for candidate in explanation_sample:
+            if str(candidate.origin).startswith("lastfm_"):
+                origin_counts["context"] += 1
+                continue
+            library_counts = candidate.raw_data.get("library_origin_counts", {})
+            if library_counts.get("top", 0):
+                origin_counts["top"] += 1
+            elif library_counts.get("playlist", 0):
+                origin_counts["playlist"] += 1
+            else:
+                origin_counts["top"] += 1
+        total_explained = sum(origin_counts.values())
+        run.explanation_json = json.dumps(
+            {
+                "library_mix": {
+                    key: round(100 * value / total_explained) if total_explained else 0
+                    for key, value in origin_counts.items()
+                }
+            }
         )
         run.subgroup_balancing_applied = any(
             candidate.subgroup_balancing_applied for candidate in ranked_candidates

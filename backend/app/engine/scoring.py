@@ -14,7 +14,10 @@ def calculate_individual_score(
     Calcula o score de afinidade de um usuário específico por uma candidata.
     """
     # 1. Afinidade de faixa
-    track_affinity = 1.0 if candidate.id in profile.tracks else 0.0
+    if candidate.preference_by_user:
+        track_affinity = candidate.preference_by_user.get(profile.user_id, 0.0)
+    else:
+        track_affinity = 1.0 if candidate.id in profile.tracks else 0.0
     
     # 2. Afinidade de artista
     candidate_artists = [
