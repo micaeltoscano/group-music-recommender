@@ -73,6 +73,15 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    music_library_snapshot: Mapped["UserMusicLibrarySnapshot | None"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    music_library_tracks: Mapped[list["UserMusicLibraryTrack"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
         return f"<User id={self.id} spotify_id={self.spotify_id!r}>"
@@ -275,6 +284,120 @@ class UserPlaylistInventory(Base):
             f"<UserPlaylistInventory user_id={self.user_id} "
             f"spotify_playlist_id={self.spotify_playlist_id!r}>"
         )
+
+
+class UserMusicLibrarySnapshot(Base):
+    """Versão promovida da biblioteca pessoal limitada (PB-31)."""
+
+    __tablename__ = "user_music_library_snapshots"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_music_library_snapshot_user"),
+        CheckConstraint(
+            "track_count >= 0 AND track_count <= 500",
+            name="ck_music_library_snapshot_track_count",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    track_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    built_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="music_library_snapshot")
+    tracks: Mapped[list["UserMusicLibraryTrack"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        order_by="UserMusicLibraryTrack.position",
+    )
+
+
+class UserMusicLibraryTrack(Base):
+    """Uma faixa única na biblioteca de um usuário."""
+
+    __tablename__ = "user_music_library_tracks"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "spotify_track_id",
+            name="uq_music_library_user_track",
+        ),
+        UniqueConstraint(
+            "snapshot_id",
+            "position",
+            name="uq_music_library_snapshot_position",
+        ),
+        CheckConstraint(
+            "position >= 1 AND position <= 500",
+            name="ck_music_library_track_position",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    spotify_track_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    spotify_uri: Mapped[str] = mapped_column(String(512), nullable=False)
+    track_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    artist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    artist_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    snapshot: Mapped["UserMusicLibrarySnapshot"] = relationship(back_populates="tracks")
+    user: Mapped["User"] = relationship(back_populates="music_library_tracks")
+    origins: Mapped[list["UserMusicLibrarySource"]] = relationship(
+        back_populates="library_track",
+        cascade="all, delete-orphan",
+        order_by="UserMusicLibrarySource.source_key",
+    )
+
+
+class UserMusicLibrarySource(Base):
+    """Proveniência/rank normalizado de uma faixa pessoal."""
+
+    __tablename__ = "user_music_library_sources"
+    __table_args__ = (
+        UniqueConstraint(
+            "library_track_id",
+            "source_key",
+            name="uq_music_library_track_source",
+        ),
+        CheckConstraint(
+            "source_type IN ('top', 'playlist')",
+            name="ck_music_library_source_type",
+        ),
+        CheckConstraint("source_rank >= 1", name="ck_music_library_source_rank"),
+        CheckConstraint(
+            "(source_type = 'top' AND access_type IS NULL) OR "
+            "(source_type = 'playlist' AND access_type IN ('owned', 'collaborative'))",
+            name="ck_music_library_source_access",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    library_track_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_tracks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    source_ref: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    source_rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    access_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
+    library_track: Mapped["UserMusicLibraryTrack"] = relationship(back_populates="origins")
 
 
 class TrackContextCache(Base):

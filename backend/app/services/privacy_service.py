@@ -13,6 +13,9 @@ from app.db.models import (
     PlaylistFeedback,
     SpotifyToken,
     User,
+    UserMusicLibrarySnapshot,
+    UserMusicLibrarySource,
+    UserMusicLibraryTrack,
     UserMusicSnapshot,
     UserPlaylistInventory,
     VibeCheckAnswer,
@@ -63,6 +66,18 @@ def remove_personal_data(db: Session, user_id: int) -> None:
         db.query(UserMusicSnapshot).filter(UserMusicSnapshot.user_id == user_id).delete(
             synchronize_session=False
         )
+        library_track_ids = db.query(UserMusicLibraryTrack.id).filter(
+            UserMusicLibraryTrack.user_id == user_id
+        )
+        db.query(UserMusicLibrarySource).filter(
+            UserMusicLibrarySource.library_track_id.in_(library_track_ids)
+        ).delete(synchronize_session=False)
+        db.query(UserMusicLibraryTrack).filter(
+            UserMusicLibraryTrack.user_id == user_id
+        ).delete(synchronize_session=False)
+        db.query(UserMusicLibrarySnapshot).filter(
+            UserMusicLibrarySnapshot.user_id == user_id
+        ).delete(synchronize_session=False)
         db.query(UserPlaylistInventory).filter(
             UserPlaylistInventory.user_id == user_id
         ).delete(synchronize_session=False)
