@@ -1920,10 +1920,10 @@ limites que preservam contexto e justiça.
 
 #### PB-34 — Integração e observabilidade da biblioteca ampliada
 
-- **Status:** AGUARDANDO-QA — `DEF-PB34-01` corrigido: linha ausente, biblioteca `track_count=0` e
-  perfil/pool vazio acionam fallback Top PB-08. Reprodutor e regressão focada: `49 passed`; regressão
-  completa: `468 passed, 6 skipped`, mantendo apenas duas falhas preexistentes fora da PB-34
-  (PB-02/PB-06).
+- **Status:** VALIDADO — QA revalidou `CT-PB34-01..06` em 2026-07-31. `DEF-PB34-01` corrigido:
+  ausência, zero faixas e pool vazio acionam fallback Top PB-08. Evidência focada: `49 passed`;
+  regressão completa Dev: `468 passed, 6 skipped`, mantendo somente falhas preexistentes fora da
+  PB-34 (PB-02/PB-06). Relatório: `PB-34.md`.
 - **Objetivo:** usar a biblioteca no pipeline sem perder fallback, privacidade ou clareza operacional.
 - **Dependências:** PB-31, PB-32 e PB-33.
 - **Plano de implementação:** `GET/POST /me/music-library`; status na Home existente; carregamento
@@ -2022,11 +2022,10 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-34 `AGUARDANDO-QA` após correção do `DEF-PB34-01`.
-- **Último resultado concluído:** Dev corrigiu fallback vazio; `49 passed` focados e reprodutor QA
-  verde. Regressão completa: `468 passed, 6 skipped`, com falhas antigas PB-02/PB-06.
-- **Onde parou:** fallback robusto pronto para revalidação.
-- **Próxima ação exata:** QA revalida somente PB-34 antes dos testes integrados da Sprint 7.
+- **PB em andamento:** nenhum; PB-30..34 estão `VALIDADO`.
+- **Último resultado concluído:** QA revalidou PB-34 com `49 passed`; `DEF-PB34-01` encerrado.
+- **Onde parou:** todos os PBs da Sprint 7 aprovados individualmente.
+- **Próxima ação exata:** iniciar em fase separada a validação integrada da Sprint 7.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

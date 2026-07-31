@@ -1925,8 +1925,8 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 ##### CT-PB34-04 — Geração usa biblioteca ou fallback Top
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** ready usa perfil ponderado;
   ausente/falha usa PB-08 e ainda conclui quando há Tops suficientes. · **Automatizável:** Sim ·
-  **Status:** Reprovado — 2026-07-31; `DEF-PB34-01`: biblioteca existente com zero faixas retorna
-  pool vazio em vez de acionar fallback Top, interrompendo a geração.
+  **Status:** Aprovado — revalidação 2026-07-31; biblioteca ausente, com zero faixas ou pool vazio
+  aciona fallback Top PB-08, enquanto biblioteca utilizável segue ponderada.
 
 ##### CT-PB34-05 — Faixas nativas não usam Search
 - **Tipo:** regressão PB-25 · **Prioridade:** Alta · **Resultado esperado:** Top/playlist com ID/URI

@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-34 AGUARDANDO-QA após correção do `DEF-PB34-01`.
+- **Estado da implementação:** PB-30..34 VALIDADO; Sprint 7 pronta para validação integrada.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -373,8 +373,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** QA revalida PB-34 e o fallback de biblioteca vazia.
-- **Evidência Dev:** `49 passed`; ausência, zero faixas e pool vazio caem para Top.
+- **Próximo passo:** iniciar validação integrada da Sprint 7 em fase separada.
+- **Evidência QA:** `49 passed`; `CT-PB34-01..06` aprovados e `DEF-PB34-01` revalidado.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.
