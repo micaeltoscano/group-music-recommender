@@ -25,3 +25,24 @@ def test_qa_pb30_accepts_current_spotify_items_summary():
         12,
         "snapshot-current",
     )
+
+
+def test_qa_pb30_prefers_current_items_summary_over_legacy_tracks():
+    """Quando ambos existem, o campo vigente precisa ser a fonte de verdade."""
+    payload = {
+        "id": "PlaylistTransition01",
+        "owner": {"id": "qa-user"},
+        "collaborative": False,
+        "items": {"total": 12},
+        "tracks": {"total": 99},
+        "snapshot_id": "snapshot-transition",
+    }
+
+    metadata = _minimal_playlist_metadata(payload, user_spotify_id="qa-user")
+
+    assert metadata == (
+        "PlaylistTransition01",
+        "owned",
+        12,
+        "snapshot-transition",
+    )
