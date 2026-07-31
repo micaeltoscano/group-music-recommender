@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-33 AGUARDANDO-QA após correção do `DEF-PB33-01`.
+- **Estado da implementação:** PB-33 VALIDADO; PB-34 é o próximo PB acionável.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -373,8 +373,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** QA revalida PB-33 e o cenário assimétrico 500×50.
-- **Evidência Dev:** `26 passed`; cada perfil soma orçamento de voz 1.
+- **Próximo passo:** Dev inicia somente PB-34 em uma nova fase.
+- **Evidência QA:** `26 passed`; `CT-PB33-01..06` aprovados e `DEF-PB33-01` revalidado.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

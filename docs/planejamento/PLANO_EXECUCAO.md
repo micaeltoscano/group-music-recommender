@@ -1903,10 +1903,10 @@ limites que preservam contexto e justiça.
 
 #### PB-33 — Perfil ponderado e seleção limitada de candidatas
 
-- **Status:** AGUARDANDO-QA — `DEF-PB33-01` corrigido com orçamento de voz normalizado para soma 1
-  por perfil, preservando separadamente o peso absoluto da preferência. Reprodutor e regressão
-  focada: `26 passed`; regressão completa: `457 passed, 6 skipped`, mantendo apenas as duas falhas
-  preexistentes fora da PB-33 (PB-02/PB-06).
+- **Status:** VALIDADO — QA revalidou `CT-PB33-01..06` em 2026-07-31. `DEF-PB33-01` corrigido: cada
+  perfil soma orçamento de voz 1 mesmo em 500×50, preservando pesos absolutos separadamente.
+  Evidência focada: `26 passed`; regressão completa Dev: `457 passed, 6 skipped`, mantendo apenas
+  falhas preexistentes fora da PB-33 (PB-02/PB-06). Relatório: `PB-33.md`.
 - **Objetivo:** diferenciar preferência forte de repertório ocasional antes do ranking coletivo.
 - **Dependências:** PB-32.
 - **Plano de implementação:** modelo puro de sinal ponderado; pesos default `1.00/0.85/0.65/0.45/0.35`;
@@ -2019,11 +2019,10 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-33 `AGUARDANDO-QA` após correção do `DEF-PB33-01`.
-- **Último resultado concluído:** Dev normalizou a voz por perfil; `26 passed` focados e reprodutor
-  QA verde. Regressão completa: `457 passed, 6 skipped`, com falhas antigas PB-02/PB-06.
-- **Onde parou:** força absoluta e orçamento coletivo separados, prontos para revalidação.
-- **Próxima ação exata:** QA revalida somente PB-33; PB-34 continua no portão.
+- **PB em andamento:** nenhum; PB-33 `VALIDADO` e PB-34 é o próximo acionável.
+- **Último resultado concluído:** QA revalidou PB-33 com `26 passed`; `DEF-PB33-01` encerrado.
+- **Onde parou:** perfil ponderado, pool limitado e justiça por orçamento de voz aprovados.
+- **Próxima ação exata:** Dev pode iniciar somente PB-34 em uma nova fase.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

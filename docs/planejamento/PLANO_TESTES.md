@@ -1891,8 +1891,8 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 ##### CT-PB33-04 — Biblioteca grande não domina a pequena
 - **Tipo:** justiça · **Prioridade:** Alta · **Cenário:** membro A com 500, B com 50. ·
   **Resultado esperado:** contribuição/coverage por pessoa mantém pesos iguais; A não ganha 10x voz. ·
-  **Automatizável:** Sim · **Status:** Reprovado — 2026-07-31; `DEF-PB33-01`: após o cap, A ainda
-  acumula peso total 112,5 contra 22,5 de B, mantendo 5× mais voz.
+  **Automatizável:** Sim · **Status:** Aprovado — revalidação 2026-07-31; bibliotecas 500×50 agora
+  somam o mesmo orçamento de voz 1 por pessoa, preservando pesos relativos internos.
 
 ##### CT-PB33-05 — Playlist não equivale a Top no perfil
 - **Tipo:** compatibilidade/regressão · **Prioridade:** Alta · **Resultado esperado:** faixa ocasional
