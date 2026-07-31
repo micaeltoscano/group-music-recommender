@@ -1886,10 +1886,10 @@ limites que preservam contexto e justiça.
 
 #### PB-32 — Sincronização incremental e resiliente
 
-- **Status:** REPROVADO — QA independente em 2026-07-31 aprovou CT-PB32-01/02/03/04/06 e reprovou
-  CT-PB32-05. `DEF-PB32-01` (Alta): `_USER_LOCKS` conserva `asyncio.Lock` ligado a event loop antigo,
-  causando `RuntimeError` em sincronização concorrente; também não coordena workers/processos.
-  Evidência: `30 passed, 1 failed` focados. Relatório: `docs/relatorios-testes/PB-32.md`.
+- **Status:** AGUARDANDO-QA — `DEF-PB32-01` corrigido: locks locais agora pertencem ao event loop e
+  PostgreSQL usa advisory lock por usuário entre workers, com liberação garantida. Reprodutor e
+  regressão focada: `32 passed`; regressão completa: `444 passed, 6 skipped`, mantendo somente duas
+  falhas preexistentes fora da PB-32 (PB-02/PB-06).
 - **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
 - **Dependências:** PB-31.
 - **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
@@ -2016,12 +2016,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** PB-32 `REPROVADO`; PB-33 permanece bloqueado pelo portão.
-- **Último resultado concluído:** QA executou 31 testes focados: `30 passed, 1 failed`; CT-PB32-05
-  falhou por lock ligado a event loop anterior.
-- **Onde parou:** `DEF-PB32-01` aberto; demais CTs da PB-32 aprovados.
-- **Próxima ação exata:** Dev corrige somente PB-32, reexecuta concorrência com sessões independentes
-  e reemite o handoff para QA.
+- **PB em andamento:** nenhum; PB-32 `AGUARDANDO-QA` após correção do `DEF-PB32-01`.
+- **Último resultado concluído:** Dev corrigiu a concorrência; `32 passed` focados e reprodutor QA
+  verde. Regressão completa: `444 passed, 6 skipped`, com falhas preexistentes PB-02/PB-06.
+- **Onde parou:** lock por event loop + advisory lock PostgreSQL prontos para revalidação.
+- **Próxima ação exata:** QA revalida somente PB-32; PB-33 continua no portão.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

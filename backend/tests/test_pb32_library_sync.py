@@ -29,6 +29,7 @@ from app.db.models import (
 )
 from app.services.library_sync_service import (
     LibrarySyncRateLimited,
+    _user_sync_lock,
     sync_music_library,
 )
 from app.services.music_library_service import rebuild_music_library
@@ -255,6 +256,28 @@ def test_ct_pb32_04_cliente_identifica_payload_de_quota_sem_confundir_403_comum(
         spotify_client._raise_playlist_access_error(
             Response(403, json={"error": {"message": "Forbidden"}})
         )
+
+
+@pytest.mark.anyio
+async def test_ct_pb32_05_postgres_advisory_lock_e_sempre_liberado():
+    statements = []
+
+    class FakePostgresSession:
+        def get_bind(self):
+            return SimpleNamespace(dialect=SimpleNamespace(name="postgresql"))
+
+        def execute(self, statement, parameters):
+            statements.append((str(statement), parameters))
+
+    with pytest.raises(RuntimeError, match="falha controlada"):
+        async with _user_sync_lock(FakePostgresSession(), 7):
+            raise RuntimeError("falha controlada")
+
+    assert [statement for statement, _parameters in statements] == [
+        "SELECT pg_advisory_lock(:namespace, :user_id)",
+        "SELECT pg_advisory_unlock(:namespace, :user_id)",
+    ]
+    assert all(parameters["user_id"] == 7 for _statement, parameters in statements)
 
 
 @pytest.mark.anyio

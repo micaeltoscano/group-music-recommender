@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import weakref
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.clients import spotify_client
@@ -54,7 +57,38 @@ class LibrarySyncResult:
     retry_after: int | None = None
 
 
-_USER_LOCKS: dict[int, asyncio.Lock] = {}
+_LOOP_USER_LOCKS: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, dict[int, asyncio.Lock]
+] = weakref.WeakKeyDictionary()
+_POSTGRES_LOCK_NAMESPACE = 1_442_928_178
+
+
+def _loop_user_lock(user_id: int) -> asyncio.Lock:
+    """Mantém locks somente durante a vida do event loop que os criou."""
+    loop = asyncio.get_running_loop()
+    locks = _LOOP_USER_LOCKS.setdefault(loop, {})
+    return locks.setdefault(user_id, asyncio.Lock())
+
+
+@asynccontextmanager
+async def _user_sync_lock(db: Session, user_id: int):
+    """Serializa no processo e, em PostgreSQL, também entre workers."""
+    local_lock = _loop_user_lock(user_id)
+    async with local_lock:
+        uses_postgres = db.get_bind().dialect.name == "postgresql"
+        if uses_postgres:
+            db.execute(
+                text("SELECT pg_advisory_lock(:namespace, :user_id)"),
+                {"namespace": _POSTGRES_LOCK_NAMESPACE, "user_id": user_id},
+            )
+        try:
+            yield
+        finally:
+            if uses_postgres:
+                db.execute(
+                    text("SELECT pg_advisory_unlock(:namespace, :user_id)"),
+                    {"namespace": _POSTGRES_LOCK_NAMESPACE, "user_id": user_id},
+                )
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -195,8 +229,7 @@ async def sync_music_library(
     if current is not None and _is_fresh(current, attempted_at) and not force_refresh:
         return LibrarySyncResult(snapshot=current, cached=True, stale=False)
 
-    lock = _USER_LOCKS.setdefault(user_id, asyncio.Lock())
-    async with lock:
+    async with _user_sync_lock(db, user_id):
         db.expire_all()
         current = _find_library(db, user_id)
         if current is not None and _is_fresh(current, attempted_at) and not force_refresh:
