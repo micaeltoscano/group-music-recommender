@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.models import (
     User,
     UserMusicLibrarySnapshot,
+    UserMusicLibraryPlaylistState,
     UserMusicLibrarySource,
     UserMusicLibraryTrack,
     UserMusicSnapshot,
@@ -73,6 +74,7 @@ def rebuild_music_library(
                 spotify_playlist_id=playlist.spotify_playlist_id,
                 access_type=playlist.access_type,
                 rank=rank,
+                playlist_snapshot_id=playlist.snapshot_id,
             )
             for rank, track in enumerate(raw_tracks, start=1)
             if isinstance(track, dict)
@@ -100,6 +102,21 @@ def rebuild_music_library(
         )
         db.add(snapshot)
 
+        db.add_all(
+            [
+                UserMusicLibraryPlaylistState(
+                    id=uuid.uuid4(),
+                    snapshot_id=snapshot.id,
+                    user_id=user_id,
+                    spotify_playlist_id=playlist.spotify_playlist_id,
+                    playlist_snapshot_id=playlist.snapshot_id,
+                    access_type=playlist.access_type,
+                    tracks_total=playlist.tracks_total,
+                )
+                for playlist in inventory
+            ]
+        )
+
         for composed_track in composed:
             track = UserMusicLibraryTrack(
                 id=uuid.uuid4(),
@@ -123,6 +140,7 @@ def rebuild_music_library(
                         source_key=origin.source_key,
                         source_rank=origin.rank,
                         access_type=origin.access_type,
+                        playlist_snapshot_id=origin.playlist_snapshot_id,
                     )
                     for origin in composed_track.origins
                 ]

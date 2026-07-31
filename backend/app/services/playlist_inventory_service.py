@@ -64,6 +64,7 @@ async def refresh_playlist_inventory(
     user_id: int,
     *,
     now: datetime | None = None,
+    verify_content_access: bool = True,
 ) -> PlaylistInventoryResult:
     """Verifica playlists legíveis e promove o inventário somente após sucesso total."""
     user = db.get(User, user_id)
@@ -94,16 +95,17 @@ async def refresh_playlist_inventory(
             skipped.append(PlaylistInventorySkip(playlist_id, "duplicate"))
             continue
         seen.add(playlist_id)
-        try:
-            await spotify_client.get_playlist_items_page(
-                access_token,
-                playlist_id,
-                limit=1,
-                offset=0,
-            )
-        except spotify_client.SpotifyAccessForbidden:
-            skipped.append(PlaylistInventorySkip(playlist_id, "content_forbidden"))
-            continue
+        if verify_content_access:
+            try:
+                await spotify_client.get_playlist_items_page(
+                    access_token,
+                    playlist_id,
+                    limit=1,
+                    offset=0,
+                )
+            except spotify_client.SpotifyAccessForbidden:
+                skipped.append(PlaylistInventorySkip(playlist_id, "content_forbidden"))
+                continue
         eligible.append((playlist_id, access_type, tracks_total, snapshot_id))
 
     existing = {

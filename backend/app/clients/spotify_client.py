@@ -122,6 +122,10 @@ class SpotifyAccessForbidden(Exception):
     """Indica conteúdo Spotify conhecido, porém não legível pelo usuário atual."""
 
 
+class SpotifyQuotaExceeded(Exception):
+    """Indica bloqueio de quota distinto de rate limit transitório."""
+
+
 class SpotifyAPIUnavailable(Exception):
     """Indica falha HTTP externa sanitizada que não é 401, 403 ou 429."""
 
@@ -134,6 +138,23 @@ def _as_utc(value: datetime) -> datetime:
 
 def _scope_set(value: str | None) -> set[str]:
     return {scope for scope in (value or "").split() if scope}
+
+
+def _response_indicates_quota(response) -> bool:
+    try:
+        payload = response.json()
+    except ValueError:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        return False
+    reason = error.get("reason")
+    message = error.get("message")
+    return reason == "QUOTA_EXCEEDED" or (
+        isinstance(message, str) and "quota" in message.lower()
+    )
 
 
 def _require_stored_scopes(
@@ -234,6 +255,8 @@ async def get_user_top_items(
         )
         if response.status_code == 429:
             raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))
+        if response.status_code == 403 and _response_indicates_quota(response):
+            raise SpotifyQuotaExceeded("Quota Spotify indisponível para esta aplicação.")
         response.raise_for_status()
         payload = response.json()
 
@@ -275,6 +298,8 @@ def _raise_playlist_access_error(response) -> None:
     if response.status_code == 401:
         raise ReauthenticationRequired("Autorização Spotify expirada ou inválida.")
     if response.status_code == 403:
+        if _response_indicates_quota(response):
+            raise SpotifyQuotaExceeded("Quota Spotify indisponível para esta aplicação.")
         raise SpotifyAccessForbidden("Conteúdo da playlist não permitido para este usuário.")
     if response.status_code == 429:
         raise SpotifyRateLimited(_retry_after_seconds(response.headers.get("Retry-After")))

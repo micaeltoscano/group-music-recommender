@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-31 VALIDADO; PB-32 é o próximo PB acionável.
+- **Estado da implementação:** PB-32 AGUARDANDO-QA após implementação completa.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -373,8 +373,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** implementação do PB-32.
-- **Ação inicial:** ler o contrato e `CT-PB32-01..06`, então marcar somente PB-32 em implementação.
+- **Próximo passo:** validação independente do PB-32.
+- **Evidência Dev:** `CT-PB32-01..06`, migração reversível e regressão focada com `29 passed`.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

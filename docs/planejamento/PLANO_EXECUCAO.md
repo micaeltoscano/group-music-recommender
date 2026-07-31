@@ -1886,7 +1886,10 @@ limites que preservam contexto e justiça.
 
 #### PB-32 — Sincronização incremental e resiliente
 
-- **Status:** A-FAZER — liberado após PB-31 `VALIDADO`.
+- **Status:** AGUARDANDO-QA — TTL de sete dias, sync incremental por `snapshot_id`, paginação,
+  concorrência externa configurável, cache stale em 429/quota, migração reversível e
+  `CT-PB32-01..06` implementados. Testes focados: `29 passed`; regressão completa:
+  `440 passed, 6 skipped`, com duas falhas preexistentes fora do escopo (PB-02 e PB-06).
 - **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
 - **Dependências:** PB-31.
 - **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
@@ -2013,17 +2016,17 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-31 `VALIDADO` e PB-32 é o próximo acionável.
-- **Último resultado concluído:** QA validou PB-31 com `14 passed` focados e
-  `434 passed, 6 skipped` na regressão completa.
-- **Onde parou:** biblioteca pessoal de até 500 faixas, proveniência normalizada, migração `0020` e
-  remoção de dados prontas.
-- **Próxima ação exata:** Dev inicia somente PB-32 em uma nova fase e respeita seu portão de QA.
+- **PB em andamento:** nenhum; PB-32 `AGUARDANDO-QA` no portão obrigatório.
+- **Último resultado concluído:** Dev implementou PB-32 com `29 passed` focados; regressão completa
+  em `440 passed, 6 skipped`, além de duas falhas preexistentes fora do escopo em PB-02/PB-06.
+- **Onde parou:** sincronização incremental, TTL, cache stale, controle de quota/rate limit,
+  concorrência por usuário e migração `0021` prontos para QA.
+- **Próxima ação exata:** QA valida somente PB-32; Dev não inicia PB-33 antes de `VALIDADO`.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull
   ```
-- **Bloqueios:** nenhum para iniciar PB-32. O spike real permanece reservado à validação integrada e
+- **Bloqueios:** nenhum para validar PB-32. O spike real permanece reservado à validação integrada e
   depende das três contas de demonstração autorizadas no app.
 
 ## 16. Checklist de encerramento de sessão

@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     # --- Snapshots musicais (PB-08) -----------------------------------------
     music_snapshot_ttl_days: int = Field(default=7, ge=1)
     spotify_top_items_limit: int = Field(default=50, ge=1, le=50)
+    music_library_ttl_days: int = Field(default=7, ge=1)
+    music_library_external_concurrency: int = Field(default=1, ge=1, le=5)
 
     # --- Modos pós-MVP (PB-21) ---------------------------------------------
     # Opt-in: o modo Descoberta não aparece nem pode ser selecionado sem flag.

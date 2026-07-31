@@ -33,6 +33,7 @@ class PlaylistTrackSignal:
     spotify_playlist_id: str
     access_type: str
     rank: int
+    playlist_snapshot_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class LibraryOrigin:
     source_ref: str
     rank: int
     access_type: str | None = None
+    playlist_snapshot_id: str | None = None
 
     @property
     def source_key(self) -> str:
@@ -177,6 +179,7 @@ def compose_music_library(
                     source_ref=playlist_id,
                     rank=signal.rank,
                     access_type=signal.access_type,
+                    playlist_snapshot_id=signal.playlist_snapshot_id,
                 ),
             )
 

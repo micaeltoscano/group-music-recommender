@@ -306,12 +306,60 @@ class UserMusicLibrarySnapshot(Base):
     )
     track_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     built_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_sync_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_sync_error_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_sync_retry_after: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="music_library_snapshot")
     tracks: Mapped[list["UserMusicLibraryTrack"]] = relationship(
         back_populates="snapshot",
         cascade="all, delete-orphan",
         order_by="UserMusicLibraryTrack.position",
+    )
+    playlist_states: Mapped[list["UserMusicLibraryPlaylistState"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+    )
+
+
+class UserMusicLibraryPlaylistState(Base):
+    """Snapshot do inventário usado para decidir refetch incremental (PB-32)."""
+
+    __tablename__ = "user_music_library_playlist_states"
+    __table_args__ = (
+        UniqueConstraint(
+            "snapshot_id",
+            "spotify_playlist_id",
+            name="uq_music_library_snapshot_playlist",
+        ),
+        CheckConstraint(
+            "access_type IN ('owned', 'collaborative')",
+            name="ck_music_library_playlist_state_access",
+        ),
+        CheckConstraint(
+            "tracks_total >= 0",
+            name="ck_music_library_playlist_state_total",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    spotify_playlist_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    playlist_snapshot_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    access_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    tracks_total: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    snapshot: Mapped["UserMusicLibrarySnapshot"] = relationship(
+        back_populates="playlist_states"
     )
 
 
@@ -396,6 +444,7 @@ class UserMusicLibrarySource(Base):
     source_key: Mapped[str] = mapped_column(String(512), nullable=False)
     source_rank: Mapped[int] = mapped_column(Integer, nullable=False)
     access_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    playlist_snapshot_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     library_track: Mapped["UserMusicLibraryTrack"] = relationship(back_populates="origins")
 
