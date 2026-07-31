@@ -1920,10 +1920,10 @@ limites que preservam contexto e justiça.
 
 #### PB-34 — Integração e observabilidade da biblioteca ampliada
 
-- **Status:** AGUARDANDO-QA — status/refresh sanitizados, Home integrada, biblioteca ponderada no
-  pipeline com fallback Top, identidade Spotify nativa e explicação apenas agregada implementados.
-  `CT-PB34-01..06`: `9 passed`; regressões focadas: `54 passed`; build Vite aprovado; suíte completa:
-  `466 passed, 6 skipped`, mantendo duas falhas preexistentes fora da PB-34 (PB-02/PB-06).
+- **Status:** REPROVADO — QA independente em 2026-07-31 aprovou CT-PB34-01/02/03/05/06 e reprovou
+  CT-PB34-04. `DEF-PB34-01` (Alta): biblioteca existente com `track_count=0` retorna pool vazio em
+  vez de fallback Top PB-08, causando falha de geração. Evidência: `47 passed, 1 failed` focados.
+  Relatório: `PB-34.md`.
 - **Objetivo:** usar a biblioteca no pipeline sem perder fallback, privacidade ou clareza operacional.
 - **Dependências:** PB-31, PB-32 e PB-33.
 - **Plano de implementação:** `GET/POST /me/music-library`; status na Home existente; carregamento
@@ -2022,11 +2022,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-34 `AGUARDANDO-QA` no portão obrigatório.
-- **Último resultado concluído:** Dev implementou PB-34 com `9 passed` próprios, `54 passed` focados
-  e build Vite verde; regressão completa em `466 passed, 6 skipped` mais PB-02/PB-06 preexistentes.
-- **Onde parou:** integração ponta a ponta da biblioteca ampliada pronta para QA.
-- **Próxima ação exata:** QA valida somente PB-34; validação integrada da Sprint aguarda o veredito.
+- **PB em andamento:** PB-34 `REPROVADO`; validação integrada da Sprint permanece bloqueada.
+- **Último resultado concluído:** QA executou 48 testes focados: `47 passed, 1 failed`; fallback para
+  biblioteca vazia falhou.
+- **Onde parou:** `DEF-PB34-01` aberto; demais CTs aprovados.
+- **Próxima ação exata:** Dev corrige somente o fallback vazio e reenvia PB-34 ao QA.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

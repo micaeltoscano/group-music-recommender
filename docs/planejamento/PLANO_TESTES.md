@@ -1910,31 +1910,34 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 ##### CT-PB34-01 — Status da biblioteca é sanitizado
 - **Tipo:** API/privacidade · **Prioridade:** Alta · **Resultado esperado:** estado, 0..500, idade,
   stale/warning e totais agregados do próprio usuário; sem lista privada. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado — 2026-07-31; payload fechado e sem IDs de playlist/faixa.
 
 ##### CT-PB34-02 — Refresh idempotente e acionável
 - **Tipo:** API · **Prioridade:** Alta · **Resultado esperado:** reenvio não duplica; reauth/rate/quota
-  têm respostas distintas. · **Automatizável:** Sim · **Status:** Não executado
+  têm respostas distintas. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; 429,
+  `Retry-After`, quota e reauth distintos e sanitizados.
 
 ##### CT-PB34-03 — Home mostra quantidade e idade
 - **Tipo:** frontend · **Prioridade:** Média · **Resultado esperado:** componente existente exibe
   sync sem tela nova, com loading/stale/erro acessíveis. · **Automatizável:** Parcialmente ·
-  **Status:** Não executado
+  **Status:** Aprovado — 2026-07-31; estados presentes na Home e build Vite verde.
 
 ##### CT-PB34-04 — Geração usa biblioteca ou fallback Top
 - **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** ready usa perfil ponderado;
   ausente/falha usa PB-08 e ainda conclui quando há Tops suficientes. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Reprovado — 2026-07-31; `DEF-PB34-01`: biblioteca existente com zero faixas retorna
+  pool vazio em vez de acionar fallback Top, interrompendo a geração.
 
 ##### CT-PB34-05 — Faixas nativas não usam Search
 - **Tipo:** regressão PB-25 · **Prioridade:** Alta · **Resultado esperado:** Top/playlist com ID/URI
   válidos são reutilizados; apenas externas usam Search. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado — 2026-07-31; identidade nativa e peso 0,45 preservados.
 
 ##### CT-PB34-06 — Explicação agregada sem origem privada
 - **Tipo:** privacidade/resultado · **Prioridade:** Alta · **Resultado esperado:** proporções
   Top/playlist/contexto, sem nomes de playlists, faixas de perfil bruto ou usuário associado. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; explicação contém somente percentuais
+  agregados.
 
 ### Testes integrados da Sprint 7
 
