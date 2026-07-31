@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-32 AGUARDANDO-QA após correção do `DEF-PB32-01`.
+- **Estado da implementação:** PB-32 VALIDADO; PB-33 é o próximo PB acionável.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -373,8 +373,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** QA revalida PB-32 e o reprodutor de concorrência.
-- **Evidência Dev:** `32 passed`; lock por event loop e advisory lock PostgreSQL exercitados.
+- **Próximo passo:** Dev inicia somente PB-33 em uma nova fase.
+- **Evidência QA:** `32 passed`; `CT-PB32-01..06` aprovados e `DEF-PB32-01` revalidado.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

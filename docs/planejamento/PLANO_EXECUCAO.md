@@ -1886,10 +1886,10 @@ limites que preservam contexto e justiça.
 
 #### PB-32 — Sincronização incremental e resiliente
 
-- **Status:** AGUARDANDO-QA — `DEF-PB32-01` corrigido: locks locais agora pertencem ao event loop e
-  PostgreSQL usa advisory lock por usuário entre workers, com liberação garantida. Reprodutor e
-  regressão focada: `32 passed`; regressão completa: `444 passed, 6 skipped`, mantendo somente duas
-  falhas preexistentes fora da PB-32 (PB-02/PB-06).
+- **Status:** VALIDADO — QA revalidou `CT-PB32-01..06` em 2026-07-31. `DEF-PB32-01` corrigido e
+  revalidado com sessões independentes, locks isolados por event loop e advisory lock PostgreSQL por
+  usuário. Evidência focada: `32 passed`; regressão completa Dev: `444 passed, 6 skipped`, mantendo
+  somente falhas preexistentes fora da PB-32 (PB-02/PB-06). Relatório: `PB-32.md`.
 - **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
 - **Dependências:** PB-31.
 - **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
@@ -2016,11 +2016,10 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-32 `AGUARDANDO-QA` após correção do `DEF-PB32-01`.
-- **Último resultado concluído:** Dev corrigiu a concorrência; `32 passed` focados e reprodutor QA
-  verde. Regressão completa: `444 passed, 6 skipped`, com falhas preexistentes PB-02/PB-06.
-- **Onde parou:** lock por event loop + advisory lock PostgreSQL prontos para revalidação.
-- **Próxima ação exata:** QA revalida somente PB-32; PB-33 continua no portão.
+- **PB em andamento:** nenhum; PB-32 `VALIDADO` e PB-33 é o próximo acionável.
+- **Último resultado concluído:** QA revalidou PB-32 com `32 passed`; `DEF-PB32-01` encerrado.
+- **Onde parou:** sincronização incremental e resiliente aprovada, incluindo concorrência.
+- **Próxima ação exata:** Dev pode iniciar somente PB-33 em uma nova fase.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

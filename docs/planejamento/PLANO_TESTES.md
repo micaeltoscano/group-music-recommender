@@ -1862,8 +1862,8 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 ##### CT-PB32-05 — Sincronizações concorrentes convergem
 - **Tipo:** concorrência · **Prioridade:** Alta · **Resultado esperado:** sem HTTP 500/duplicidade;
   biblioteca final única e pronta. Deve reproduzir e fechar `DEF-PB08-01`. · **Automatizável:** Sim
-  com PostgreSQL · **Status:** Reprovado — 2026-07-31; `DEF-PB32-01`: lock global reutilizado entre
-  event loops lança `RuntimeError` e a proteção não atravessa processos/workers.
+  com PostgreSQL · **Status:** Aprovado — revalidação 2026-07-31; sessões independentes convergiram,
+  locks não vazam entre event loops e advisory lock PostgreSQL é adquirido/liberado por usuário.
 
 ##### CT-PB32-06 — Falha inicial não apaga Tops
 - **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** sem biblioteca anterior,
