@@ -1807,28 +1807,33 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 
 ##### CT-PB31-01 — Tops ocupam as primeiras vagas
 - **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** até 150 Tops únicos das
-  três faixas temporais; artistas não contam no cap. · **Automatizável:** Sim · **Status:** Não executado
+  três faixas temporais; artistas não contam no cap. · **Automatizável:** Sim · **Status:** Aprovado
+  — 2026-07-31; 150 Tops ocuparam as primeiras posições e 1.000 artistas não consumiram vagas.
 
 ##### CT-PB31-02 — Limite absoluto 500
 - **Tipo:** fronteira/banco · **Prioridade:** Alta · **Cenários:** 0, 499, 500, 501 e milhares de
   entradas. · **Resultado esperado:** contagem persistida sempre `<=500`. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado — 2026-07-31; fronteiras 0/499/500/501/2.000 persistiram no máximo 500.
 
 ##### CT-PB31-03 — Dedupe preserva proveniência
 - **Tipo:** duplicidade · **Prioridade:** Alta · **Resultado esperado:** uma vaga por ID, com todas as
-  origens/ranks referenciadas. · **Automatizável:** Sim · **Status:** Não executado
+  origens/ranks referenciadas. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; Tops em
+  duas faixas e duas playlists produziram uma faixa com quatro origens/ranks.
 
 ##### CT-PB31-04 — Preenchimento distribuído entre playlists
 - **Tipo:** justiça/determinismo · **Prioridade:** Alta · **Resultado esperado:** round-robin estável;
-  uma playlist longa não elimina todas as demais. · **Automatizável:** Sim · **Status:** Não executado
+  uma playlist longa não elimina todas as demais. · **Automatizável:** Sim · **Status:** Aprovado —
+  2026-07-31; permutação de entrada foi estável e playlist 2×100 permaneceu representada.
 
 ##### CT-PB31-05 — Metadados mínimos e remoção
 - **Tipo:** privacidade · **Prioridade:** Alta · **Resultado esperado:** sem payload bruto; exclusão
-  da conta apaga inventário, biblioteca e sinais. · **Automatizável:** Sim · **Status:** Não executado
+  da conta apaga inventário, biblioteca e sinais. · **Automatizável:** Sim · **Status:** Aprovado —
+  2026-07-31; payload privado não foi persistido e exclusão preservou o outro usuário.
 
 ##### CT-PB31-06 — Migração reversível e unicidade
 - **Tipo:** banco · **Prioridade:** Alta · **Resultado esperado:** upgrade/downgrade/upgrade; uma linha
-  por usuário/faixa mesmo sob duplicidade. · **Automatizável:** Parcialmente · **Status:** Não executado
+  por usuário/faixa mesmo sob duplicidade. · **Automatizável:** Parcialmente · **Status:** Aprovado —
+  2026-07-31; ciclo reversível, unicidade, checks e rollback atômico comprovados.
 
 ### PB-32 — Sincronização incremental e resiliente
 

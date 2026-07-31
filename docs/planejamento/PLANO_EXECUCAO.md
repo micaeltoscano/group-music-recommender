@@ -1853,7 +1853,7 @@ limites que preservam contexto e justiça.
 
 #### PB-31 — Biblioteca musical limitada a 500 faixas
 
-- **Status:** AGUARDANDO-QA — implementado no commit `04ac876`; validação independente pendente.
+- **Status:** VALIDADO — `CT-PB31-01..06` e testes adversariais aprovados pelo QA em 2026-07-31.
 - **Objetivo:** compor e persistir até 500 faixas únicas por pessoa com proveniência completa.
 - **Dependências:** PB-30.
 - **Plano de implementação:** tabelas normalizadas de faixa e vínculo usuário/faixa; sinais de Top
@@ -1877,13 +1877,16 @@ limites que preservam contexto e justiça.
 - **Evidências do Dev:** `11 passed` focados; `32 passed` relacionados; regressão completa
   `431 passed, 6 skipped`; build Vite aprovado; `compileall`, `pip check`, Alembic head, migração
   reversível isolada, SQL PostgreSQL offline e `git diff --check` aprovados.
-- **Critérios pendentes:** nenhum tecnicamente; `CT-PB31-01..06` aguardam QA independente.
-- **Próxima ação:** QA executa `CT-PB31-01..06`, com atenção ao cap após dedupe, justiça do
-  round-robin, atomicidade da substituição e remoção isolada. PB-32 permanece no portão.
+- **Handoff do Dev:** nenhum critério técnico pendente; `CT-PB31-01..06` foram entregues ao QA com
+  atenção solicitada ao cap, round-robin, atomicidade e remoção isolada.
+- **Resultado do QA:** `14 passed` focados (11 Dev + 3 adversariais); regressão completa
+  `434 passed, 6 skipped`; migração `0020`, rollback atômico e build Vite aprovados. Nenhum defeito
+  alto, bloqueante ou regressão encontrado. Relatório: `docs/relatorios-testes/PB-31.md`.
+- **Próxima ação após QA:** PB-32 liberado para uma nova fase de implementação.
 
 #### PB-32 — Sincronização incremental e resiliente
 
-- **Status:** A-FAZER — depende de PB-31 `VALIDADO`.
+- **Status:** A-FAZER — liberado após PB-31 `VALIDADO`.
 - **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
 - **Dependências:** PB-31.
 - **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
@@ -2010,25 +2013,25 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** PB-31 `AGUARDANDO-QA`; PB-30 permanece `VALIDADO`.
-- **Último resultado concluído:** PB-31 implementado no commit `04ac876`, com `11 passed` focados e
-  `431 passed, 6 skipped` na regressão completa.
+- **PB em andamento:** nenhum; PB-31 `VALIDADO` e PB-32 é o próximo acionável.
+- **Último resultado concluído:** QA validou PB-31 com `14 passed` focados e
+  `434 passed, 6 skipped` na regressão completa.
 - **Onde parou:** biblioteca pessoal de até 500 faixas, proveniência normalizada, migração `0020` e
   remoção de dados prontas.
-- **Próxima ação exata:** QA executa `CT-PB31-01..06`; somente após `VALIDADO` iniciar PB-32.
+- **Próxima ação exata:** Dev inicia somente PB-32 em uma nova fase e respeita seu portão de QA.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull
   ```
-- **Bloqueios:** portão de QA do PB-31. O spike real permanece reservado à validação integrada e
+- **Bloqueios:** nenhum para iniciar PB-32. O spike real permanece reservado à validação integrada e
   depende das três contas de demonstração autorizadas no app.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — Dev com 11 focados, 32 relacionados, regressão backend
-  431/6, build Vite e migração reversível.
+- [x] Rodei as verificações relevantes. — QA com 14 focados, regressão backend 434/6, build Vite,
+  migração reversível e rollback atômico.
 - [x] Comparei o plano com o backlog e os limites da integração Spotify.
-- [x] Atualizei status sem declarar validação independente. — PB-31 `AGUARDANDO-QA`.
+- [x] Atualizei status após validação independente. — PB-31 `VALIDADO`.
 - [x] Registrei decisões ou bloqueios novos. — teto 500, TTL 7 dias, pool 250 e exceção do Product Owner.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
 - [x] Atualizei a documentação afetada. — backlog, planos de execução/testes e mapa de trabalho.
