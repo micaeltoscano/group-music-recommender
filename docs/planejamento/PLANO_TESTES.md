@@ -1839,30 +1839,36 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 
 ##### CT-PB32-01 — Cache fresco faz zero chamada Spotify
 - **Tipo:** cache · **Prioridade:** Alta · **Resultado esperado:** biblioteca <7 dias retornada sem
-  inventário, itens ou Top externo. · **Automatizável:** Sim · **Status:** Não executado
+  inventário, itens ou Top externo. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31;
+  mock adversarial confirmou zero chamadas externas com cache fresco.
 
 ##### CT-PB32-02 — `snapshot_id` evita refetch de itens
 - **Tipo:** cache incremental · **Prioridade:** Alta · **Resultado esperado:** playlist inalterada não
-  chama `/items`; apenas alteradas são paginadas. · **Automatizável:** Sim · **Status:** Não executado
+  chama `/items`; apenas alteradas são paginadas. · **Automatizável:** Sim · **Status:** Aprovado —
+  2026-07-31; apenas o `snapshot_id` alterado acionou download.
 
 ##### CT-PB32-03 — Sem N+1 por faixa
 - **Tipo:** performance/mock · **Prioridade:** Alta · **Cenário:** 500 itens. · **Resultado esperado:**
   somente inventário, páginas de Tops/itens e zero `GET /tracks/{id}` ou Search. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; páginas de 50 e concorrência externa 1
+  comprovadas, sem busca individual.
 
 ##### CT-PB32-04 — 429 e quota preservam cache pronto
 - **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** respeita `Retry-After`,
   distingue `QUOTA_EXCEEDED`, não promove parcial e serve stale. · **Automatizável:** Sim ·
-  **Status:** Não executado
+  **Status:** Aprovado — 2026-07-31; QA adicionou falha 429 na segunda playlist e confirmou que a
+  primeira página baixada não substituiu o cache pronto.
 
 ##### CT-PB32-05 — Sincronizações concorrentes convergem
 - **Tipo:** concorrência · **Prioridade:** Alta · **Resultado esperado:** sem HTTP 500/duplicidade;
   biblioteca final única e pronta. Deve reproduzir e fechar `DEF-PB08-01`. · **Automatizável:** Sim
-  com PostgreSQL · **Status:** Não executado
+  com PostgreSQL · **Status:** Reprovado — 2026-07-31; `DEF-PB32-01`: lock global reutilizado entre
+  event loops lança `RuntimeError` e a proteção não atravessa processos/workers.
 
 ##### CT-PB32-06 — Falha inicial não apaga Tops
 - **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** sem biblioteca anterior,
-  erro acionável; snapshot PB-08 permanece intacto. · **Automatizável:** Sim · **Status:** Não executado
+  erro acionável; snapshot PB-08 permanece intacto. · **Automatizável:** Sim · **Status:** Aprovado —
+  2026-07-31; 429 inicial preservou os três snapshots Top e não criou biblioteca parcial.
 
 ### PB-33 — Perfil ponderado e seleção limitada de candidatas
 

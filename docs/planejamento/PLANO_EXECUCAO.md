@@ -1886,10 +1886,10 @@ limites que preservam contexto e justiça.
 
 #### PB-32 — Sincronização incremental e resiliente
 
-- **Status:** AGUARDANDO-QA — TTL de sete dias, sync incremental por `snapshot_id`, paginação,
-  concorrência externa configurável, cache stale em 429/quota, migração reversível e
-  `CT-PB32-01..06` implementados. Testes focados: `29 passed`; regressão completa:
-  `440 passed, 6 skipped`, com duas falhas preexistentes fora do escopo (PB-02 e PB-06).
+- **Status:** REPROVADO — QA independente em 2026-07-31 aprovou CT-PB32-01/02/03/04/06 e reprovou
+  CT-PB32-05. `DEF-PB32-01` (Alta): `_USER_LOCKS` conserva `asyncio.Lock` ligado a event loop antigo,
+  causando `RuntimeError` em sincronização concorrente; também não coordena workers/processos.
+  Evidência: `30 passed, 1 failed` focados. Relatório: `docs/relatorios-testes/PB-32.md`.
 - **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
 - **Dependências:** PB-31.
 - **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
@@ -2016,12 +2016,12 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-32 `AGUARDANDO-QA` no portão obrigatório.
-- **Último resultado concluído:** Dev implementou PB-32 com `29 passed` focados; regressão completa
-  em `440 passed, 6 skipped`, além de duas falhas preexistentes fora do escopo em PB-02/PB-06.
-- **Onde parou:** sincronização incremental, TTL, cache stale, controle de quota/rate limit,
-  concorrência por usuário e migração `0021` prontos para QA.
-- **Próxima ação exata:** QA valida somente PB-32; Dev não inicia PB-33 antes de `VALIDADO`.
+- **PB em andamento:** PB-32 `REPROVADO`; PB-33 permanece bloqueado pelo portão.
+- **Último resultado concluído:** QA executou 31 testes focados: `30 passed, 1 failed`; CT-PB32-05
+  falhou por lock ligado a event loop anterior.
+- **Onde parou:** `DEF-PB32-01` aberto; demais CTs da PB-32 aprovados.
+- **Próxima ação exata:** Dev corrige somente PB-32, reexecuta concorrência com sessões independentes
+  e reemite o handoff para QA.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull
