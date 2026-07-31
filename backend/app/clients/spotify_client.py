@@ -20,11 +20,18 @@ SPOTIFY_API_BASE = "https://api.spotify.com/v1"
 # playlist-modify-private (padrão)
 # user-top-read (para snapshots)
 # user-read-private (para mercado/país)
-# playlist-read-private (inventário pessoal da Sprint 7)
+# playlist-read-private e playlist-read-collaborative (inventário da Sprint 7)
 PLAYLIST_READ_PRIVATE_SCOPE = "playlist-read-private"
+PLAYLIST_READ_COLLABORATIVE_SCOPE = "playlist-read-collaborative"
+PLAYLIST_INVENTORY_SCOPES = frozenset(
+    {
+        PLAYLIST_READ_PRIVATE_SCOPE,
+        PLAYLIST_READ_COLLABORATIVE_SCOPE,
+    }
+)
 SCOPES = (
     "user-top-read playlist-modify-private user-read-private "
-    f"{PLAYLIST_READ_PRIVATE_SCOPE}"
+    f"{PLAYLIST_READ_PRIVATE_SCOPE} {PLAYLIST_READ_COLLABORATIVE_SCOPE}"
 )
 
 def get_auth_url(state: str) -> str:

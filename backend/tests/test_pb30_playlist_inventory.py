@@ -138,6 +138,7 @@ def test_ct_pb30_01_scope_missing_requires_reconsent_and_callback_clears_flag(
     )
     auth_url = spotify_client.get_auth_url("state")
     assert "playlist-read-private" in auth_url
+    assert "playlist-read-collaborative" in auth_url
 
     user_id, _ = _seed_user(session_factory, scopes="user-top-read")
     db = session_factory()
@@ -147,10 +148,13 @@ def test_ct_pb30_01_scope_missing_requires_reconsent_and_callback_clears_flag(
                 spotify_client.get_valid_access_token(
                     db,
                     user_id,
-                    required_scopes={spotify_client.PLAYLIST_READ_PRIVATE_SCOPE},
+                    required_scopes=spotify_client.PLAYLIST_INVENTORY_SCOPES,
                 )
             )
-        assert error.value.missing_scopes == ("playlist-read-private",)
+        assert error.value.missing_scopes == (
+            "playlist-read-collaborative",
+            "playlist-read-private",
+        )
     finally:
         db.close()
 
@@ -179,6 +183,7 @@ def test_ct_pb30_01_scope_missing_requires_reconsent_and_callback_clears_flag(
         stored = db.query(SpotifyToken).filter_by(user_id=user_id).one()
         assert stored.reauth_required_at is None
         assert spotify_client.PLAYLIST_READ_PRIVATE_SCOPE in stored.scopes.split()
+        assert spotify_client.PLAYLIST_READ_COLLABORATIVE_SCOPE in stored.scopes.split()
     finally:
         db.close()
 
@@ -264,7 +269,7 @@ def test_ct_pb30_03_and_04_only_accessible_minimal_inventory_is_persisted(
     )
 
     async def valid_token(_db, _user_id, *, required_scopes=()):
-        assert required_scopes == {spotify_client.PLAYLIST_READ_PRIVATE_SCOPE}
+        assert required_scopes == spotify_client.PLAYLIST_INVENTORY_SCOPES
         return "access-fake"
 
     async def playlists(_token):

@@ -33,18 +33,20 @@ def _minimal_playlist_metadata(
     playlist_id = raw.get("id")
     snapshot_id = raw.get("snapshot_id")
     owner = raw.get("owner")
-    tracks = raw.get("tracks")
+    items_summary = raw.get("items")
+    if items_summary is None:
+        items_summary = raw.get("tracks")
     if (
         not isinstance(playlist_id, str)
         or not playlist_id.isalnum()
         or not isinstance(snapshot_id, str)
         or not snapshot_id
         or not isinstance(owner, dict)
-        or not isinstance(tracks, dict)
+        or not isinstance(items_summary, dict)
     ):
         return None
     owner_id = owner.get("id")
-    tracks_total = tracks.get("total")
+    tracks_total = items_summary.get("total")
     if not isinstance(tracks_total, int) or isinstance(tracks_total, bool) or tracks_total < 0:
         return None
 
@@ -72,7 +74,7 @@ async def refresh_playlist_inventory(
     access_token = await spotify_client.get_valid_access_token(
         db,
         user_id,
-        required_scopes={spotify_client.PLAYLIST_READ_PRIVATE_SCOPE},
+        required_scopes=spotify_client.PLAYLIST_INVENTORY_SCOPES,
     )
     raw_playlists = await spotify_client.get_current_user_playlists(access_token)
 
