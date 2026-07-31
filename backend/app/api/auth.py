@@ -111,6 +111,7 @@ async def callback(
             spotify_token.refresh_token = encrypted_refresh
         spotify_token.token_expires_at = token_expires_at
         spotify_token.scopes = token_data.get("scope")
+        spotify_token.reauth_required_at = None
 
     # Cria AppSession
     raw_session_token = secrets.token_urlsafe(64)

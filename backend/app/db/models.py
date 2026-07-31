@@ -69,6 +69,10 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    playlist_inventory: Mapped[list["UserPlaylistInventory"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
         return f"<User id={self.id} spotify_id={self.spotify_id!r}>"
@@ -229,6 +233,47 @@ class UserMusicSnapshot(Base):
         return (
             f"<UserMusicSnapshot id={self.id} user_id={self.user_id} "
             f"time_range={self.time_range!r}>"
+        )
+
+
+class UserPlaylistInventory(Base):
+    """Metadados mínimos de uma playlist legível pelo usuário (PB-30)."""
+
+    __tablename__ = "user_playlist_inventory"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "spotify_playlist_id",
+            name="uq_playlist_inventory_user_playlist",
+        ),
+        CheckConstraint(
+            "access_type IN ('owned', 'collaborative')",
+            name="ck_playlist_inventory_access_type",
+        ),
+        CheckConstraint(
+            "tracks_total >= 0",
+            name="ck_playlist_inventory_tracks_total",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    spotify_playlist_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    access_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    tracks_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    snapshot_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="playlist_inventory")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<UserPlaylistInventory user_id={self.user_id} "
+            f"spotify_playlist_id={self.spotify_playlist_id!r}>"
         )
 
 
