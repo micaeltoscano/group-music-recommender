@@ -108,13 +108,20 @@ def load_library_generation_data(
         .filter(UserMusicLibrarySnapshot.user_id.in_(user_ids))
         .all()
     }
-    if any(user_id not in snapshots for user_id in user_ids):
+    if any(
+        user_id not in snapshots or snapshots[user_id].track_count == 0
+        for user_id in user_ids
+    ):
         return None
     profiles = tuple(
         build_weighted_profile(user_id, _library_signals(snapshots[user_id]))
         for user_id in user_ids
     )
+    if any(not profile.tracks for profile in profiles):
+        return None
     merged = merge_weighted_candidates(profiles)
+    if not merged:
+        return None
     candidates = tuple(
         CandidateTrack(
             track_id=item.track.spotify_track_id,

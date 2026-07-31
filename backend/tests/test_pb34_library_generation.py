@@ -11,7 +11,12 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.auth import get_current_user
 from app.db.base import Base
-from app.db.models import User, UserMusicSnapshot, UserPlaylistInventory
+from app.db.models import (
+    User,
+    UserMusicLibrarySnapshot,
+    UserMusicSnapshot,
+    UserPlaylistInventory,
+)
 from app.db.session import get_db
 from app.engine.scoring import calculate_individual_score
 from app.engine.taste import UserTasteProfile
@@ -184,6 +189,26 @@ def test_ct_pb34_04_biblioteca_pronta_gera_pool_e_ausente_cai_para_top(environme
         assert len(ready.profiles[0].tracks) == 2
         assert {candidate.id for candidate in ready.candidates} == {"Top01", "Playlist01"}
         assert load_library_generation_data(db, [user_id, 999999]) is None
+    finally:
+        db.close()
+
+
+def test_ct_pb34_04_biblioteca_vazia_tambem_cai_para_top(environment):
+    _client, factory, _user_id = environment
+    db = factory()
+    try:
+        empty_user = User(spotify_id="PB34Empty", display_name="Vazio")
+        db.add(empty_user)
+        db.flush()
+        db.add(
+            UserMusicLibrarySnapshot(
+                user_id=empty_user.id,
+                track_count=0,
+                built_at=NOW,
+            )
+        )
+        db.commit()
+        assert load_library_generation_data(db, [empty_user.id]) is None
     finally:
         db.close()
 
