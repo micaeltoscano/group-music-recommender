@@ -28,9 +28,9 @@
 | Professor | Gledson Elias |
 | Instituição | [INFORMAÇÃO A DEFINIR] |
 | Equipe | [INFORMAÇÃO A DEFINIR] |
-| Versão | 1.0 |
-| Data | 10 de julho de 2026 |
-| Status | Proposta inicial para validação |
+| Versão | 1.1 |
+| Data | 31 de julho de 2026 |
+| Status | Refinado até a Sprint 7 |
 
 Este documento apresenta a visão, os épicos, as histórias de usuário, os critérios de aceitação, as prioridades, as estimativas e a proposta de planejamento incremental do produto Vibe Check. O conteúdo foi elaborado com base no escopo do MVP definido no `README.md` e nos conceitos apresentados nos materiais de Desenvolvimento Ágil e Engenharia de Requisitos da disciplina.
 
@@ -133,6 +133,7 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 | EP-06 | Integrações e geração | Integrações com Spotify, LLM e Last.fm, controle da geração e criação da playlist. |
 | EP-07 | Experiência e explicabilidade | Sequenciamento, tela de resultado, explicações e feedback. |
 | EP-08 | Evolução do produto | Funcionalidades previstas para versões posteriores, como descoberta e agrupamento de gostos. |
+| EP-09 | Biblioteca musical ampliada | Sincroniza Tops e playlists elegíveis com cache limitado, resiliência de quota e sinais ponderados de gosto. |
 
 ## 10. Backlog detalhado
 
@@ -538,6 +539,219 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 - **Sprint sugerida:** Sprint 5.
 - **Status inicial:** A fazer.
 
+### PB-25 — Resiliência e eficiência da integração Spotify *(pós-MVP)*
+
+- **Épico:** EP-06 — Integrações e geração.
+- **História:** Como grupo, queremos que faixas já identificadas no Spotify sejam reutilizadas, para
+  reduzir chamadas redundantes e recuperar a geração corretamente quando houver rate limit.
+- **Descrição:** Reutilizar ID/URI de candidatas nativas, manter Search apenas para fontes externas e
+  interromper o lote no primeiro `429`, preservando `Retry-After`.
+- **Critérios de aceitação:**
+  1. Candidata nativa válida deve ser correspondida sem Spotify Search.
+  2. Candidata externa ou incompleta deve continuar sujeita ao matching textual e à confiança mínima.
+  3. O primeiro rate limit deve interromper o lote e retornar falha recuperável com `Retry-After`.
+  4. Uma falha deve liberar a sala para nova tentativa sem transformar o restante em falsos descartes.
+- **Prioridade:** Alta.
+- **Estimativa:** 3 pontos.
+- **Dependências:** PB-13, PB-14 e PB-15.
+- **Sprint sugerida:** Sprint 6.
+- **Status inicial:** A fazer.
+
+### PB-26 — Pool contextual híbrido *(pós-MVP)*
+
+- **Épico:** EP-06 — Integrações e geração.
+- **História:** Como grupo, queremos combinar repertório habitual com descobertas coerentes com a
+  ocasião, para que o contexto influencie mais do que a simples reordenação dos Tops.
+- **Descrição:** Ampliar as âncoras Spotify com faixas Last.fm por tag e similaridade, registrando
+  proveniência e preservando fallback, veto, justiça e representação.
+- **Critérios de aceitação:**
+  1. O pool deve distinguir `spotify_top`, `lastfm_tag` e `lastfm_similar`.
+  2. Intenções específicas devem afetar oferta, score e ordem de forma reproduzível.
+  3. Falha ou ausência de Last.fm deve preservar o fluxo baseado em Tops.
+  4. Descobertas não devem herdar metadados musicais da semente nem ultrapassar vetos.
+  5. A composição deve manter uma parcela configurável de âncoras pessoais.
+- **Prioridade:** Alta.
+- **Estimativa:** 8 pontos.
+- **Dependências:** PB-17, PB-18, PB-21 e PB-25.
+- **Sprint sugerida:** Sprint 6.
+- **Status inicial:** A fazer.
+
+### PB-27 — Acompanhamento compartilhado da geração *(pós-MVP)*
+
+- **Épico:** EP-07 — Experiência e explicabilidade.
+- **História:** Como integrante, quero acompanhar a mesma geração do host, para saber seu progresso
+  e chegar ao resultado sem permanecer parado no lobby.
+- **Descrição:** Persistir estágios e percentual monotônico e compartilhá-los por polling, mantendo a
+  ação de iniciar ou repetir exclusivamente com o host.
+- **Critérios de aceitação:**
+  1. A execução deve persistir estágio e percentual coerentes com o pipeline real.
+  2. Todos os membros devem observar progresso, conclusão e erro sanitizado.
+  3. Apenas o host deve iniciar ou repetir uma geração.
+  4. O payload coletivo não deve expor Tops, respostas, clusters ou tokens.
+- **Prioridade:** Média.
+- **Estimativa:** 5 pontos.
+- **Dependências:** PB-13 e PB-16.
+- **Sprint sugerida:** Sprint 6.
+- **Status inicial:** A fazer.
+
+### PB-28 — Conformidade visual do Login/Landing *(pós-MVP)*
+
+- **Épico:** EP-07 — Experiência e explicabilidade.
+- **História:** Como visitante, quero uma entrada coerente com o design do produto, para entender a
+  proposta e iniciar o OAuth com confiança.
+- **Descrição:** Reconstruir Login/Landing em React a partir do design oficial, preservando OAuth,
+  acessibilidade, responsividade e estados de erro/carregamento.
+- **Critérios de aceitação:**
+  1. A tela deve reproduzir a hierarquia e os tokens do design oficial sem embutir o protótipo HTML.
+  2. O CTA deve iniciar o OAuth real e impedir duplo clique.
+  3. Foco, erro, responsividade e movimento reduzido devem ser tratados.
+- **Prioridade:** Média.
+- **Estimativa:** 3 pontos.
+- **Dependências:** PB-02.
+- **Sprint sugerida:** Sprint 6.
+- **Status inicial:** A fazer.
+
+### PB-29 — Estado compartilhado e privado do Vibe Check *(pós-MVP)*
+
+- **Épico:** EP-04 — Contexto e preferências.
+- **História:** Como integrante, quero ver quem respondeu ou pulou o Vibe Check sem ver respostas
+  privadas, para o grupo saber quando está pronto.
+- **Descrição:** Distinguir `pending`, `answered` e `skipped`, expor apenas estados e totais agregados
+  e permitir que cada pessoa edite somente a própria resposta.
+- **Critérios de aceitação:**
+  1. O lobby deve mostrar estado individual e resumo agregado sem valores privados.
+  2. Responder, pular e editar devem afetar somente o registro do próprio usuário.
+  3. Pular não deve fabricar valores neutros persistidos nem alterar o ranking.
+  4. Uma resposta posterior deve substituir corretamente o estado pulado.
+- **Prioridade:** Média.
+- **Estimativa:** 5 pontos.
+- **Dependências:** PB-07 e PB-27.
+- **Sprint sugerida:** Sprint 6.
+- **Status inicial:** A fazer.
+
+### PB-30 — Autorização e inventário de playlists *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como integrante, quero autorizar a leitura das minhas playlists elegíveis, para que
+  o sistema conheça um repertório maior do que somente o Top 50.
+- **Descrição:** Adicionar o escopo `playlist-read-private`, detectar consentimento antigo
+  insuficiente e inventariar, com paginação, playlists próprias ou colaborativas cujo conteúdo seja
+  permitido pela API vigente do Spotify.
+- **Critérios de aceitação:**
+  1. O OAuth deve solicitar somente os escopos necessários e exigir novo consentimento quando faltar
+     `playlist-read-private`.
+  2. O inventário deve paginar `GET /me/playlists` até o fim, sem assumir uma única página.
+  3. Apenas playlists cujo conteúdo seja legível para o usuário atual devem seguir para sincronização;
+     playlists apenas seguidas e inacessíveis não devem provocar erro nem tentativa de contorno.
+  4. ID, propriedade/colaboração, quantidade, `snapshot_id` e data de verificação devem ser
+     persistidos sem tokens, imagens ou descrições desnecessárias.
+  5. Respostas 401, 403 e 429 devem ser diferenciadas e sanitizadas.
+- **Prioridade:** Alta.
+- **Estimativa:** 3 pontos.
+- **Dependências:** nenhuma.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
+### PB-31 — Biblioteca musical limitada a 500 faixas *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como integrante, quero que Tops e playlists formem uma biblioteca limitada e
+  deduplicada, para ampliar minha representação sem crescimento descontrolado do banco.
+- **Descrição:** Persistir um catálogo mínimo normalizado e sinais por usuário, com limite absoluto
+  de **500 faixas Spotify únicas por pessoa**, incluindo todas as origens.
+- **Critérios de aceitação:**
+  1. A biblioteca deve priorizar até 150 Tops únicos: 50 `short_term`, 50 `medium_term` e 50
+     `long_term`; top artists continuam como metadado auxiliar e não contam no limite de faixas.
+  2. Faixas das playlists elegíveis devem preencher a capacidade restante até, nunca acima de, 500
+     faixas únicas por usuário.
+  3. A mesma faixa em Tops e/ou em várias playlists deve ocupar uma vaga e preservar todas as origens,
+     ranks e referências necessárias ao peso posterior.
+  4. Quando houver mais faixas do que vagas, o preenchimento de playlists deve ser determinístico e
+     distribuído entre elas, evitando que uma única playlist longa consuma todo o limite.
+  5. A persistência deve guardar somente metadados necessários à recomendação e ser removida no
+     `DELETE /auth/me`.
+  6. A migração deve ser reversível e impor unicidade por usuário/faixa.
+- **Prioridade:** Alta.
+- **Estimativa:** 5 pontos.
+- **Dependências:** PB-30.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
+### PB-32 — Sincronização incremental e resiliente *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como integrante, quero reutilizar minha biblioteca por sete dias e atualizar somente
+  o que mudou, para evitar rate limit e continuar usando o produto em falhas temporárias.
+- **Descrição:** Aplicar TTL, `snapshot_id`, controle de concorrência, paginação sem N+1 por faixa e
+  fallback atômico para o último cache utilizável.
+- **Critérios de aceitação:**
+  1. Biblioteca com menos de sete dias deve ser reutilizada sem chamadas ao Spotify.
+  2. Ao vencer, o sistema deve reler o inventário e evitar baixar itens de playlists cujo
+     `snapshot_id` não mudou.
+  3. A sincronização deve paginar itens em lotes, nunca consultar detalhes individualmente por faixa,
+     e usar concorrência externa limitada e configurável.
+  4. `429` deve respeitar `Retry-After`; `QUOTA_EXCEEDED` deve ser distinguido de rate limit transitório.
+     Em ambos, o último cache pronto permanece utilizável e dados parciais não o substituem.
+  5. Duas sincronizações simultâneas do mesmo usuário devem convergir sem HTTP 500, duplicidade ou
+     corrupção, encerrando também o defeito conhecido `DEF-PB08-01` no fluxo compartilhado.
+  6. Sem cache anterior, a falha deve ser explícita, recuperável e não apagar os Tops já existentes.
+- **Prioridade:** Alta.
+- **Estimativa:** 5 pontos.
+- **Dependências:** PB-31.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
+### PB-33 — Perfil ponderado e seleção limitada de candidatas *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como grupo, queremos que Tops tenham mais valor do que uma faixa ocasional de
+  playlist, para ganhar variedade sem confundir presença em playlist com preferência forte.
+- **Descrição:** Evoluir o motor puro para sinais ponderados por origem/rank e extrair, por geração,
+  um conjunto contextual e equilibrado de no máximo 250 candidatas por usuário.
+- **Critérios de aceitação:**
+  1. Pesos default devem ser centralizados e decrescentes: Top recente `1,00`, Top médio `0,85`, Top
+     longo `0,65`, playlist própria `0,45` e colaborativa `0,35`, com bônus limitado por recorrência.
+  2. Uma faixa em mais de uma origem deve combinar evidências sem ultrapassar 1,00 nem duplicar a
+     candidata.
+  3. O conjunto ativo deve ter no máximo 250 faixas por pessoa, mirando até 150 Tops e até 100
+     faixas de playlists; uma origem pode preencher capacidade ociosa sem retirar prioridade dos Tops.
+  4. A seleção deve ser determinística, considerar o contexto e impedir que quem possui 500 faixas
+     domine quem possui uma biblioteca pequena.
+  5. Compatibilidade e afinidade devem consumir pesos, não inserir todas as faixas de playlist como
+     um conjunto binário equivalente ao Top atual.
+  6. Todo o cálculo deve permanecer em `engine/`, puro e sem banco ou rede.
+- **Prioridade:** Alta.
+- **Estimativa:** 8 pontos.
+- **Dependências:** PB-32.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
+### PB-34 — Integração e observabilidade da biblioteca ampliada *(pós-MVP)*
+
+- **Épico:** EP-09 — Biblioteca musical ampliada.
+- **História:** Como integrante, quero saber se meu repertório está sincronizado e usá-lo na geração,
+  para confiar que Tops e playlists realmente influenciaram o resultado.
+- **Descrição:** Expor status/refresh sanitizados, integrar o perfil ponderado ao pipeline e explicar
+  origens apenas de forma agregada, preservando o fallback histórico de Tops.
+- **Critérios de aceitação:**
+  1. `GET /me/music-library` deve retornar estado, quantidade `0..500`, idade, stale/warning e contagem
+     agregada por origem, sem listar playlists ou faixas privadas de outro usuário.
+  2. `POST /me/refresh-music-library` deve iniciar/realizar uma atualização idempotente e informar
+     rate limit, quota ou reautenticação de modo acionável.
+  3. A Home deve mostrar quantidade e idade da sincronização no componente existente, sem criar tela
+     fora do design oficial.
+  4. A geração deve usar a biblioteca ponderada quando pronta e cair para o snapshot Top do PB-08
+     quando a biblioteca não existir ou estiver indisponível, sem bloquear a sala.
+  5. Faixas nativas de playlist devem reutilizar ID/URI conforme PB-25; Search continua restrito às
+     candidatas externas.
+  6. Resultado e logs devem explicar somente proporções agregadas de Top/playlist/contexto, sem nome
+     de playlist, resposta privada, token ou perfil bruto.
+- **Prioridade:** Alta.
+- **Estimativa:** 3 pontos.
+- **Dependências:** PB-31, PB-32 e PB-33.
+- **Sprint sugerida:** Sprint 7.
+- **Status inicial:** A fazer.
+
 ## 11. Backlog resumido e priorizado
 
 | Ordem | ID | Épico | Item | Prioridade | Pontos | Dependências | Sprint | Status |
@@ -566,22 +780,34 @@ As estimativas utilizam a sequência de Fibonacci: 1, 2, 3, 5, 8, 13 e 21. Os po
 | 22 | PB-22 | EP-05 | Agrupamento de perfis | Baixa | 4 | PB-09 | Sprint 5 | A fazer |
 | 23 | PB-23 | EP-05 | Músicas-ponte | Baixa | 5 | PB-11, PB-22 | Sprint 5 | A fazer |
 | 24 | PB-24 | EP-05 | Balanceamento entre subgrupos | Baixa | 4 | PB-12, PB-16, PB-22, PB-23 | Sprint 5 | A fazer |
+| 25 | PB-25 | EP-06 | Resiliência Spotify | Alta | 3 | PB-13, PB-14, PB-15 | Sprint 6 | A fazer |
+| 26 | PB-26 | EP-06 | Pool contextual híbrido | Alta | 8 | PB-17, PB-18, PB-21, PB-25 | Sprint 6 | A fazer |
+| 27 | PB-27 | EP-07 | Progresso compartilhado | Média | 5 | PB-13, PB-16 | Sprint 6 | A fazer |
+| 28 | PB-28 | EP-07 | Login conforme design | Média | 3 | PB-02 | Sprint 6 | A fazer |
+| 29 | PB-29 | EP-04 | Estado do Vibe Check | Média | 5 | PB-07, PB-27 | Sprint 6 | A fazer |
+| 30 | PB-30 | EP-09 | Autorização e inventário | Alta | 3 | — | Sprint 7 | A fazer |
+| 31 | PB-31 | EP-09 | Biblioteca de 500 faixas | Alta | 5 | PB-30 | Sprint 7 | A fazer |
+| 32 | PB-32 | EP-09 | Sincronização resiliente | Alta | 5 | PB-31 | Sprint 7 | A fazer |
+| 33 | PB-33 | EP-09 | Perfil ponderado e candidatas | Alta | 8 | PB-32 | Sprint 7 | A fazer |
+| 34 | PB-34 | EP-09 | Integração da biblioteca | Alta | 3 | PB-31..33 | Sprint 7 | A fazer |
 
 > "Qualidade, robustez e documentação" (antigo PB-20) não é mais item do backlog — virou a
 > **Definition of Done**, aplicada a todos os PBs.
 
 ### 11.1 Totais
 
-- **Total de histórias/itens:** 24.
-- **Total geral:** 104 pontos (MVP: 86; expansão pós-MVP: 18).
-- **Prioridade Alta:** 13 itens, totalizando 57 pontos.
-- **Prioridade Média:** 7 itens, totalizando 29 pontos.
+- **Total de histórias/itens:** 34.
+- **Total geral:** 152 pontos (MVP: 86; expansão pós-MVP: 66).
+- **Prioridade Alta:** 20 itens, totalizando 92 pontos.
+- **Prioridade Média:** 10 itens, totalizando 42 pontos.
 - **Prioridade Baixa:** 4 itens, totalizando 18 pontos.
 - **Sprint 1:** 25 pontos.
 - **Sprint 2:** 24 pontos.
 - **Sprint 3:** 23 pontos.
 - **Sprint 4:** 14 pontos.
 - **Sprint 5 (pós-MVP):** 18 pontos.
+- **Sprint 6 (pós-MVP):** 24 pontos.
+- **Sprint 7 (pós-MVP):** 24 pontos.
 
 ## 12. Definição do Produto Mínimo Viável — MVP
 
@@ -684,6 +910,11 @@ alteram os critérios de aceitação definidos aqui:
 | Last.fm | Candidatas e contexto estruturado | Enriquece as músicas com tags. |
 | Sequenciamento | Seleção e playlist | Ordena o conjunto final já validado. |
 | Feedback | Resultado | Avalia uma execução concluída. |
+| Inventário de playlists | Autenticação e resiliência Spotify | Requer novo escopo e paginação compatível com a API vigente. |
+| Biblioteca de 500 faixas | Tops e inventário de playlists | Deduplica origens e impõe limite único por pessoa. |
+| Sincronização incremental | Biblioteca persistida | Usa TTL, `snapshot_id`, atomicidade e fallback em rate limit/quota. |
+| Perfil ponderado | Biblioteca pronta e motor existente | Diferencia força de Top e playlist antes da formação do pool. |
+| Geração com biblioteca | Perfil ponderado e progresso | Integra a nova entrada sem remover o fallback de Tops. |
 
 Fluxo principal de dependências:
 
@@ -707,6 +938,9 @@ Fluxo principal de dependências:
 | R-12 | Maioria dominar a seleção | Média | Alto | Usar least misery, cobertura, rejeição e testes com grupos divergentes. |
 | R-13 | Falta de dados musicais de um integrante | Média | Médio | Tratar listas vazias, informar limitação e utilizar os demais sinais disponíveis. |
 | R-14 | Crescimento não controlado do escopo | Alta | Alto | Manter itens futuros fora do MVP e exigir refinamento antes de promoção. |
+| R-15 | Sincronização de playlists exceder rate limit ou quota do Spotify | Média | Alto | Limite 500, TTL de 7 dias, `snapshot_id`, paginação sem N+1, concorrência baixa e fallback para cache. |
+| R-16 | Faixas ocasionais de playlists diluírem o gosto real | Alta | Alto | Pesos por origem/rank, Tops prioritários e pool ativo limitado por pessoa. |
+| R-17 | Retenção excessiva de dados Spotify | Média | Alto | Metadados mínimos, cache temporário, remoção no disconnect e revisão das políticas vigentes. |
 
 ## 18. Regras para atualização e refinamento do backlog
 

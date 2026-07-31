@@ -23,11 +23,12 @@ guia executável para o agente de implementação e de referência de aceitaçã
 
 ## 2. Escopo
 
-- **Coberto:** PBs das Sprints 1 a 4 (PB-01 a PB-20), seus testes integrados, e PB-21/PB-22/PB-23/
-  PB-24 promovidos da Sprint 5 por decisão explícita de escopo.
+- **Coberto:** PBs das Sprints 1 a 5; PB-25..29 implementados tecnicamente na Sprint 6 e ainda
+  aguardando validação; e PB-30..34 da Sprint 7 ativa por decisão do Product Owner.
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13,
   PB-14, PB-15, PB-16; com a qualidade aplicada continuamente pela Definition of Done.
-- **Fora do escopo atual deste plano:** nenhum PB já promovido; evoluções futuras exigem refinamento.
+- **Fora do escopo atual deste plano:** qualquer ampliação acima de 500 faixas por pessoa exige novo
+  refinamento; a dívida de QA da Sprint 6 permanece separada e não é promovida a aprovação implícita.
 
 ## 3. Estratégia de testes
 
@@ -39,7 +40,7 @@ guia executável para o agente de implementação e de referência de aceitaçã
 - **Serviços externos mockados:** Spotify, LLM e Last.fm são simulados para exercitar sucesso, erro,
   timeout, 429, JSON inválido e ausência de resultado, sem depender das APIs reais.
 - **Validação real no fechamento:** o fluxo com contas Spotify reais é verificado ao final das Sprints
-  3 e 4 (criação de playlist de fato).
+  3 e 4 (criação da playlist) e da Sprint 7 (consentimento, inventário, cache e geração ampliada).
 - **Regressão:** ao final de cada Sprint, reexecutar os testes das Sprints anteriores.
 
 ## 4. Ambientes de teste
@@ -1622,6 +1623,341 @@ não há demonstração e2e real obrigatória distinta das já diferidas nas Spr
 
 ---
 
+## Sprint 6 — Estabilização e evolução contextual
+
+Os casos abaixo consolidam o contrato de QA do handoff
+[`SPRINT_06_IMPLEMENTACAO.md`](SPRINT_06_IMPLEMENTACAO.md). Evidências do implementador não alteram
+o status inicial: cada caso permanece `Não executado` até o QA independente registrar o resultado.
+
+### PB-25 — Resiliência e eficiência da integração Spotify
+
+#### Objetivo da validação
+Comprovar reuso de IDs nativos e interrupção correta em rate limit, sem falsos descartes.
+
+##### CT-PB25-01 — Candidata nativa não usa Search
+- **Tipo:** integração/mock · **Prioridade:** Alta · **Resultado esperado:** ID/URI válidos produzem
+  match com confiança 1,0 e zero chamadas a Search. · **Automatizável:** Sim · **Status:** Aprovado
+
+##### CT-PB25-02 — Candidata externa continua usando matching
+- **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** fonte externa usa Search,
+  normalização e limiar de confiança. · **Automatizável:** Sim · **Status:** Aprovado
+
+##### CT-PB25-03 — Primeiro 429 interrompe o lote
+- **Tipo:** rate limit · **Prioridade:** Alta · **Resultado esperado:** nenhuma chamada posterior;
+  `Retry-After` preservado e itens restantes não viram descartes. · **Automatizável:** Sim ·
+  **Status:** Aprovado
+
+##### CT-PB25-04 — Falha libera a sala para retry
+- **Tipo:** API/recuperação · **Prioridade:** Alta · **Resultado esperado:** 429 sanitizado, run
+  `failed`, sala `open` e nova tentativa permitida. · **Automatizável:** Sim · **Status:** Aprovado
+
+##### CT-PB25-05 — Erro isolado permanece por candidata
+- **Tipo:** regressão · **Prioridade:** Média · **Resultado esperado:** not found/low match de uma
+  faixa não interrompe o lote. · **Automatizável:** Sim · **Status:** Aprovado
+
+### PB-26 — Pool contextual híbrido
+
+#### Objetivo da validação
+Comprovar proveniência, aderência a intenções específicas, composição híbrida e fallback seguro.
+
+##### CT-PB26-01 — Descoberta por tag e similaridade
+- **Tipo:** integração/mock · **Prioridade:** Alta · **Resultado esperado:** tags e sementes geram
+  candidatas deduplicadas com origem correta. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB26-02 — Intenção específica tem prioridade
+- **Tipo:** regra de negócio · **Prioridade:** Alta · **Cenário:** `festa punk rock pesada`. ·
+  **Resultado esperado:** punk/rock afetam oferta e score antes de tags genéricas. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB26-03 — Similar não herda metadados da semente
+- **Tipo:** privacidade/correção · **Prioridade:** Alta · **Resultado esperado:** cada descoberta é
+  enriquecida com seus próprios sinais; falha cai no fallback. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB26-04 — Composição preserva âncoras e vetos
+- **Tipo:** motor · **Prioridade:** Alta · **Resultado esperado:** participação contextual configurada,
+  piso de Tops e nenhuma promoção de veto. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB26-05 — Last.fm ausente preserva comportamento anterior
+- **Tipo:** recuperação/regressão · **Prioridade:** Alta · **Resultado esperado:** geração baseada
+  em Tops continua determinística. · **Automatizável:** Sim · **Status:** Não executado
+
+### PB-27 — Acompanhamento compartilhado da geração
+
+##### CT-PB27-01 — Progresso persistido é monotônico
+- **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** estágios reais e percentual
+  nunca retrocedem. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB27-02 — Todos os membros veem a mesma execução
+- **Tipo:** API/polling · **Prioridade:** Alta · **Resultado esperado:** host e membro recebem o mesmo
+  `run_id`, estado e progresso. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB27-03 — Somente host inicia ou repete
+- **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** membro observa, mas recebe
+  403 ao gerar. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB27-04 — Erro é sanitizado e volta ao lobby
+- **Tipo:** recuperação/frontend · **Prioridade:** Alta · **Resultado esperado:** ambos observam a
+  falha sem stack/token e a sala volta ao estado utilizável. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+##### CT-PB27-05 — Migração reversível
+- **Tipo:** banco · **Prioridade:** Média · **Resultado esperado:** `0017` faz upgrade/downgrade sem
+  perder colunas históricas. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+### PB-28 — Conformidade visual do Login/Landing
+
+##### CT-PB28-01 — Conformidade com design oficial
+- **Tipo:** visual · **Prioridade:** Alta · **Resultado esperado:** hierarquia, tokens e breakpoints
+  coerentes com `01-login-landing.png`. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+##### CT-PB28-02 — OAuth e duplo clique
+- **Tipo:** frontend/regressão · **Prioridade:** Alta · **Resultado esperado:** CTA abre `/auth/login`
+  uma vez e mostra carregamento. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB28-03 — Acessibilidade e erro
+- **Tipo:** acessibilidade · **Prioridade:** Alta · **Resultado esperado:** foco visível, semântica,
+  `alert` e recuperação do erro. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+##### CT-PB28-04 — Responsividade e movimento reduzido
+- **Tipo:** frontend · **Prioridade:** Média · **Resultado esperado:** sem overflow nos breakpoints e
+  respeito a `prefers-reduced-motion`. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+### PB-29 — Estado compartilhado e privado do Vibe Check
+
+##### CT-PB29-01 — Estados e totais sem respostas
+- **Tipo:** privacidade/API · **Prioridade:** Alta · **Resultado esperado:** somente estado por membro
+  e totais agregados; nenhum valor privado. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB29-02 — Pular é ausência neutra
+- **Tipo:** motor/integração · **Prioridade:** Alta · **Resultado esperado:** `skipped` usa valores
+  nulos e não influencia ranking. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB29-03 — Usuário edita somente o próprio registro
+- **Tipo:** autorização/privacidade · **Prioridade:** Alta · **Resultado esperado:** GET privado e
+  upserts isolados por membro. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB29-04 — Resposta substitui pulo e vice-versa
+- **Tipo:** idempotência · **Prioridade:** Alta · **Resultado esperado:** transições atualizam uma
+  única linha e o resumo coletivo. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB29-05 — Migração e histórico
+- **Tipo:** banco · **Prioridade:** Média · **Resultado esperado:** `0018` reversível; registros antigos
+  recebem estado compatível. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+### Testes integrados da Sprint 6
+
+##### CT-S6-INT-01 — Geração compartilhada com contexto específico
+- **Tipo:** integração/e2e · **Prioridade:** Alta · **Resultado esperado:** dois membros observam
+  progresso e resultado; contexto específico altera o pool; somente host gera. ·
+  **Automatizável:** Parcialmente · **Status:** Não executado
+
+##### CT-S6-INT-02 — Falhas externas preservam privacidade e retry
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** Last.fm/Ollama falham aberto;
+  Spotify 429 interrompe e libera retry; payloads continuam sanitizados. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-S6-INT-03 — Regressão completa e frontend
+- **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** suíte completa, migrações e
+  build verdes; Login/Room/Result inspecionados. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+#### Resultado da Sprint
+Pendente. Implementação técnica registrada; QA ainda não emitiu veredito dos PBs 25–29.
+
+---
+
+## Sprint 7 — Biblioteca musical ampliada e eficiente
+
+### PB-30 — Autorização e inventário de playlists
+
+#### Objetivo da validação
+Comprovar consentimento mínimo, paginação completa e respeito às playlists realmente acessíveis.
+
+##### CT-PB30-01 — Novo escopo e reconsentimento
+- **Tipo:** OAuth/segurança · **Prioridade:** Alta · **Resultado esperado:** solicita
+  `playlist-read-private`; token antigo sem escopo recebe reauth acionável, sem loop. ·
+  **Automatizável:** Sim · **Status:** Aprovado — revalidado em 2026-07-31; escopos privado e
+  colaborativo, detecção do token antigo e limpeza após callback passaram.
+
+##### CT-PB30-02 — Inventário pagina todas as playlists
+- **Tipo:** cliente/mock · **Prioridade:** Alta · **Resultado esperado:** segue `next`/offset até o fim,
+  com limite de 50 e sem duplicar IDs. · **Automatizável:** Sim · **Status:** Aprovado — revalidado
+  em 2026-07-31; paginação de inventário e itens passou com transporte Spotify mockado.
+
+##### CT-PB30-03 — Somente conteúdo elegível segue para sync
+- **Tipo:** autorização · **Prioridade:** Alta · **Resultado esperado:** própria/colaborativa acessível
+  entra; seguida sem itens/403 é ignorada com motivo. · **Automatizável:** Sim · **Status:** Aprovado
+  — revalidado em 2026-07-31; OAuth e serviço exigem `playlist-read-collaborative`, enquanto seguida
+  sem acesso continua sendo ignorada com motivo. `DEF-PB30-01` revalidado.
+
+##### CT-PB30-04 — Inventário mínimo e privado
+- **Tipo:** persistência/privacidade · **Prioridade:** Alta · **Resultado esperado:** ID, acesso,
+  total e `snapshot_id`; nenhum token, imagem ou descrição desnecessária. · **Automatizável:** Sim ·
+  **Status:** Aprovado — revalidado em 2026-07-31; `items.total` é a fonte principal,
+  `tracks.total` funciona como fallback e somente metadados mínimos são persistidos.
+  `DEF-PB30-02` revalidado.
+
+##### CT-PB30-05 — 401/403/429 diferenciados
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** reauth, inacessível e rate
+  limit produzem estados sanitizados distintos. · **Automatizável:** Sim · **Status:** Aprovado —
+  revalidado em 2026-07-31; os três estados e `Retry-After` foram comprovados com mocks.
+
+### PB-31 — Biblioteca musical limitada a 500 faixas
+
+##### CT-PB31-01 — Tops ocupam as primeiras vagas
+- **Tipo:** regra de negócio · **Prioridade:** Alta · **Resultado esperado:** até 150 Tops únicos das
+  três faixas temporais; artistas não contam no cap. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB31-02 — Limite absoluto 500
+- **Tipo:** fronteira/banco · **Prioridade:** Alta · **Cenários:** 0, 499, 500, 501 e milhares de
+  entradas. · **Resultado esperado:** contagem persistida sempre `<=500`. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB31-03 — Dedupe preserva proveniência
+- **Tipo:** duplicidade · **Prioridade:** Alta · **Resultado esperado:** uma vaga por ID, com todas as
+  origens/ranks referenciadas. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB31-04 — Preenchimento distribuído entre playlists
+- **Tipo:** justiça/determinismo · **Prioridade:** Alta · **Resultado esperado:** round-robin estável;
+  uma playlist longa não elimina todas as demais. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB31-05 — Metadados mínimos e remoção
+- **Tipo:** privacidade · **Prioridade:** Alta · **Resultado esperado:** sem payload bruto; exclusão
+  da conta apaga inventário, biblioteca e sinais. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB31-06 — Migração reversível e unicidade
+- **Tipo:** banco · **Prioridade:** Alta · **Resultado esperado:** upgrade/downgrade/upgrade; uma linha
+  por usuário/faixa mesmo sob duplicidade. · **Automatizável:** Parcialmente · **Status:** Não executado
+
+### PB-32 — Sincronização incremental e resiliente
+
+##### CT-PB32-01 — Cache fresco faz zero chamada Spotify
+- **Tipo:** cache · **Prioridade:** Alta · **Resultado esperado:** biblioteca <7 dias retornada sem
+  inventário, itens ou Top externo. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB32-02 — `snapshot_id` evita refetch de itens
+- **Tipo:** cache incremental · **Prioridade:** Alta · **Resultado esperado:** playlist inalterada não
+  chama `/items`; apenas alteradas são paginadas. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB32-03 — Sem N+1 por faixa
+- **Tipo:** performance/mock · **Prioridade:** Alta · **Cenário:** 500 itens. · **Resultado esperado:**
+  somente inventário, páginas de Tops/itens e zero `GET /tracks/{id}` ou Search. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB32-04 — 429 e quota preservam cache pronto
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** respeita `Retry-After`,
+  distingue `QUOTA_EXCEEDED`, não promove parcial e serve stale. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB32-05 — Sincronizações concorrentes convergem
+- **Tipo:** concorrência · **Prioridade:** Alta · **Resultado esperado:** sem HTTP 500/duplicidade;
+  biblioteca final única e pronta. Deve reproduzir e fechar `DEF-PB08-01`. · **Automatizável:** Sim
+  com PostgreSQL · **Status:** Não executado
+
+##### CT-PB32-06 — Falha inicial não apaga Tops
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** sem biblioteca anterior,
+  erro acionável; snapshot PB-08 permanece intacto. · **Automatizável:** Sim · **Status:** Não executado
+
+### PB-33 — Perfil ponderado e seleção limitada de candidatas
+
+##### CT-PB33-01 — Pesos default por origem
+- **Tipo:** motor · **Prioridade:** Alta · **Resultado esperado:** `1.00/0.85/0.65/0.45/0.35`
+  centralizados e sensíveis no score. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB33-02 — Múltiplas origens combinam sem duplicar
+- **Tipo:** motor/dedupe · **Prioridade:** Alta · **Resultado esperado:** uma candidata, evidências
+  combinadas, peso final `<=1`. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB33-03 — Cap de 250 candidatas por pessoa
+- **Tipo:** limite · **Prioridade:** Alta · **Cenários:** bibliotecas 0, 50, 250 e 500. ·
+  **Resultado esperado:** nunca mais de 250; alvo Top/playlist e preenchimento ocioso respeitados. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB33-04 — Biblioteca grande não domina a pequena
+- **Tipo:** justiça · **Prioridade:** Alta · **Cenário:** membro A com 500, B com 50. ·
+  **Resultado esperado:** contribuição/coverage por pessoa mantém pesos iguais; A não ganha 10x voz. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB33-05 — Playlist não equivale a Top no perfil
+- **Tipo:** compatibilidade/regressão · **Prioridade:** Alta · **Resultado esperado:** faixa ocasional
+  tem afinidade menor e não dilui compatibilidade como conjunto binário bruto. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB33-06 — Determinismo e pureza
+- **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** permutações equivalentes geram
+  o mesmo resultado; zero rede/banco. · **Automatizável:** Sim · **Status:** Não executado
+
+### PB-34 — Integração e observabilidade da biblioteca ampliada
+
+##### CT-PB34-01 — Status da biblioteca é sanitizado
+- **Tipo:** API/privacidade · **Prioridade:** Alta · **Resultado esperado:** estado, 0..500, idade,
+  stale/warning e totais agregados do próprio usuário; sem lista privada. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB34-02 — Refresh idempotente e acionável
+- **Tipo:** API · **Prioridade:** Alta · **Resultado esperado:** reenvio não duplica; reauth/rate/quota
+  têm respostas distintas. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-PB34-03 — Home mostra quantidade e idade
+- **Tipo:** frontend · **Prioridade:** Média · **Resultado esperado:** componente existente exibe
+  sync sem tela nova, com loading/stale/erro acessíveis. · **Automatizável:** Parcialmente ·
+  **Status:** Não executado
+
+##### CT-PB34-04 — Geração usa biblioteca ou fallback Top
+- **Tipo:** integração · **Prioridade:** Alta · **Resultado esperado:** ready usa perfil ponderado;
+  ausente/falha usa PB-08 e ainda conclui quando há Tops suficientes. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB34-05 — Faixas nativas não usam Search
+- **Tipo:** regressão PB-25 · **Prioridade:** Alta · **Resultado esperado:** Top/playlist com ID/URI
+  válidos são reutilizados; apenas externas usam Search. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-PB34-06 — Explicação agregada sem origem privada
+- **Tipo:** privacidade/resultado · **Prioridade:** Alta · **Resultado esperado:** proporções
+  Top/playlist/contexto, sem nomes de playlists, faixas de perfil bruto ou usuário associado. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+### Testes integrados da Sprint 7
+
+##### CT-S7-INT-01 — Três usuários sincronizam e geram
+- **Tipo:** integração/e2e mockado · **Prioridade:** Alta · **Resultado esperado:** cada biblioteca
+  `<=500`, pool `<=250` por pessoa e playlist final com 20–30 faixas. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-S7-INT-02 — Cache fresco e incremental reduzem chamadas
+- **Tipo:** performance/cache · **Prioridade:** Alta · **Resultado esperado:** segunda leitura <7d
+  faz zero chamada; após TTL, só playlists alteradas baixam itens. · **Automatizável:** Sim ·
+  **Status:** Não executado
+
+##### CT-S7-INT-03 — Falha de quota/rate preserva demonstração
+- **Tipo:** recuperação · **Prioridade:** Alta · **Resultado esperado:** cache pronto/stale continua
+  gerando; sem parcial, 500 ou falsos descartes. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-S7-INT-04 — Privacidade e remoção ponta a ponta
+- **Tipo:** privacidade · **Prioridade:** Alta · **Resultado esperado:** isolamento entre usuários,
+  nada bruto no LLM/resultado e `DELETE /auth/me` remove a biblioteca pessoal. ·
+  **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-S7-INT-05 — Regressão completa
+- **Tipo:** regressão · **Prioridade:** Alta · **Resultado esperado:** Sprints 1–6, migrações,
+  build e motor continuam verdes. · **Automatizável:** Sim · **Status:** Não executado
+
+##### CT-S7-INT-06 — Spike real Spotify sanitizado
+- **Tipo:** e2e real · **Prioridade:** Alta · **Cenário:** três contas allowlisted. ·
+  **Resultado esperado:** reconsentimento, inventário elegível, sync, cache e geração reais; evidência
+  sem token/nome de playlist/faixas pessoais. · **Automatizável:** Não · **Status:** Não executado
+
+#### Critérios de aprovação da Sprint
+PB-30..34 validados em ordem; CT-S7-INT-01..06 aprovados; limite 500 e pool 250 comprovados nas
+fronteiras; nenhuma regressão, segredo, N+1 por faixa ou defeito alto/bloqueante aberto.
+
+#### Resultado da Sprint
+Não iniciada. Planejamento aprovado documentalmente não equivale a implementação ou QA.
+
+---
+
 ## Apêndice — Rastreabilidade PB × critérios × casos
 
 | PB | Sprint | Nº de casos individuais | Testes integrados |
@@ -1638,7 +1974,7 @@ não há demonstração e2e real obrigatória distinta das já diferidas nas Spr
 | PB-12 | 2 | 7 (CT-PB12-01..07) | CT-S2-INT-* |
 | PB-13 | 2 | 6 (CT-PB13-01..06) | CT-S2-INT-* |
 | PB-14 | 3 | 5 (CT-PB14-01..05) | CT-S3-INT-* |
-| PB-15 | 3 | 4 (CT-PB15-01..04) | CT-S3-INT-* |
+| PB-15 | 3 | 5 (CT-PB15-01..05) | CT-S3-INT-* |
 | PB-16 | 3 | 6 (CT-PB16-01..06) | CT-S3-INT-* |
 | PB-17 | 3 | 6 (CT-PB17-01..06) | CT-S3-INT-* |
 | PB-07 | 3 | 6 (CT-PB07-01..06) | CT-S3-INT-* |
@@ -1646,7 +1982,17 @@ não há demonstração e2e real obrigatória distinta das já diferidas nas Spr
 | PB-18 | 4 | 5 (CT-PB18-01..05) | CT-S4-INT-* |
 | PB-19 | 4 | 5 (CT-PB19-01..05) | CT-S4-INT-* |
 | PB-20 | 4 | 5 (CT-PB20-01..05) | CT-S4-INT-* |
-| PB-21 | 5 | 6 (CT-PB21-01..06) | a definir no fechamento da Sprint 5 |
-| PB-22 | 5 | 6 (CT-PB22-01..06) | a definir no fechamento da Sprint 5 |
-| PB-23 | 5 | 6 (CT-PB23-01..06) | a definir no fechamento da Sprint 5 |
-| PB-24 | 5 | 6 (CT-PB24-01..06) | a definir no fechamento da Sprint 5 |
+| PB-21 | 5 | 6 (CT-PB21-01..06) | CT-S5-INT-* |
+| PB-22 | 5 | 6 (CT-PB22-01..06) | CT-S5-INT-* |
+| PB-23 | 5 | 6 (CT-PB23-01..06) | CT-S5-INT-* |
+| PB-24 | 5 | 6 (CT-PB24-01..06) | CT-S5-INT-* |
+| PB-25 | 6 | 5 (CT-PB25-01..05) | CT-S6-INT-* |
+| PB-26 | 6 | 5 (CT-PB26-01..05) | CT-S6-INT-* |
+| PB-27 | 6 | 5 (CT-PB27-01..05) | CT-S6-INT-* |
+| PB-28 | 6 | 4 (CT-PB28-01..04) | CT-S6-INT-* |
+| PB-29 | 6 | 5 (CT-PB29-01..05) | CT-S6-INT-* |
+| PB-30 | 7 | 5 (CT-PB30-01..05) | CT-S7-INT-* |
+| PB-31 | 7 | 6 (CT-PB31-01..06) | CT-S7-INT-* |
+| PB-32 | 7 | 6 (CT-PB32-01..06) | CT-S7-INT-* |
+| PB-33 | 7 | 6 (CT-PB33-01..06) | CT-S7-INT-* |
+| PB-34 | 7 | 6 (CT-PB34-01..06) | CT-S7-INT-* |

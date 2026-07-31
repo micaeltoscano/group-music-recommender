@@ -146,10 +146,14 @@ SPRINT N REPROVADA NA VALIDAÇÃO — CORREÇÕES NECESSÁRIAS
 | Sprint 3 | Fluxo principal ponta a ponta (playlist real + resultado) | PB-07, PB-14, PB-15, PB-16, PB-17 | 23 | **Encerrada operacionalmente por exceção do usuário — e2e real pendente, não VALIDADA** |
 | Sprint 4 | Complementos da experiência | PB-03, PB-18, PB-19, PB-20 | 14 | **EM VALIDAÇÃO — integrada automatizável OK; e2e real (`CT-S4-INT-02`) diferida** |
 | Sprint 5 | Expansão pós-MVP (fora do MVP) | PB-21, PB-22, PB-23, PB-24 | 18 | **PB-21..24 VALIDADOS; integrada automatizável OK (CT-S5-INT-01..03); e2e real diferida** |
+| Sprint 6 | Estabilização e evolução contextual | PB-25, PB-26, PB-27, PB-28, PB-29 | 24 | Em validação paralela — implementação técnica concluída; aguardando QA |
+| Sprint 7 | Biblioteca musical ampliada e eficiente | PB-30, PB-31, PB-32, PB-33, PB-34 | 24 | Em andamento — promovida pelo Product Owner em 2026-07-31 |
 
 - **MVP (núcleo):** PB-01, PB-02, PB-04, PB-05, PB-06, PB-08, PB-09, PB-10, PB-11, PB-12, PB-13, PB-14, PB-15, PB-16, com as práticas de qualidade aplicadas continuamente pela **Definition of Done** (antigo PB-20 de "Qualidade" — ver `../produto/BACKLOG_PRODUTO.md` §15).
-- **Sprint ativa:** Sprint 5 (aberta por autorização explícita do usuário em 2026-07-18, apesar da
-  validação integrada pendente das Sprints 1–4). **Próximo PB acionável:** definido automaticamente pelo campo `Status`
+- **Sprint ativa:** Sprint 7, promovida por decisão explícita do Product Owner em 2026-07-31 e
+  executada conforme [`SPRINT_07_IMPLEMENTACAO.md`](SPRINT_07_IMPLEMENTACAO.md). A Sprint 6 segue em
+  validação paralela, sem dependência bloqueante para PB-30..34. **Próximo PB acionável:** definido
+  automaticamente pelo campo `Status`
   de cada PB, na ordem de implementação da Sprint ativa (ver `AGENTS.md` e `scripts/orquestrar.sh`).
 - **Exceção processual explícita:** em 2026-07-18, o usuário autorizou avançar para a Sprint 4 sem a
   demonstração e2e real da Sprint 3 e sem as assinaturas integradas das Sprints 1–2. A exceção libera
@@ -1691,6 +1695,240 @@ Detalhes e critérios de aceitação em `../produto/BACKLOG_PRODUTO.md` (§10, P
 
 ---
 
+## Sprint 6 — Estabilização e evolução contextual
+
+### Estado e fonte detalhada
+
+A Sprint 6 foi implementada em sequência por exceção explícita do usuário. O handoff, as decisões,
+os commits, as correções e as evidências técnicas estão em
+[`SPRINT_06_IMPLEMENTACAO.md`](SPRINT_06_IMPLEMENTACAO.md). A exceção retirou o portão entre PBs
+durante a implementação, mas não substituiu o QA: os cinco PBs permanecem `AGUARDANDO-QA`.
+
+### Ordem de validação
+
+1. PB-25
+2. PB-26
+3. PB-27
+4. PB-28
+5. PB-29
+6. Testes integrados da Sprint 6 e regressão completa
+
+#### PB-25 — Resiliência e eficiência da integração Spotify
+
+- **Status:** AGUARDANDO-QA — `DEF-PB25-01` corrigido no commit `bb1337f`; URI nativa agora só usa o
+  fast path quando for exatamente `spotify:track:{id}`.
+- **Objetivo:** reutilizar ID/URI de candidatas nativas e interromper o matching no primeiro rate limit.
+- **Dependências:** PB-13, PB-14 e PB-15 (`VALIDADO`).
+- **Critérios e evidências:** 22 testes relacionados passaram, inclusive o teste adversarial que
+  reproduzia o defeito; regressão completa: 407 passaram, 6 pulados e 1 falha histórica fora do
+  PB-25 (`test_qa_mode_enum_is_closed[Descoberta]`). Ver `../relatorios-testes/PB-25.md`.
+- **Próxima ação:** QA revalida `DEF-PB25-01` e decide o PB-25. PB-26 permanece bloqueado até o
+  veredito independente; a Sprint 7 segue pela exceção do Product Owner.
+
+#### PB-26 — Pool contextual híbrido
+
+- **Status:** AGUARDANDO-QA — implementado e corrigido nos commits `53c59f3`, `cfcec7f` e `1af62fe`;
+  sem relatório independente das correções de aderência específica.
+- **Objetivo:** combinar Tops com descoberta Last.fm por tag/similaridade, preservando proveniência,
+  fallback, veto, justiça e uma parcela de âncoras pessoais.
+- **Dependências:** PB-17, PB-18, PB-21 e PB-25.
+- **Critérios e evidências:** ver `SPRINT_06_IMPLEMENTACAO.md` §6 e §§12–14 e `PLANO_TESTES.md` PB-26.
+- **Próxima ação:** após PB-25 validado, QA repete os casos contextuais e a regressão.
+
+#### PB-27 — Acompanhamento compartilhado da geração
+
+- **Status:** AGUARDANDO-QA — implementado no commit `5504680`; sem relatório independente.
+- **Objetivo:** compartilhar progresso, conclusão e erro por polling, preservando ações host-only.
+- **Dependências:** PB-13 e PB-16 (`VALIDADO`).
+- **Migração:** `0017_pb27_generation_progress`.
+- **Próxima ação:** após PB-26 validado, QA executa `CT-PB27-01..05`.
+
+#### PB-28 — Conformidade visual do Login/Landing
+
+- **Status:** AGUARDANDO-QA — implementado no commit `c57179c`; build comprovado, inspeção visual
+  independente pendente.
+- **Objetivo:** alinhar a entrada ao design oficial sem quebrar OAuth, acessibilidade ou responsividade.
+- **Dependências:** PB-02 (`VALIDADO`).
+- **Próxima ação:** após PB-27 validado, QA executa `CT-PB28-01..04` em navegador real.
+
+#### PB-29 — Estado compartilhado e privado do Vibe Check
+
+- **Status:** AGUARDANDO-QA — implementado no commit `46df4a9`; sem relatório independente.
+- **Objetivo:** expor somente `pending`/`answered`/`skipped` e totais, mantendo respostas privadas.
+- **Dependências:** PB-07 e PB-27.
+- **Migração:** `0018_pb29_vibe_status`.
+- **Próxima ação:** após PB-28 validado, QA executa `CT-PB29-01..05`; depois valida a Sprint 6.
+
+### Critérios de encerramento da Sprint 6
+
+- [ ] PB-25..29 `VALIDADO` pelo QA;
+- [ ] correções contextuais e de resultado revalidadas;
+- [ ] migrações `0017`/`0018` reversíveis;
+- [ ] fluxo compartilhado demonstrado sem exposição de dados privados;
+- [ ] regressão completa e build frontend aprovados;
+- [ ] dívidas e2e reais anteriores permanecem explicitamente rastreadas.
+
+---
+
+## Sprint 7 — Biblioteca musical ampliada e eficiente
+
+> **Estado:** em andamento desde 2026-07-31 por decisão explícita do Product Owner. A validação
+> pendente da Sprint 6 continua rastreada em paralelo, mas deixou de ser dependência de PB-30..34.
+> Permissões reais do Spotify Development Mode e a retenção temporária continuam riscos de entrada.
+
+### Objetivo da Sprint
+
+Ampliar o repertório de cada integrante sem transformar o banco num espelho do Spotify: combinar
+Tops e playlists elegíveis em uma biblioteca temporária, deduplicada e limitada a **500 faixas
+únicas por pessoa**, sincronizada no máximo a cada sete dias e consumida pelo motor com pesos e
+limites que preservam contexto e justiça.
+
+### Contrato de produto da biblioteca
+
+- **Limite único:** `0..500` faixas Spotify únicas por usuário, contando Tops e playlists juntas.
+- **Prioridade dos Tops:** até 50 `short_term` + 50 `medium_term` + 50 `long_term`, deduplicadas;
+  top artists continuam como sinal auxiliar de artistas/gêneros e não contam como faixas.
+- **Preenchimento por playlists:** somente playlists próprias ou colaborativas cujo conteúdo a API
+  vigente permita ler; elas preenchem as vagas restantes de modo determinístico e distribuído.
+- **Sem equivalência falsa:** estar numa playlist é sinal mais fraco do que estar no Top; recorrência
+  e rank podem reforçar o sinal dentro de limites configuráveis.
+- **Pool ativo:** no máximo 250 candidatas por pessoa em uma geração, com alvo de até 150 Tops e 100
+  faixas de playlists; capacidade ociosa pode ser preenchida sem remover a prioridade dos Tops.
+- **Cache:** TTL default de sete dias, `snapshot_id` por playlist, metadados mínimos, atualização
+  atômica e remoção no disconnect.
+- **Compatibilidade:** sem biblioteca pronta, o pipeline continua usando o snapshot Top do PB-08.
+- **Privacidade:** nenhuma playlist/faixa bruta vai ao LLM; nomes de playlists e sinais individuais
+  não entram em resultado, logs ou payload coletivo.
+
+### Dependências e riscos de entrada
+
+- A decisão do Product Owner removeu as dependências formais da Sprint 6. O código já implementado de
+  rate limit, pool contextual e observabilidade permanece como baseline, ainda sujeito ao QA próprio.
+- Novo consentimento OAuth `playlist-read-private`; os três usuários da demonstração devem estar na
+  allowlist. O app owner deve atender aos requisitos atuais do Development Mode.
+- A API atual pode listar playlists seguidas sem permitir ler seus itens; não tentar contornar 403.
+- Quotas do Spotify não são tratadas como “tokens consumíveis”: o desenho reduz chamadas, trata 429
+  e mantém cache, mas não presume um limite numérico não publicado.
+- Os termos do Spotify exigem necessidade, atualização e exclusão dos dados; o modelo evita payloads
+  completos, retenção indefinida e uso fora da recomendação autorizada.
+
+### Ordem de implementação
+
+1. PB-30 — Autorização e inventário de playlists
+2. PB-31 — Biblioteca musical limitada a 500 faixas
+3. PB-32 — Sincronização incremental e resiliente
+4. PB-33 — Perfil ponderado e seleção limitada de candidatas
+5. PB-34 — Integração e observabilidade da biblioteca ampliada
+
+### Execução dos PBs
+
+#### PB-30 — Autorização e inventário de playlists
+
+- **Status:** VALIDADO — todos os testes obrigatórios e adversariais passaram na revalidação de
+  2026-07-31; correção no commit `be45742`.
+- **Objetivo:** adicionar o menor escopo de leitura necessário, detectar reconsentimento e paginar o
+  inventário de playlists elegíveis.
+- **Dependências:** nenhuma.
+- **Plano de implementação:** atualizar OAuth/reauth; criar cliente paginado para `/me/playlists` e
+  `/playlists/{id}/items`; persistir somente ID, tipo de acesso, total, `snapshot_id` e verificação;
+  filtrar itens nulos, episódios, arquivos locais e playlists sem permissão de conteúdo.
+- **Arquivos previstos:** cliente Spotify, auth/scopes, serviço de biblioteca, modelos/migração e
+  testes `test_pb30_playlist_inventory.py`.
+- **Testes obrigatórios:** `CT-PB30-01..05` no `PLANO_TESTES.md`.
+- **Migração:** inventário de playlists; revisão deve partir do head real posterior a `0018`.
+- **Riscos:** consentimento antigo, paginação, payload `item`/`items`, 403 e mudanças do Dev Mode.
+- **Evidências do Dev:** 9 testes focados e 72 relacionados passaram; suíte backend
+  `416 passed / 6 skipped`; build Vite aprovado; `0019` upgrade/downgrade isolado e SQL PostgreSQL
+  verificados; `compileall`, `pip check` e `git diff --check` aprovados.
+- **Resultado do QA:** `CT-PB30-01`, `02` e `05` aprovados; `CT-PB30-03` e `04` reprovados. Suíte
+  completa: `417 passed, 6 skipped, 2 failed`; build do frontend e migração `0019` aprovados.
+- **Defeitos:** `DEF-PB30-01` — ausência de `playlist-read-collaborative`; `DEF-PB30-02` — inventário
+  rejeita o campo vigente `items.total` e depende de `tracks.total` legado.
+- **Correção do Dev:** OAuth e reauth agora exigem os dois escopos do inventário; `items.total` é o
+  formato principal e `tracks.total` permanece como fallback. Testes focados: `11 passed`; regressão:
+  `419 passed, 6 skipped`; build, migração, `compileall`, `pip check` e `git diff --check` aprovados.
+- **Revalidação do QA:** `CT-PB30-01..05` aprovados; `DEF-PB30-01..02` revalidados; suíte focada
+  `12 passed`; regressão `420 passed, 6 skipped`; migração e build aprovados.
+- **Próxima ação:** PB-31 está liberado para uma nova fase de implementação.
+
+#### PB-31 — Biblioteca musical limitada a 500 faixas
+
+- **Status:** A-FAZER — liberado após PB-30 `VALIDADO`.
+- **Objetivo:** compor e persistir até 500 faixas únicas por pessoa com proveniência completa.
+- **Dependências:** PB-30.
+- **Plano de implementação:** tabelas normalizadas de faixa e vínculo usuário/faixa; sinais de Top
+  por faixa temporal e de playlist; dedupe por Spotify ID; Tops primeiro; preenchimento round-robin
+  estável entre playlists até 500; limpeza de vínculos antigos na promoção do novo snapshot.
+- **Arquivos previstos:** modelos/migração, serviço de composição puro, serviço de persistência,
+  privacidade e testes `test_pb31_music_library.py`.
+- **Testes obrigatórios:** `CT-PB31-01..06`.
+- **Migração:** reversível, com unicidade `(user_id, spotify_track_id)` e FKs em cascata apenas
+  para dados pessoais da biblioteca.
+- **Riscos:** cap incorreto após dedupe, uma playlist dominar o preenchimento e payload excessivo.
+
+#### PB-32 — Sincronização incremental e resiliente
+
+- **Status:** A-FAZER — depende de PB-31 `VALIDADO`.
+- **Objetivo:** reduzir chamadas externas e preservar a última biblioteca pronta em falhas.
+- **Dependências:** PB-31.
+- **Plano de implementação:** TTL de sete dias; comparar `snapshot_id`; paginação de 50 itens sem
+  busca individual; concorrência externa default 1; lock/upsert por usuário; staging transacional;
+  distinguir rate limit transitório de `QUOTA_EXCEEDED`; nunca promover sincronização parcial.
+- **Arquivos previstos:** cliente/serviço de sync, config/env de limites e testes
+  `test_pb32_library_sync.py`.
+- **Testes obrigatórios:** `CT-PB32-01..06`.
+- **Migração:** campos de estado/tempo/erro sanitizado somente se PB-31 não os introduzir.
+- **Riscos:** 429 no meio da paginação, quota compartilhada, corrida e latência de primeiro sync.
+
+#### PB-33 — Perfil ponderado e seleção limitada de candidatas
+
+- **Status:** A-FAZER — depende de PB-32 `VALIDADO`.
+- **Objetivo:** diferenciar preferência forte de repertório ocasional antes do ranking coletivo.
+- **Dependências:** PB-32.
+- **Plano de implementação:** modelo puro de sinal ponderado; pesos default `1.00/0.85/0.65/0.45/0.35`;
+  bônus de recorrência limitado; similaridade/afinidade ponderadas; amostragem estável contextual de
+  no máximo 250 faixas por pessoa; dedupe global mantendo contribuidores e proveniência agregada.
+- **Arquivos previstos:** novos módulos ou evolução de `engine/taste.py`, `candidates.py`,
+  `scoring.py`, `weights.py` e testes `test_pb33_weighted_library.py`.
+- **Testes obrigatórios:** `CT-PB33-01..06`.
+- **Migração:** nenhuma; motor recebe DTOs preparados pelo serviço.
+- **Riscos:** regressão de métricas, viés por tamanho e custo de enriquecer candidatas demais.
+
+#### PB-34 — Integração e observabilidade da biblioteca ampliada
+
+- **Status:** A-FAZER — depende de PB-33 `VALIDADO`.
+- **Objetivo:** usar a biblioteca no pipeline sem perder fallback, privacidade ou clareza operacional.
+- **Dependências:** PB-31, PB-32 e PB-33.
+- **Plano de implementação:** `GET/POST /me/music-library`; status na Home existente; carregamento
+  da biblioteca em `generation_service`; fallback para PB-08; reuso de ID/URI; explicação agregada
+  das origens no resultado.
+- **Arquivos previstos:** API/schema/serviço de música, geração/resultado, Home/apiClient/CSS e testes
+  `test_pb34_library_generation.py`.
+- **Testes obrigatórios:** `CT-PB34-01..06`.
+- **Migração:** nenhuma prevista além das definidas nos PBs 30–32.
+- **Riscos:** gerar antes do primeiro sync, expor origem privada e bloquear o fluxo em cache stale.
+
+### Testes integrados da Sprint 7
+
+Ver `PLANO_TESTES.md` → "Testes integrados da Sprint 7". Devem comprovar: três usuários com no
+máximo 500 faixas cada; sync fresco sem rede; update incremental por `snapshot_id`; rate limit/quota
+com cache preservado; pool de no máximo 250 por pessoa; geração de 20–30 faixas; privacidade e
+remoção; regressão completa; e uma validação real sanitizada dos novos endpoints Spotify.
+
+### Critérios de encerramento da Sprint 7
+
+- [ ] PB-30..34 `VALIDADO` individualmente, um por vez;
+- [ ] nenhuma biblioteca possui mais de 500 faixas únicas;
+- [ ] nenhuma geração recebe mais de 250 candidatas por integrante antes do dedupe global;
+- [ ] sync inicial não faz N+1 por faixa e sync fresco faz zero chamada Spotify;
+- [ ] 429/quota/403/reauth e concorrência mantêm estado consistente;
+- [ ] `DELETE /auth/me` remove inventário, biblioteca e sinais pessoais;
+- [ ] motor puro, determinístico e justo para bibliotecas de tamanhos diferentes;
+- [ ] testes integrados, regressão, migrações e build frontend aprovados;
+- [ ] spike/e2e real com as contas autorizadas registrado sem tokens ou dados pessoais.
+
+---
+
 ## 12. Marcos de entrega (referência técnica — não controlam a ordem)
 
 Mantidos como referência de entregas e riscos. A ordem oficial de implementação é por Sprint (acima).
@@ -1727,6 +1965,9 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
 | 2026-07-17 | Reabrir PB-17 dentro da Sprint 3 sem reabrir PB-11/PB-12. | Teste real em grupo mostrou que o contexto é persistido, mas não consumido pelo motor; CT-PB17-05 e CT-S3-INT-02 contradizem o “não aplicável” da validação histórica. |
 | 2026-07-18 | Abrir a Sprint 4 por exceção explícita do usuário, sem promover evidências pendentes a `VALIDADO`. | A autorização libera implementação, mas a dívida de QA continua rastreada. |
 | 2026-07-18 | No PB-03, anonimizar `users` em vez de excluir fisicamente a linha. | A FK do host usa `ON DELETE CASCADE`; exclusão apagaria salas e artefatos de terceiros. |
+| 2026-07-31 | Planejar Sprint 7 com biblioteca única de até 500 faixas por pessoa, formada por Tops e playlists elegíveis. | Ampliar cobertura sem tratar toda playlist como gosto forte nem elevar chamadas/armazenamento sem limite. |
+| 2026-07-31 | Manter no máximo 250 candidatas ativas por pessoa e pesos por origem. | Separar repertório armazenado do pool de execução e preservar justiça entre bibliotecas desiguais. |
+| 2026-07-31 | Promover Sprint 7 e remover dependências formais de Sprints anteriores por decisão explícita do Product Owner. | Atender ao prazo urgente, mantendo dívidas históricas rastreadas separadamente e uma cadeia interna PB-30→34. |
 
 ## 14. Riscos e bloqueios atuais
 
@@ -1741,44 +1982,42 @@ Mantidos como referência de entregas e riscos. A ordem oficial de implementaç�
   consumido pelo ranqueamento com influência limitada a 20%; o reprodutor QA intocado passa e a
   sondagem adversarial confirma que o sinal não inverte consenso forte, preserva o "pular" e é
   monotônico em `valence`. Não bloqueia mais o encerramento.
+- **Sprint 6:** PB-25..29 possuem evidência técnica do implementador e seguem em QA paralelo; por
+  decisão do Product Owner em 2026-07-31, não bloqueiam mais a Sprint 7.
+- **Sprint 7 / Spotify:** novo escopo e leitura de itens de playlist exigem spike real; 403 e
+  `QUOTA_EXCEEDED` devem ser tratados sem contorno e sem apagar cache utilizável.
+- **Sprint 7 / dados:** limite absoluto de 500 faixas únicas por pessoa, retenção temporária,
+  metadados mínimos e remoção no disconnect são requisitos, não otimizações opcionais.
 
 ## 15. Diário de retomada
 
 Atualizar esta seção ao encerrar cada sessão.
 
-- **Data da última sessão:** 2026-07-18.
-- **Sprint/branch de trabalho:** Sprint 5, branch de entrega `feat/SPRINT05/PB24`.
-- **PB em andamento:** PB-24 `AGUARDANDO-QA` — balanceamento entre subgrupos implementado.
-- **Último resultado concluído:** reordenação opt-in posterior à justiça, limite configurável por
-  cluster, melhor esforço na escassez e explicação condicional persistida. Suíte completa
-  **365 passed / 6 skipped / 0 failed**; build Vite aprovado.
-- **Onde parou:** implementação e testes técnicos do último PB da Sprint 5 concluídos; handoff para QA.
-- **Próxima ação exata:** QA executa `CT-PB24-01..06`. Se `REPROVADO`, o Dev corrige somente PB-24;
-  se `VALIDADO`, inicia-se a validação integrada da Sprint 5. As validações integradas das Sprints
-  1–4 permanecem pendentes e não foram promovidas a concluídas pela abertura operacional da Sprint 5.
+- **Data da última sessão:** 2026-07-31.
+- **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
+- **PB em andamento:** nenhum; PB-30 `VALIDADO` e PB-31 é o próximo acionável.
+- **Último resultado concluído:** QA revalidou PB-30 com `12 passed` focados e
+  `420 passed, 6 skipped` na regressão completa.
+- **Onde parou:** inventário mínimo, OAuth/reconsentimento, paginação e erros diferenciados prontos.
+- **Próxima ação exata:** Dev inicia somente PB-31 em nova fase e respeita o próximo portão de QA.
 - **Comando/teste para retomada:**
   ```bash
-  cd backend
-  APP_ENV=test .venv/bin/pytest tests/test_pb24_subgroup_balance.py -o addopts='' -q
-  APP_ENV=test .venv/bin/pytest tests -o addopts='' -q
-  .venv/bin/alembic upgrade head
-  cd ../frontend && npm run build
+  ./scripts/orquestrar.sh --list --no-pull
   ```
-- **Bloqueios:** nenhum técnico no PB-24. Aguarda QA. Dívidas integradas das Sprints 1–4 preservadas
-  pela exceção explícita do usuário.
+- **Bloqueios:** nenhum para iniciar PB-31. O spike real permanece reservado à validação integrada e
+  depende das três contas de demonstração autorizadas no app.
 
 ## 16. Checklist de encerramento de sessão
 
-- [x] Rodei as verificações relevantes. — 14 testes focados; 103 relacionados; suíte completa
-  365 passed / 6 skipped; build Vite, `compileall`, `pip check` e migração reversível.
-- [x] Comparei o comportamento real com os critérios existentes. — predominância, melhor esforço,
-  preservação de vetos/justiça, opt-in e explicação condicional cobertos.
-- [x] Atualizei status sem declarar validação independente. — PB-24 `AGUARDANDO-QA`.
-- [x] Registrei decisões ou bloqueios novos. — teto 0,60, veto 0,05 e cadeia SQLite antiga.
+- [x] Rodei as verificações relevantes. — QA final com 12 focados, regressão backend 420/6,
+  build Vite e migração reversível.
+- [x] Comparei o plano com o backlog e os limites da integração Spotify.
+- [x] Atualizei status após validação independente. — PB-30 `VALIDADO`.
+- [x] Registrei decisões ou bloqueios novos. — teto 500, TTL 7 dias, pool 250 e exceção do Product Owner.
 - [x] Atualizei o diário de retomada com a próxima ação exata.
-- [x] Atualizei a documentação afetada. — README, planos de testes/execução e diário de retomada.
+- [x] Atualizei a documentação afetada. — backlog, planos de execução/testes e mapa de trabalho.
 - [x] Confirmei que nenhum segredo ou token foi adicionado ao diff versionado.
-- [x] Commit do PB-24 — incluído no handoff desta sessão.
+- [x] Commits do PB-30 — `efb8625` e correção `be45742`.
 
 ## 17. Modelos de prompt (Implementação e Teste)
 
