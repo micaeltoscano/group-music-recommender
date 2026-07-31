@@ -223,7 +223,13 @@ async def resolve_candidates(
         # continuam pelo matching textual logo abaixo.
         raw_spotify_id = str(candidate.raw_data.get("id") or "")
         raw_spotify_uri = candidate.raw_data.get("uri")
-        if raw_spotify_id == str(candidate.id) and raw_spotify_uri:
+        expected_spotify_uri = f"spotify:track:{raw_spotify_id}"
+        has_consistent_native_identity = (
+            bool(raw_spotify_id)
+            and raw_spotify_id == str(candidate.id)
+            and raw_spotify_uri == expected_spotify_uri
+        )
+        if has_consistent_native_identity:
             if candidate.raw_data.get("is_playable") is False:
                 tracks_to_insert.append(PlaylistRunTrack(
                     run_id=run_id,
@@ -241,7 +247,7 @@ async def resolve_candidates(
                 run_id=run_id,
                 candidate_id=candidate.id,
                 spotify_id=raw_spotify_id,
-                spotify_uri=str(raw_spotify_uri),
+                spotify_uri=expected_spotify_uri,
                 name=original_name,
                 artist=original_artist,
                 match_confidence=1.0,

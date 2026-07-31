@@ -63,6 +63,29 @@ def test_native_spotify_candidate_reuses_id_and_uri_without_search(mock_search):
 
 
 @patch("app.clients.spotify_client.search_track", new_callable=AsyncMock)
+def test_inconsistent_native_uri_falls_back_to_textual_matching(mock_search):
+    mock_search.return_value = [
+        {
+            "id": "native-safe",
+            "uri": "spotify:track:native-safe",
+            "name": "Track native-safe",
+            "artists": [{"name": "Artist"}],
+            "is_playable": True,
+        }
+    ]
+    db = MagicMock(spec=Session)
+    candidate = _candidate("native-safe", uri="spotify:track:different-track")
+
+    asyncio.run(resolve_candidates(db, uuid.uuid4(), [candidate], "token"))
+
+    mock_search.assert_awaited_once()
+    track = db.add_all.call_args.args[0][0]
+    assert track.status == "matched"
+    assert track.spotify_id == "native-safe"
+    assert track.spotify_uri == "spotify:track:native-safe"
+
+
+@patch("app.clients.spotify_client.search_track", new_callable=AsyncMock)
 def test_incomplete_candidate_still_uses_textual_matching(mock_search):
     mock_search.return_value = [
         {
