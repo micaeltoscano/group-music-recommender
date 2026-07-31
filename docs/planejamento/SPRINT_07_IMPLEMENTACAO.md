@@ -8,7 +8,7 @@
 ## 1. Estado e portão de entrada
 
 - **Estado deste plano:** PRONTO PARA EXECUÇÃO.
-- **Estado da implementação:** PB-33 AGUARDANDO-QA após implementação completa.
+- **Estado da implementação:** PB-33 REPROVADO no CT-PB33-04; `DEF-PB33-01` aberto.
 - **Data do refinamento:** 2026-07-31.
 - **Branch atual no momento da criação:** `feat/SPRINT06/stabilization`.
 - **Liberação:** Product Owner removeu as dependências formais de todas as Sprints anteriores e
@@ -373,8 +373,8 @@ Atualizar esta tabela apenas quando o documento oficial liberar a Sprint e cada 
 
 ## 15. Ponto exato de retomada
 
-- **Próximo passo:** QA valida somente PB-33 e seus seis CTs obrigatórios.
-- **Evidência Dev:** `11 passed` próprios, `24 passed` focados; motor permanece puro.
+- **Próximo passo:** Dev corrige somente `DEF-PB33-01` e devolve PB-33 ao QA.
+- **Evidência QA:** `25 passed, 1 failed`; biblioteca 500 acumulou 5× o peso da biblioteca 50.
 - **Dependências:** PB-30 e PB-31 `VALIDADO` em 2026-07-31.
 - **Portão seguinte:** PB-32 termina em `AGUARDANDO-QA` e exige validação independente.
 - **Proibido na retomada:** antecipar PB-33 ou posteriores.

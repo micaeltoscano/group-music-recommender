@@ -1903,11 +1903,9 @@ limites que preservam contexto e justiça.
 
 #### PB-33 — Perfil ponderado e seleção limitada de candidatas
 
-- **Status:** AGUARDANDO-QA — motor puro de perfil ponderado entregue com pesos centralizados,
-  recorrência limitada, seleção contextual 150/100 até 250, redistribuição ociosa, afinidade
-  ponderada e dedupe coletivo com contribuidores. `CT-PB33-01..06`: `11 passed`; regressões focadas:
-  `24 passed`; suíte completa: `455 passed, 6 skipped`, mantendo duas falhas preexistentes fora da
-  PB-33 (PB-02/PB-06).
+- **Status:** REPROVADO — QA independente em 2026-07-31 aprovou CT-PB33-01/02/03/05/06 e reprovou
+  CT-PB33-04. `DEF-PB33-01` (Alta): biblioteca 500×50 resulta em peso agregado 112,5×22,5; o membro
+  maior conserva 5× mais voz. Evidência focada: `25 passed, 1 failed`. Relatório: `PB-33.md`.
 - **Objetivo:** diferenciar preferência forte de repertório ocasional antes do ranking coletivo.
 - **Dependências:** PB-32.
 - **Plano de implementação:** modelo puro de sinal ponderado; pesos default `1.00/0.85/0.65/0.45/0.35`;
@@ -2020,11 +2018,11 @@ Atualizar esta seção ao encerrar cada sessão.
 
 - **Data da última sessão:** 2026-07-31.
 - **Sprint/branch de trabalho atual:** Sprint 7 na branch `feat/SPRINT06/stabilization`.
-- **PB em andamento:** nenhum; PB-33 `AGUARDANDO-QA` no portão obrigatório.
-- **Último resultado concluído:** Dev implementou PB-33 com `11 passed` próprios e `24 passed`
-  focados; regressão completa em `455 passed, 6 skipped`, além das falhas antigas PB-02/PB-06.
-- **Onde parou:** perfil ponderado e pool limitado prontos para validação independente.
-- **Próxima ação exata:** QA valida somente PB-33; Dev não inicia PB-34 antes de `VALIDADO`.
+- **PB em andamento:** PB-33 `REPROVADO`; PB-34 permanece bloqueado.
+- **Último resultado concluído:** QA executou 26 testes focados: `25 passed, 1 failed`; CT-PB33-04
+  revelou peso agregado 5× maior para a biblioteca de 500 faixas.
+- **Onde parou:** `DEF-PB33-01` aberto; demais CTs aprovados.
+- **Próxima ação exata:** Dev normaliza a contribuição total por pessoa e reenvia PB-33 ao QA.
 - **Comando/teste para retomada:**
   ```bash
   ./scripts/orquestrar.sh --list --no-pull

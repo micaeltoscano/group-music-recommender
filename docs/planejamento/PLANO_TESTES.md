@@ -1874,30 +1874,36 @@ Comprovar consentimento mínimo, paginação completa e respeito às playlists r
 
 ##### CT-PB33-01 — Pesos default por origem
 - **Tipo:** motor · **Prioridade:** Alta · **Resultado esperado:** `1.00/0.85/0.65/0.45/0.35`
-  centralizados e sensíveis no score. · **Automatizável:** Sim · **Status:** Não executado
+  centralizados e sensíveis no score. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31;
+  constantes e sensibilidade verificadas no motor.
 
 ##### CT-PB33-02 — Múltiplas origens combinam sem duplicar
 - **Tipo:** motor/dedupe · **Prioridade:** Alta · **Resultado esperado:** uma candidata, evidências
-  combinadas, peso final `<=1`. · **Automatizável:** Sim · **Status:** Não executado
+  combinadas, peso final `<=1`. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31;
+  origens preservadas, candidata única e teto comprovado.
 
 ##### CT-PB33-03 — Cap de 250 candidatas por pessoa
 - **Tipo:** limite · **Prioridade:** Alta · **Cenários:** bibliotecas 0, 50, 250 e 500. ·
   **Resultado esperado:** nunca mais de 250; alvo Top/playlist e preenchimento ocioso respeitados. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; limites 0/50/250/500 e redistribuição
+  150/100 aprovados.
 
 ##### CT-PB33-04 — Biblioteca grande não domina a pequena
 - **Tipo:** justiça · **Prioridade:** Alta · **Cenário:** membro A com 500, B com 50. ·
   **Resultado esperado:** contribuição/coverage por pessoa mantém pesos iguais; A não ganha 10x voz. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Reprovado — 2026-07-31; `DEF-PB33-01`: após o cap, A ainda
+  acumula peso total 112,5 contra 22,5 de B, mantendo 5× mais voz.
 
 ##### CT-PB33-05 — Playlist não equivale a Top no perfil
 - **Tipo:** compatibilidade/regressão · **Prioridade:** Alta · **Resultado esperado:** faixa ocasional
   tem afinidade menor e não dilui compatibilidade como conjunto binário bruto. ·
-  **Automatizável:** Sim · **Status:** Não executado
+  **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31; playlist 0,45 ficou abaixo de Top 1,00
+  e a compatibilidade ponderada permaneceu simétrica.
 
 ##### CT-PB33-06 — Determinismo e pureza
 - **Tipo:** unitário · **Prioridade:** Alta · **Resultado esperado:** permutações equivalentes geram
-  o mesmo resultado; zero rede/banco. · **Automatizável:** Sim · **Status:** Não executado
+  o mesmo resultado; zero rede/banco. · **Automatizável:** Sim · **Status:** Aprovado — 2026-07-31;
+  permutações/contexto estáveis e módulo sem dependência de rede ou banco.
 
 ### PB-34 — Integração e observabilidade da biblioteca ampliada
 
