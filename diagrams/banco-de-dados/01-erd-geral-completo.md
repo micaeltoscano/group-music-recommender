@@ -14,7 +14,7 @@ erDiagram
     }
 
     spotify_tokens {
-        int user_id PK, FK
+        int user_id PK_FK
         str access_token
         str refresh_token
         datetime token_expires_at
@@ -45,8 +45,8 @@ erDiagram
     }
 
     music_session_members {
-        uuid session_id PK, FK
-        int user_id PK, FK
+        uuid session_id PK_FK
+        int user_id PK_FK
         str role
         datetime joined_at
     }
@@ -198,41 +198,60 @@ erDiagram
         datetime updated_at
     }
 
-    users ||--o| spotify_tokens : "tem"
-    users ||--o{ app_sessions : "mantém"
-    users ||--o{ music_sessions : "hospeda"
-    users ||--o{ music_session_members : "participa"
-    music_sessions ||--|{ music_session_members : "possui"
-    users ||--o{ user_music_snapshots : "gera"
-    users ||--o{ user_playlist_inventory : "possui"
-    users ||--o| user_music_library_snapshots : "mantém"
+    users ||--o| spotify_tokens : "possui (1:1)"
+    users ||--o{ app_sessions : "mantém (1:N)"
+    users ||--o{ music_sessions : "hospeda (1:N)"
+    users ||--o{ music_session_members : "participa (1:N)"
+    music_sessions ||--|{ music_session_members : "agrega (1:N)"
+    users ||--o{ user_music_snapshots : "gera (1:N)"
+    users ||--o{ user_playlist_inventory : "possui (1:N)"
+    users ||--o| user_music_library_snapshots : "mantém (1:1)"
     
-    user_music_library_snapshots ||--o{ user_music_library_playlist_states : "contém"
-    users ||--o{ user_music_library_playlist_states : "associa"
+    user_music_library_snapshots ||--o{ user_music_library_playlist_states : "contém (1:N)"
+    users ||--o{ user_music_library_playlist_states : "associa (1:N)"
     
-    user_music_library_snapshots ||--o{ user_music_library_tracks : "agrega"
-    users ||--o{ user_music_library_tracks : "associa"
+    user_music_library_snapshots ||--o{ user_music_library_tracks : "agrega (1:N)"
+    users ||--o{ user_music_library_tracks : "associa (1:N)"
     
-    user_music_library_tracks ||--o{ user_music_library_sources : "origina de"
+    user_music_library_tracks ||--o{ user_music_library_sources : "origina de (1:N)"
     
-    music_sessions ||--o{ vibe_check_answers : "coleta"
-    users ||--o{ vibe_check_answers : "responde"
+    music_sessions ||--o{ vibe_check_answers : "coleta (1:N)"
+    users ||--o{ vibe_check_answers : "responde (1:N)"
     
-    music_sessions ||--o{ playlist_runs : "executa"
-    playlist_runs ||--o{ playlist_run_tracks : "inclui"
+    music_sessions ||--o{ playlist_runs : "executa (1:N)"
+    playlist_runs ||--o{ playlist_run_tracks : "contém (1:N)"
     
-    users ||--o{ member_track_feedback : "avalia"
-    playlist_runs ||--o{ member_track_feedback : "recebe"
+    users ||--o{ member_track_feedback : "avalia (1:N)"
+    playlist_runs ||--o{ member_track_feedback : "recebe (1:N)"
     
-    users ||--o{ playlist_feedback : "avalia"
-    playlist_runs ||--o{ playlist_feedback : "recebe"
+    users ||--o{ playlist_feedback : "avalia (1:N)"
+    playlist_runs ||--o{ playlist_feedback : "recebe (1:N)"
 
+    playlist_run_tracks ..> track_context_cache : "consulta lógica por spotify_track_id (sem FK)"
 ```
 
-Este diagrama apresenta o schema geral e completo do banco de dados relacional PostgreSQL do projeto Vibe Check, totalizando **16 tabelas**. Houve uma evolução natural das 12 tabelas originais para as 16 atuais durante a Sprint 7, onde foram incluídas as features de biblioteca musical incremental (Product Backlog PB-30 ao PB-34).
+Este diagrama mapeia o modelo de dados relacional completo do repositório PostgreSQL no projeto **Vibe Check**, consolidando as **16 tabelas SQLAlchemy** definidas em `backend/app/db/models.py`. O modelo evoluiu de 12 tabelas para 16 tabelas durante a Sprint 7 (PB-30 a PB-34) para acomodar a sincronização incremental da biblioteca musical dos usuários.
 
-As adições contemplam as tabelas `user_playlist_inventory`, `user_music_library_snapshots`, `user_music_library_playlist_states`, `user_music_library_tracks` e `user_music_library_sources`. Juntas, elas formam um subsistema robusto de sincronização em background que armazena referências incrementais das playlists e faixas favoritas do usuário, mantendo constraints rigorosas (como `track_count 0-500` e tipos de acesso restritos a `owned` ou `collaborative`).
+### Organização em Subsistemas
 
-Vale destacar que a tabela `track_context_cache` atua como um repositório de cache totalmente independente, não possuindo chave estrangeira (FK) apontando para outras tabelas estruturais. Ela se liga logicamente às faixas através da coluna `spotify_track_id`. O uso desse design otimiza a performance das requisições a APIs externas como Last.fm e Spotify.
+1. **Identidade e Autenticação (RNF-01 / PB-02):**
+   - `users`: Entidade central do sistema, indexada por `spotify_id` único.
+   - `spotify_tokens`: Relação de composição 1:1 estrita (`user_id` como PK/FK). Armazena os segredos OAuth (`access_token`, `refresh_token`) cifrados em repouso via biblioteca Fernet (`crypto.py`), impedindo o vazamento de credenciais.
+   - `app_sessions`: Gerencia sessões ativas do frontend via hash de cookie `session_token_hash` com expiração controlada.
 
-As constraints de unicidade, como `uq_music_snapshot_user_range` e `uq_member_track_feedback_user_run_track`, mapeiam estritamente os requisitos de não-duplicação de avaliações e de limite de snapshot temporal definidos nos requisitos. Os tipos de dados e os relacionamentos de deleção em cascata garantem a integridade relacional quando sessões expiradas ou usuários são removidos.
+2. **Salas e Gestão do Grupo (RF-02 / PB-04, PB-05, PB-07):**
+   - `music_sessions`: Define a sala efêmera criada pelo host, identificada por um `code` alfanumérico único de 6 caracteres.
+   - `music_session_members`: Tabela associativa da relação N:M entre usuários e salas, com chave primária composta (`session_id`, `user_id`) e atributo de papel (`role`: "host" ou "member").
+   - `vibe_check_answers`: Registra a afinidade pontual enviada pelos participantes (energia, valência, popularidade) com unicidade por `(session_id, user_id)`.
+
+3. **Biblioteca e Histórico Musical (RF-04 / PB-08, PB-30 a PB-34):**
+   - `user_music_snapshots`: Snapshots periódicos de faixas e artistas mais ouvidos (`short_term`, `medium_term`, `long_term`).
+   - `user_playlist_inventory`: Inventário de playlists do Spotify pertencentes ou colaborativas do usuário.
+   - `user_music_library_snapshots`: Cabeçalho 1:1 da biblioteca sincronizada do usuário, controlando idempotência e tentativas de sincronização em background (`track_count` 0-500).
+   - `user_music_library_playlist_states`, `user_music_library_tracks` e `user_music_library_sources`: Estrutura hierárquica normalizada para armazenar as faixas da biblioteca, suas origens e posições sem duplicidade.
+
+4. **Engine PNE e Avaliação de Resultados (RF-05 a RF-09 / PB-09 a PB-20):**
+   - `playlist_runs`: Registra cada execução do motor de recomendação para uma sala, monitorando o andamento (`progress_stage`, `progress_percent`), o resultado da LLM (`llm_context_json`), explicações descritivas e scores finais de compatibilidade e justiça.
+   - `playlist_run_tracks`: Faixas selecionadas para a playlist com grau de confiança (`match_confidence`), estado (`matched`/`discarded`), ordem no ranking e motivo de descarte (`discard_reason`).
+   - `track_context_cache`: Tabela de cache **isolada (sem chave estrangeira real)**, consultada por `spotify_track_id` para enriquecimento contextual via Last.fm/Spotify. Sua desconexão relacional impede que falhas em apagar ou atualizar a cache afetem a integridade das tabelas de negócio.
+   - `member_track_feedback` e `playlist_feedback`: Coletam o feedback explícito dos usuários (reações a músicas e notas de satisfação de 0 a 5) com restrições de unicidade para evitar voto duplo.

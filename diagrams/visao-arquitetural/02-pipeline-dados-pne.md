@@ -66,17 +66,18 @@ flowchart TD
     class S6,S7,S9,S11 optional
 ```
 
-Este fluxograma detalha o encadeamento (pipeline) do Motor de Recomendação de Músicas (PNE) no Vibe Check. O pipeline é coordenado pelo método `execute_generation` do arquivo `generation_service.py`.
+Este fluxograma especifica o encadeamento detalhado em 15 etapas do **Motor de Negociação de Preferências (Preference Negotiation Engine — PNE)**, coordenado pela função `execute_generation()` em `backend/app/services/generation_service.py`.
 
-1. **Ordenação Estrita:** O pipeline exige uma sequência estrita porque cada etapa depende da estrutura de dados processada na anterior. Para gerar uma "Pool de Candidatas" (Etapa 5), é necessário ter calculado os "Perfis de Gosto" (Etapa 3). Da mesma forma, o Scoring (Etapa 10) só pode ocorrer após o Enriquecimento Contextual (Etapa 8) avaliar as faixas contra o Contexto LLM (Etapa 2).
-2. **Separação I/O vs Motor Puro:** A arquitetura distingue etapas lógicas (verdes) das etapas de I/O (azul/laranja). As etapas 3, 4, 5, 10 e 13 são puramente in-memory e implementadas na camada de `engine`, respeitando os preceitos determinísticos. Já as etapas 2, 8, 12 e 14 necessitam se comunicar com o exterior (LLM Local, Spotify, Last.fm) sendo geridas pela `Services Layer` para blindar o Motor. As etapas cinzas são isoladas via Feature Flags.
-3. **Rastreabilidade de Progresso:** A cada passo no pipeline, os campos `progress_stage` (nome da etapa atual) e `progress_percent` (de 0 a 100) são atualizados e persistidos no modelo `PlaylistRun`, o que permite fornecer feedback em tempo real para a interface de carregamento do cliente.
-4. **Tratamento de Erros:** Caso qualquer passo crítico do processo lance uma exceção não resolvida, o bloco de `except` aciona o método `fail_generation`, que cancela a esteira, atualiza o status para `failed` e anota o erro no campo `error_message`, evitando que playlists quebradas travem as salas dos usuários.
-5. **Transformações de Dados:** O pipeline realiza progressivas transformações funcionais: a massa de dados brutos (`JSON` da API Spotify) é processada em um `UserTasteProfile`. Em seguida, as faixas dos usuários viram `CandidateTrack`, que após enriquecidas e sequenciadas, tornam-se de fato os registros finais persistidos na tabela `PlaylistRunTrack`.
-6. **Mapeamento de Requisitos (PB/RF):**
-   * **Etapa 2 (LLM Context):** Mapeia o **PB-17** (fallback determinístico do LLM).
-   * **Etapa 4 (Compatibilidade):** Reflete a necessidade de um indicador de afinidade musical.
-   * **Etapa 6 (Clusterização):** Atende ao **RF-07**, que demanda tratamento de preferências contrastantes em grupos maiores.
-   * **Etapa 8 (Last.fm):** Cumpre o **RNF-08** (falhas na API secundária são silenciadas) e incrementa a semântica das faixas.
-   * **Etapa 11 (Balanceamento):** Mapeia a métrica de "fairness" exigida para que nenhum membro domine a playlist.
-   * **Etapa 14 (Criação no Host):** Atende ao **RF-08**, assegurando que a playlist resida unicamente na conta do usuário Host.
+### Codificação Visual e Racional de Execução
+
+1. **Classificação por Cores das Etapas:**
+   - **Verde (Motor Puro em `app/engine/*`):** Estágios 3, 4, 5, 10 e 13. Processamento puramente em memória e imutável.
+   - **Azul (I/O Externe via `app/clients/*`):** Estágios 2 (LLM), 8 (Last.fm), 12 (Spotify Matching) e 14 (Spotify Playlist Creation).
+   - **Laranja (Persistência no Banco PostgreSQL):** Estágios 1 (Início do `PlaylistRun`), 15 (Conclusão e gravações de `PlaylistRunTrack`) e o nó de tratamento de erros `fail_generation`.
+   - **Cinza Tracejado (Módulos Opcionais isolados por Feature Flags):** Estágios 6 (Clusterização), 7 (Músicas-Ponte), 9 (Pool Contextual por Tags) e 11 (Balanceamento de Subgrupos — PB-21 ao PB-24).
+
+2. **Dependência Funcional de Dados:**
+   A ordem das 15 etapas é estrita: a construção da Pool de Candidatas (Etapa 5) exige os Perfis de Gosto processados (Etapa 3); o Scoring (Etapa 10) exige a união do Contexto LLM (Etapa 2), respostas do Vibe Check e Enriquecimento de Tags (Etapa 8).
+
+3. **Mecanismo Central de Falha Segura (`fail_generation`):**
+   Qualquer exceção não tratada ao longo da esteira aciona o bloco `except`, invocando `fail_generation()`. O método registra a causa exata em `error_message`, transiciona `status` do `PlaylistRun` para `"failed"` e reabre a sala (`MusicSession.status = "open"`), assegurando que o estado do grupo nunca fique bloqueado.

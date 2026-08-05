@@ -101,21 +101,29 @@ erDiagram
         datetime updated_at
     }
 
-    music_sessions ||--o{ vibe_check_answers : "coleta respostas de"
-    music_sessions ||--o{ playlist_runs : "gera execuções de"
-    playlist_runs ||--o{ playlist_run_tracks : "seleciona faixas para"
+    music_sessions ||--o{ vibe_check_answers : "coleta respostas (1:N)"
+    music_sessions ||--o{ playlist_runs : "executa histórico (1:N)"
+    playlist_runs ||--o{ playlist_run_tracks : "seleciona faixas (1:N)"
     
-    playlist_runs ||--o{ member_track_feedback : "avaliação por faixa"
-    playlist_runs ||--o{ playlist_feedback : "avaliação global"
+    playlist_runs ||--o{ member_track_feedback : "recebe avaliações por faixa (1:N)"
+    playlist_runs ||--o{ playlist_feedback : "recebe avaliações gerais (1:N)"
     
-    playlist_run_tracks }|..|{ track_context_cache : "consulta lógica via spotify_track_id"
-
+    playlist_run_tracks ..> track_context_cache : "consulta lógica via spotify_track_id (sem FK)"
 ```
 
-Este diagrama enfoca a porção do sistema encarregada pela inteligência de recomendação, ciclo de geração de playlist e a retroalimentação de seus usuários.
+Este diagrama detalha o domínio relacional responsável pelo **ciclo de geração de recomendação (PNE), acompanhamento da execução, persistência das playlists resultantes e captura de feedback explícito**.
 
-O modelo central, `playlist_runs`, orquestra o ciclo de vida e andamento das gerações do motor de recomendação. A tabela é desenhada para acomodar estados de falha, execução ou sucesso (`status`: running, completed, failed), possuindo também rastreio da progressão via `progress_stage` e `progress_percent`. O registro consolida os relatórios descritivos da LLM (`explanation_json` e `llm_context_json`) que viabilizam o RF-05, RF-06 e as PBs atreladas à geração (PB-09 ao PB-17).
+### Racional Arquitetural e Mapeamento de Código
 
-As faixas vinculadas a esta execução (`playlist_run_tracks`) realizam consultas à tabela de cache `track_context_cache`. É fundamental observar no diagrama o uso da relação pontilhada: isso representa uma busca lógica baseada no identificador `spotify_track_id` sem aplicar chave estrangeira (FK) real, visto que `track_context_cache` atua como cache independente para os dados enriquecidos que não devem falhar integridade por ações noutras tabelas.
+1. **Orquestração da Execução em `playlist_runs` (RF-05, RF-06 / PB-09 ao PB-17):**
+   A tabela `playlist_runs` armazena o estado de cada tentativa de geração vinculada a uma `MusicSession`. Ela desacopla o progresso em tempo real (`progress_stage` e `progress_percent`, de 0% a 100%) da sala, registra o relatório contextual interpretado da LLM (`llm_context_json`) e consolida os relatórios de transparência (`explanation_json`, `compatibility_score` e `fairness_score`) calculados por `result_service.py` após o término da geração.
 
-A etapa final do domínio abrange as instâncias de feedback explícito, rastreadas em `member_track_feedback` (feedback detalhado da música) e `playlist_feedback` (satisfação da sala). Tais estruturas garantem unicidade das análises através de constraints específicas (como `uq_playlist_feedback_user_run`) que impedem duplo preenchimento do formulário. Adicionalmente, as notas (`representation_score` e `satisfaction_score`) possuem validação restrita com `CheckConstraint` exigindo valores de 0 a 5. Isto consolida inteiramente os RF-07, RF-08 e RF-09 relacionados aos resultados (PB-19) e avaliações dos membros (PB-20).
+2. **Rastreabilidade e Correspondência de Faixas em `playlist_run_tracks` (PB-10, PB-14, PB-19):**
+   Cada faixa avaliada pela Engine é gravada nesta tabela. Faixas aceitas recebem `status="matched"` e `match_confidence` (grau de similaridade fuzzy entre o catálogo retornado pelo Spotify e a candidata). Faixas rejeitadas pelo filtro de artista (`MAX_TRACKS_PER_ARTIST = 2`) ou capacidade registram o motivo exato em `discard_reason` ("artist_cap", "no_uri", "confidence_below_threshold"), atendendo ao requisito de auditoria do motor.
+
+3. **Design de Cache Independente em `track_context_cache` (RNF-08 / PB-18):**
+   A relação pontilhada no diagrama destaca um aspecto crucial da arquitetura: `track_context_cache` **não possui chave estrangeira física** apontando para outras tabelas. Ela é uma tabela de cache global consultada unicamente via `spotify_track_id`. Isso isola o banco contra falhas na API do Last.fm ou Spotify — a falha em buscar tags externas grava uma cache vazia sem violar integridade relacional.
+
+4. **Captura de Feedback Granular e Satisfação Global (RF-09 / PB-20):**
+   - `member_track_feedback`: Permite a cada integrante classificar faixas individuais (`liked`, `disliked`, `more_like_this`, `never_again`) com `UniqueConstraint` por `(user_id, playlist_run_id, spotify_track_id)`.
+   - `playlist_feedback`: Avalia a percepção geral da sala com notas de 0 a 5 (`representation_score`, `satisfaction_score`) validadas por `CheckConstraint` no banco (`scores BETWEEN 0 AND 5`).

@@ -57,10 +57,20 @@ graph TD
     class Spotify,LastFM,Ollama external
 ```
 
-Este diagrama de contêiner (nível 2 do modelo C4) representa a arquitetura técnica de alto nível do Vibe Check. O sistema utiliza **Docker Compose** para orquestrar os contêineres do backend, frontend e banco de dados, simplificando a infraestrutura e garantindo ambientes reproduzíveis.
+Este diagrama de contêineres (Modelo C4 Nível 2) detalha a arquitetura de alto nível do **Vibe Check**, estruturada para garantir desacoplamento, resiliência a falhas de serviços externos e estrita separação entre I/O e a inteligência pura de recomendação.
 
-1. **Isolamento de Camadas:** A arquitetura segue um fluxo de dependência estrito. O frontend apenas interage com a **API Router Layer**, não tendo acesso direto ao banco de dados ou aos serviços externos. A comunicação frontend-backend é feita via HTTPS/REST, e o gerenciamento de sessão utiliza cookies HTTP-only (vibe_session), garantindo isolamento e segurança.
-2. **Pureza do PNE (Engine Layer):** Como exigido pelos requisitos **RNF-03** e **RNF-04**, a camada de domínio (`app/engine/*`) é mantida estritamente pura, determinística e livre de I/O. A **Services Layer** atua como um escudo, gerenciando as operações de banco de dados e as chamadas de API, para então passar estruturas de dados em memória para as funções do PNE.
-3. **Resiliência e Fallbacks:** O sistema foi projetado para tolerar falhas em serviços externos secundários. O LLM Local (Ollama) possui um *fallback* determinístico caso esteja indisponível, conforme o **PB-17**. Da mesma forma, falhas na API do Last.fm são absorvidas silenciosamente sem interromper a geração da playlist, atendendo ao **RNF-08**. A renovação de tokens do Spotify ocorre automaticamente, garantindo a estabilidade das credenciais dos usuários.
-4. **Modelo de Segurança:** Atendendo ao requisito **RNF-01**, tokens críticos (como o `access_token` e o `refresh_token` do Spotify) nunca deixam o backend. Eles são mantidos cifrados em repouso no banco de dados utilizando a biblioteca `cryptography` (Fernet) via `crypto.py`. O navegador apenas recebe o hash de sessão por meio de um cookie seguro, acompanhado de parâmetros de estado (state) para mitigar ataques CSRF.
-5. **Feature Flags:** Para suportar a evolução pós-MVP, a aplicação emprega sinalizadores de recursos (feature flags) em `config.py` como `discovery_mode_enabled`, `bridge_tracks_enabled` e `subgroup_balancing_enabled`, que permitem controlar o comportamento da Engine dinamicamente sem alterar regras estritas de arquitetura.
+### Racional Arquitetural e Princípios de Design
+
+1. **Isolamento e Segurança da Camada Cliente (RNF-01):**
+   O frontend React (Vite) consome unicamente a camada de **API Routers** (`app/api/*`) via chamadas HTTPS/REST. Nenhuma credencial do Spotify atinge o navegador: a autenticação utiliza cookies seguros `HTTP-only` (`vibe_session`), e os tokens OAuth do Spotify permanecem mantidos no backend, cifrados em repouso com o algoritmo Fernet (`crypto.py`).
+
+2. **Pureza do PNE (Engine Layer) (RNF-03, RNF-04):**
+   A camada de domínio (`app/engine/*`) é **totalmente pura, síncrona/determinística e isenta de I/O**. Ela opera exclusivamente sobre `dataclasses` em memória (`UserTasteProfile`, `CandidateTrack`, `ContextCriteria`). A **Services Layer** (`app/services/*`) atua como a única orquestradora de I/O, responsabilizando-se por buscar dados no banco PostgreSQL e clientes externos antes de invocá-la.
+
+3. **Estratégias de Resiliência a Serviços Externos (RNF-08, PB-17):**
+   - **LLM Local (Ollama):** Interpreta o contexto da sala (`occasion`/`description`). Caso o Ollama esteja indisponível, o sistema aciona automaticamente o *fallback determinístico*, garantindo a geração da playlist.
+   - **API Last.fm:** Enriquece candidatas com tags musicais. Falhas ou rate limits na API Last.fm são silenciados para não comprometer a execução principal.
+   - **Spotify Client:** Gerencia renovação automática de tokens expirados e aplica exponenciação de tempo de retentativa em respostas HTTP 429.
+
+4. **Infraestrutura em Docker Compose:**
+   Orquestra os três contêineres principais (`frontend`, `backend` e `db` PostgreSQL 16 Alpine com volume persistente `vibe_pgdata`), garantindo reprodutibilidade idêntica entre ambiente local de desenvolvimento e produção.

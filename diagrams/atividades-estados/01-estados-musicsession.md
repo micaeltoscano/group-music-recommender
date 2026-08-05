@@ -1,4 +1,4 @@
-# 01 — Diagrama de Estados: MusicSession (Sala)
+# 01 — Diagrama de Estados: MusicSession
 
 ![Diagrama de Estados: MusicSession](01-estados-musicsession.png)
 
@@ -10,15 +10,15 @@ stateDiagram-v2
     generating --> open : complete_generation()\ngeneration_service.py:162\n[sucesso]
     generating --> open : fail_generation()\ngeneration_service.py:175\n[erro]
 
-    open --> [*] : expiração (expires_at)\nsala efêmera
+    open --> [*] : expiração temporal (expires_at)\nsala efêmera
 
     state open {
         [*] --> AguardandoMembros
-        AguardandoMembros --> ContextoDefinido : Host define\nocasião/modo\n(PB-06)
-        ContextoDefinido --> AguardandoMembros : Host limpa\ncontexto
+        AguardandoMembros --> ContextoDefinido : Host define\nocasião/modo (PB-06)
+        ContextoDefinido --> AguardandoMembros : Host altera/limpa\ncontexto
         AguardandoMembros --> AguardandoMembros : Membro entra\n(PB-05, máx 5)
-        ContextoDefinido --> VibeCheckAberto : Membros\nrespondem\nVibe Check\n(PB-07)
-        VibeCheckAberto --> ProntaParaGerar : Todos prontos\nou host decide\ngerar
+        ContextoDefinido --> VibeCheckAberto : Membros preenchem\nVibe Check (PB-07)
+        VibeCheckAberto --> ProntaParaGerar : Membros prontos ou\nhost decide gerar
     }
 
     state generating {
@@ -34,30 +34,17 @@ stateDiagram-v2
     }
 ```
 
-Este diagrama de estados modela o ciclo de vida completo de uma `MusicSession` (sala efêmera), conforme
-implementado em `app/db/models.py:146-179` e `app/services/room_service.py` + `generation_service.py`.
+Este diagrama modela o ciclo de vida dinâmico da entidade `MusicSession` (sala de recomendação colaborativa), conforme implementado no modelo SQLAlchemy `backend/app/db/models.py:146-179` e gerenciado pelos serviços `app/services/room_service.py` e `app/services/generation_service.py`.
 
-A sala possui apenas **dois estados persistentes no banco**: `"open"` e `"generating"` — ambos
-controlados pela coluna `MusicSession.status` (tipo `String(32)`, default `"open"` na linha 160 do
-modelo). Os subestados dentro de `open` (aguardando membros, contexto definido, vibe check, pronta
-para gerar) são **comportamentais**: não existem como valores distintos da coluna `status`, mas
-emergem da combinação de dados presentes na sala (existência de `occasion`/`mode`, presença de
-`VibeCheckAnswer`, quantidade de membros). Modelá-los como subestados é uma decisão de documentação
-que torna explícito o ciclo que o frontend (`Room.jsx`) implementa ao navegar entre as fases do lobby.
+### Racional de Arquitetura e Decisões de Estado
 
-A transição `open → generating` é protegida por dois guards explícitos no código:
-(1) `room.host_user_id != host_id` lança `RoomHostRequiredError` (linha 108-109), garantindo que
-somente o host inicia a geração; e (2) `room.status == "generating"` lança `GenerationConflictError`
-(linha 111-112), impedindo concorrência de gerações via lock pessimista (`with_for_update()`).
+1. **Dois Estados Persistentes em Banco:**
+   A coluna `MusicSession.status` (`String(32)`, default `"open"`) armazena estritamente dois valores em banco: `"open"` e `"generating"`. Os subestados comportamentais de `open` (Aguardando Membros, Contexto Definido, Vibe Check Aberto, Pronta para Gerar) são inferidos dinamicamente na aplicação e na API pelo estado dos relacionamentos (presença de membros, definição de `occasion`/`mode` e submissões em `vibe_check_answers`). Essa abstração simplifica o schema relacional mantendo a rica navegação do lobby no React frontend.
 
-O estado composto `generating` detalha os 9 estágios do pipeline registrados no dicionário
-`GENERATION_STAGES` (linha 56-66 de `generation_service.py`), que controla a barra de progresso
-exibida em tempo real no frontend. A monotonia do progresso é garantida pela guarda em
-`update_generation_progress` (linha 140: `if next_percent < run.progress_percent: return run`),
-impedindo regressão percentual caso estágios sejam atingidos fora de ordem.
+2. **Mecanismo de Lock e Guardas de Segurança (PB-13):**
+   A transição de `"open"` para `"generating"` acionada por `start_generation()` executa um **lock pessimista de linha no PostgreSQL** via `.with_for_update()`. O código valida duas guardas críticas:
+   - `room.host_user_id != host_id`: Lança `RoomHostRequiredError` impedindo que convidados iniciem a geração.
+   - `room.status == "generating"`: Lança `GenerationConflictError` evitando execuções concorrentes simultâneas na mesma sala.
 
-Ambas as saídas de `generating` (sucesso via `complete_generation` e falha via `fail_generation`)
-restauram a sala para `"open"`, permitindo que o host tente gerar novamente sem precisar recriar a
-sala — um requisito explícito do PB-13 (retry pós-falha). A expiração temporal da sala
-(`expires_at`, definida no momento da criação) é a única forma de destruição, consistente com o
-conceito de sala efêmera do RF-02.
+3. **Ciclo de Vida do Pipeline e Resiliência (PB-13, PB-17):**
+   Enquanto em `"generating"`, a sala é blindada contra edições de membros. Ambas as saídas do pipeline — sucesso (`complete_generation`) e erro (`fail_generation`) — transicionam a sala **de volta para `"open"`**, liberando-a para novas gerações sem destruir o histórico de membros ou a sala. A expiração temporal (`expires_at`) garante a limpeza da sala efêmera.

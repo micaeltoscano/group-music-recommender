@@ -14,7 +14,7 @@ erDiagram
     }
 
     spotify_tokens {
-        int user_id PK, FK
+        int user_id PK_FK
         str access_token
         str refresh_token
         datetime token_expires_at
@@ -45,8 +45,8 @@ erDiagram
     }
 
     music_session_members {
-        uuid session_id PK, FK
-        int user_id PK, FK
+        uuid session_id PK_FK
+        int user_id PK_FK
         str role
         datetime joined_at
     }
@@ -114,31 +114,39 @@ erDiagram
     }
 
     users ||--o| spotify_tokens : "possui (1:1)"
-    users ||--o{ app_sessions : "mantém"
-    users ||--o{ music_sessions : "hospeda"
-    users ||--o{ music_session_members : "participa"
-    music_sessions ||--|{ music_session_members : "integra"
+    users ||--o{ app_sessions : "mantém (1:N)"
+    users ||--o{ music_sessions : "hospeda (1:N)"
+    users ||--o{ music_session_members : "participa (1:N)"
+    music_sessions ||--|{ music_session_members : "agrega (1:N)"
     
-    users ||--o{ user_music_snapshots : "gera"
-    users ||--o{ user_playlist_inventory : "possui"
+    users ||--o{ user_music_snapshots : "gera (1:N)"
+    users ||--o{ user_playlist_inventory : "possui (1:N)"
     users ||--o| user_music_library_snapshots : "mantém (1:1)"
     
-    user_music_library_snapshots ||--o{ user_music_library_playlist_states : "contém estados"
-    users ||--o{ user_music_library_playlist_states : "associa"
+    user_music_library_snapshots ||--o{ user_music_library_playlist_states : "contém (1:N)"
+    users ||--o{ user_music_library_playlist_states : "associa (1:N)"
     
-    user_music_library_snapshots ||--o{ user_music_library_tracks : "agrega faixas"
-    users ||--o{ user_music_library_tracks : "associa"
+    user_music_library_snapshots ||--o{ user_music_library_tracks : "agrega (1:N)"
+    users ||--o{ user_music_library_tracks : "associa (1:N)"
     
-    user_music_library_tracks ||--o{ user_music_library_sources : "deriva de"
-
+    user_music_library_tracks ||--o{ user_music_library_sources : "origina de (1:N)"
 ```
 
-Este diagrama detalha o subconjunto de tabelas responsável pela gestão do ciclo de vida do usuário, sessões do aplicativo e o gerenciamento de salas (grupos) e biblioteca musical pessoal.
+Este diagrama enfoca o núcleo relacional encarregado da **gestão de identidade, controle de sessões do aplicativo, salas colaborativas e sincronização da biblioteca de músicas do usuário**.
 
-A relação de composição entre `users` e `spotify_tokens` é estritamente 1:1, modelada com o comportamento de `cascade="all, delete-orphan"`, garantindo que não haja tokens órfãos caso o usuário seja deletado. Esse modelo atende ao RF-01 e PB-02 de autenticação de conta via Spotify.
+### Racional Arquitetural e Mapeamento de Código
 
-Para a formação dos grupos, a associação (N:M) entre `users` e `music_sessions` é reificada na tabela associativa `music_session_members`. Esta possui uma **Chave Primária Composta** (`session_id`, `user_id`) que não só impede duplicidade de inscrições em uma mesma sala, como embute o atributo `role` ("host" ou "guest") e atende diretamente ao RF-02, PB-04 e PB-05 (criação e acesso às salas de recomendação).
+1. **Composição Estrita Usuário → Token (RF-01 / PB-02):**
+   A entidade `spotify_tokens` utiliza a chave primária do próprio usuário (`user_id` como PK e FK simultaneamente), forçando uma relação de composição 1:1 rigorosa com a regra de exclusão `cascade="all, delete-orphan"`. Isso garante que credenciais cifradas nunca fiquem órfãs caso um usuário encerre sua conta. Os tokens são renovados automaticamente por `spotify_client.py` quando `token_expires_at` é atingido.
 
-A hierarquia da biblioteca (PB-30 a PB-34) reflete uma complexa engenharia de dados offline. Ela inicia no `user_music_library_snapshots` (limitada a 1:1 com o usuário, com exclusão em cascata). Dali derivam os estados de playlist (`user_music_library_playlist_states`) e os rastreios de música (`user_music_library_tracks`), garantindo idempotência durante a sincronização incremental da biblioteca. A rastreabilidade das origens se dá em `user_music_library_sources`.
+2. **Reificação N:M da Sala de Música (RF-02 / PB-04, PB-05):**
+   A participação de usuários em salas não é uma tabela associativa simples. `music_session_members` possui uma **Chave Primária Composta** (`session_id`, `user_id`) e adiciona a coluna `role` ("host" ou "member"). Essa modelagem evita duplicidade de membros na mesma sala, impõe o limite máximo de 5 participantes via regra de aplicação e distingue o criador da sala (anfitrião com permissão de disparar a geração) dos convidados.
 
-Os dados obedecem a **UniqueConstraints** (como a de usuário e `time_range` em `user_music_snapshots` para RF-04/PB-08) e **CheckConstraints** rigorosas de validação de domínio. Por exemplo: limites de 0 a 500 no `track_count`, checagem de tipos de acesso a playlists em inventário (`access_type IN ('owned', 'collaborative')`), e ranqueamentos positivos (`position >= 1`).
+3. **Arquitetura da Biblioteca Incremental (PB-30 ao PB-34):**
+   A sincronização em segundo plano das músicas do usuário é estruturada de forma hierárquica e idempotente:
+   - `user_music_library_snapshots` atua como a raiz da biblioteca de cada usuário (relação 1:1), monitorando estatísticas como `track_count` (0 a 500 faixas) e metadados de tentativas de sync em caso de rate limit.
+   - `user_music_library_playlist_states` e `user_music_library_tracks` registram a fotografia atual das playlists e faixas indexadas.
+   - `user_music_library_sources` mantém o rastreio da origem de cada faixa (se veio dos "Top Tracks" do Spotify ou de uma playlist específica do inventário).
+
+4. **Integridade e Constraints de Domínio:**
+   O schema SQLAlchemy aplica `UniqueConstraint` compostas como `uq_music_snapshot_user_range` em `user_music_snapshots` por `(user_id, time_range)`, e `CheckConstraint` restritivas como `access_type IN ('owned', 'collaborative')` em `user_playlist_inventory`, assegurando a qualidade dos dados antes do processamento pela Engine.

@@ -1,4 +1,4 @@
-# 02 — Diagrama de Estados: PlaylistRun (Execução de Geração)
+# 02 — Diagrama de Estados: PlaylistRun
 
 ![Diagrama de Estados: PlaylistRun](02-estados-playlistrun.png)
 
@@ -9,11 +9,11 @@ stateDiagram-v2
     state running {
         [*] --> starting : progress_stage=starting\nprogress_percent=0
 
-        starting --> interpreting_context : 0% → 8%\nLLM interpreta contexto\ndo host (occasion+description)
-        interpreting_context --> collecting_tastes : 8% → 20%\nCarrega snapshots e\nconstrói UserTasteProfile[]
-        collecting_tastes --> discovering_context : 20% → 40%\nEnriquece candidatas\n(Last.fm + Spotify genres)
-        discovering_context --> ranking : 40% → 55%\nScoring individual/grupo\n+ fairness + bridges
-        ranking --> matching_spotify : 55% → 70%\nResolve candidatas\nno catálogo Spotify
+        starting --> interpreting_context : 0% → 8%\nLLM interpreta contexto do host\n(occasion + description)
+        interpreting_context --> collecting_tastes : 8% → 20%\nCarrega snapshots e monta\nUserTasteProfile[]
+        collecting_tastes --> discovering_context : 20% → 40%\nEnriquece candidatas via\nLast.fm + Spotify genres
+        discovering_context --> ranking : 40% → 55%\nScoring individual/grupo +\nfairness + bridges
+        ranking --> matching_spotify : 55% → 70%\nResolve candidatas no\ncatálogo Spotify
         matching_spotify --> creating_playlist : 70% → 90%\nCria playlist privada\nna conta do host
         creating_playlist --> finalizing : 90% → 97%\nCalcula métricas finais\n(compatibility + fairness)
     }
@@ -23,63 +23,23 @@ stateDiagram-v2
 
     completed --> [*]
     failed --> [*]
-
-    note right of running
-        Cada estágio é persistido via
-        update_generation_progress()
-        com garantia de monotonia
-        (nunca regride percentual).
-    end note
-
-    note right of failed
-        Erros categorizados:
-        • reauth_required (token expirado)
-        • rate_limited (Spotify 429)
-        • insufficient_tracks (< mínimo)
-        • unavailable (erro genérico)
-    end note
 ```
 
-Este diagrama modela o ciclo de vida completo de um registro `PlaylistRun` conforme definido em
-`app/db/models.py:482-534` e orquestrado por `app/services/generation_service.py`.
+Este diagrama mapeia o ciclo de vida detalhado do registro `PlaylistRun` (`app/db/models.py:482-534`), que monitora e auditoria cada tentativa de geração do motor de recomendação (PNE).
 
-O `PlaylistRun` possui três estados terminais persistidos na coluna `status` (`String(32)`, default
-`"running"`, linha 493): `"running"`, `"completed"` e `"failed"`. A criação ocorre em
-`start_generation()` (linha 118-123), onde o registro nasce simultaneamente com a transição da sala
-para `"generating"`, garantindo atomicidade via commit conjunto.
+### Racional Arquitetural e Transição Monotônica de Progresso
 
-O estado composto `running` encapsula os **8 estágios intermediários** do pipeline, mapeados pelo
-dicionário `GENERATION_STAGES` (linhas 56-66). Cada estágio corresponde a uma fase funcional do
-Preference Negotiation Engine (PNE):
+1. **Garantia de Progresso Monotônico (PB-13):**
+   A função `update_generation_progress(db, run_id, stage)` em `generation_service.py:129-145` utiliza o dicionário de estágios `GENERATION_STAGES`:
+   - `starting` (0%) → `interpreting_context` (8%) → `collecting_tastes` (20%) → `discovering_context` (40%) → `ranking` (55%) → `matching_spotify` (70%) → `creating_playlist` (90%) → `finalizing` (97%) → `completed` (100%).
+   A instrução `if next_percent < run.progress_percent: return run` impede regressões visuais, garantindo que o progresso da barra exibida no frontend seja estritamente não-decrescente.
 
-| Estágio | % | Camada | Arquivo principal |
-|---|---:|---|---|
-| `starting` | 0 | — | start_generation |
-| `interpreting_context` | 8 | I/O (LLM) | llm_client.py |
-| `collecting_tastes` | 20 | Engine (puro) | taste.py, candidates.py |
-| `discovering_context` | 40 | I/O (Last.fm) | context_enrichment_service.py |
-| `ranking` | 55 | Engine (puro) | scoring.py, fairness.py |
-| `matching_spotify` | 70 | I/O (Spotify) | track_matcher.py, spotify_client.py |
-| `creating_playlist` | 90 | I/O (Spotify) | spotify_client.py |
-| `finalizing` | 97 | Banco | result_service.py |
+2. **Categorização de Erros e Recuperação (PB-17, PB-25):**
+   Caso a esteira interrompa por exceção, a função `fail_generation()` anota o erro no campo `error_message` e altera o status para `"failed"`. O bloco `except` de `execute_generation()` captura e classifica o erro em quatro motivos acionáveis no cliente:
+   - `reauth_required`: Exige nova autorização OAuth no Spotify.
+   - `rate_limited`: Notifica tempo de espera (`retry_after` em segundos).
+   - `insufficient_tracks`: Alerta que as escolhas dos membros resultaram em candidatos insuficientes.
+   - `unavailable`: Trata indisponibilidades temporárias genéricas.
 
-A função `update_generation_progress()` (linhas 129-145) persiste cada transição com uma regra de
-monotonia estrita: se `next_percent < run.progress_percent`, a atualização é ignorada (linha 140),
-impedindo que operações fora de ordem causem regressão visual na barra de progresso do frontend.
-
-A transição `running → completed` é executada por `complete_generation()` (linhas 148-164), que
-além de atualizar `status` e `progress_stage`/`progress_percent`, invoca `finalize_run_metrics()`
-para calcular e persistir `compatibility_score`, `fairness_score` e `explanation_json` — dados
-exibidos na tela de resultado (PB-15/PB-16). A sala é restaurada para `"open"` na mesma transação.
-
-A transição `running → failed` é executada por `fail_generation()` (linhas 167-177), que persiste
-o `error_message` para diagnóstico e também restaura a sala para `"open"`, habilitando retry. O
-bloco `except` de `execute_generation()` (linhas 783-811) categoriza os erros em 4 tipos:
-`reauth_required` (token Spotify expirado, PB-25), `rate_limited` (HTTP 429 do Spotify, com
-`retry_after` em segundos), `insufficient_tracks` (pool insuficiente após filtragem) e
-`unavailable` (qualquer outro erro não mapeado). Essa categorização permite que o frontend exiba
-mensagens de erro específicas e actionáveis ao host.
-
-Não existe transição `failed → running` ou `completed → running` — cada tentativa de geração cria
-um novo `PlaylistRun`. O histórico completo de tentativas (bem-sucedidas e falhadas) permanece
-associado à `MusicSession` via `session_id`, permitindo auditoria.
+3. **Imutabilidade e Registro de Histórico:**
+   Cada tentativa de geração gera uma nova instância de `PlaylistRun`, mantendo o histórico de auditoria preservado para análises de satisfação e feedback pós-playlist.
