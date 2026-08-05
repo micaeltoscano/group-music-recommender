@@ -3,54 +3,55 @@
 ![Contexto, modo de consenso e Vibe Check](04-vibe-check-contexto.png)
 
 ```mermaid
+%%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
     actor Host
-    actor Convidado
+    actor Membro as Membro da Sala
     participant API as API (rooms.py / vibe_check.py)
     participant RoomSvc as room_service
     participant DB as Banco (MusicSession, VibeCheckAnswer)
 
-    Host->>API: PUT /rooms/{code}/context {occasion, description}
-    API->>RoomSvc: update_room_context(db, code, host_id, occasion, description)
+    Host->>API: 1: PUT /rooms/{code}/context {occasion, description}
+    API->>RoomSvc: 1.1: update_room_context(db, code, host_id, occasion, description)
     alt usuário autenticado não é o host
         RoomSvc-->>API: RoomHostRequiredError
         API-->>Host: 403
     else host confirmado
-        RoomSvc->>DB: UPDATE MusicSession.occasion/description
+        RoomSvc->>DB: 1.1.1: UPDATE MusicSession.occasion/description
         RoomSvc-->>API: MusicSession atualizada
         API-->>Host: 200 RoomResponse
     end
 
-    Host->>API: PUT /rooms/{code}/mode {mode}
-    API->>RoomSvc: update_room_mode(db, code, host_id, mode)
+    Host->>API: 2: PUT /rooms/{code}/mode {mode}
+    API->>RoomSvc: 2.1: update_room_mode(db, code, host_id, mode)
     alt modo fora do conjunto habilitado na configuração
         RoomSvc-->>API: RoomModeUnavailableError
         API-->>Host: 422
     else modo válido (Democrático | Festa Segura | Descoberta*)
-        RoomSvc->>DB: UPDATE MusicSession.mode
+        RoomSvc->>DB: 2.1.1: UPDATE MusicSession.mode
         RoomSvc-->>API: MusicSession atualizada
         API-->>Host: 200 RoomResponse
     end
 
     Note right of Host: * Descoberta só aparece quando habilitada na config do produto (RF-10)
 
-    Convidado->>API: GET /rooms/{code}/vibe-check
-    API->>DB: busca VibeCheckAnswer(session_id, user_id)
-    API-->>Convidado: perguntas fixas (energia, valência, popularidade) + status atual
+    Membro->>API: 3: GET /rooms/{code}/vibe-check
+    API->>DB: 3.1: busca VibeCheckAnswer(session_id, user_id)
+    API-->>Membro: perguntas fixas (energia, valência, popularidade) + status atual
 
-    alt Convidado responde ao questionário
-        Convidado->>API: POST /rooms/{code}/vibe-check {energy, valence, popularity}
-        API->>DB: upsert VibeCheckAnswer(status="answered")
-        API-->>Convidado: 200 "Vibe Check salvo"
-    else Convidado opta por pular
-        Convidado->>API: POST /rooms/{code}/vibe-check/skip
-        API->>DB: upsert VibeCheckAnswer(status="skipped", energy/valence/popularity=null)
-        API-->>Convidado: 200 "pulado, nenhuma preferência foi aplicada"
+    alt Membro da Sala responde ao questionário
+        Membro->>API: 4: POST /rooms/{code}/vibe-check {energy, valence, popularity}
+        API->>DB: 4.1: upsert VibeCheckAnswer(status="answered")
+        API-->>Membro: 200 "Vibe Check salvo"
+    else Membro da Sala opta por pular
+        Membro->>API: 5: POST /rooms/{code}/vibe-check/skip
+        API->>DB: 5.1: upsert VibeCheckAnswer(status="skipped", energy/valence/popularity=null)
+        API-->>Membro: 200 "pulado, nenhuma preferência foi aplicada"
     end
 
     loop polling da sala (qualquer integrante)
-        Host->>API: GET /rooms/{code}
-        API->>DB: agrega vibe_status de todos os membros
+        Host->>API: 6: GET /rooms/{code}
+        API->>DB: 6.1: agrega vibe_status de todos os membros
         API-->>Host: RoomResponse.vibe_summary{total, pending, answered, skipped}
     end
 

@@ -3,19 +3,20 @@
 ![Autenticação via Spotify OAuth](01-autenticacao-spotify.png)
 
 ```mermaid
+%%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
-    actor Usuario as Usuário
+    actor Membro as Membro da Sala
     participant Frontend as Frontend (React)
     participant API as API (auth.py)
     participant Spotify as Spotify
     participant DB as Banco (User, SpotifyToken, AppSession)
 
-    Usuario->>Frontend: clica "Entrar com Spotify"
-    Frontend->>API: GET /auth/login
-    API->>API: gera state (secrets.token_urlsafe)
+    Membro->>Frontend: 1: clica "Entrar com Spotify"
+    Frontend->>API: 1.1: GET /auth/login
+    API->>API: 1.1.1: gera state (secrets.token_urlsafe)
     API-->>Frontend: 302 Redirect + Set-Cookie(spotify_auth_state, httpOnly)
-    Frontend->>Spotify: redireciona para autorização OAuth
-    Usuario->>Spotify: autoriza acesso (login + consentimento)
+    Frontend->>Spotify: 1.2: redireciona para autorização OAuth
+    Membro->>Spotify: 2: autoriza acesso (login + consentimento)
     Spotify-->>API: GET /auth/callback?code&state
 
     alt state ausente ou diferente do cookie
@@ -23,28 +24,28 @@ sequenceDiagram
     else code ausente ou error=acesso negado
         API-->>Frontend: 400 "Autorização Spotify negada"
     else state válido
-        API->>Spotify: exchange_code_for_token(code)
+        API->>Spotify: 2.1: exchange_code_for_token(code)
         Spotify-->>API: access_token, refresh_token, expires_in
-        API->>Spotify: get_current_user_profile(access_token)
+        API->>Spotify: 2.2: get_current_user_profile(access_token)
         Spotify-->>API: perfil {id, display_name, images}
-        API->>DB: SELECT User WHERE spotify_id
+        API->>DB: 2.3: SELECT User WHERE spotify_id
         alt usuário novo
-            API->>DB: INSERT User
+            API->>DB: 2.4: INSERT User
         else usuário existente
-            API->>DB: UPDATE User (display_name, image_url)
+            API->>DB: 2.5: UPDATE User (display_name, image_url)
         end
-        API->>API: crypto.encrypt(access_token, refresh_token)
-        API->>DB: UPSERT SpotifyToken (tokens cifrados, token_expires_at)
-        API->>DB: CREATE AppSession (session_token_hash, expires_at = +30d)
+        API->>API: 2.6: crypto.encrypt(access_token, refresh_token)
+        API->>DB: 2.7: UPSERT SpotifyToken (tokens cifrados, token_expires_at)
+        API->>DB: 2.8: CREATE AppSession (session_token_hash, expires_at = +30d)
         API-->>Frontend: 302 Redirect + Set-Cookie(vibe_session, httpOnly)
     end
 
-    Frontend->>API: GET /auth/me (cookie vibe_session)
-    API->>DB: SELECT AppSession WHERE session_token_hash
+    Frontend->>API: 3: GET /auth/me (cookie vibe_session)
+    API->>DB: 3.1: SELECT AppSession WHERE session_token_hash
     alt sessão inexistente ou expirada
         API-->>Frontend: 401 "Sessão inválida ou expirada"
     else sessão válida
-        API->>DB: SELECT User WHERE id
+        API->>DB: 3.2: SELECT User WHERE id
         API-->>Frontend: 200 {id, spotify_id, display_name, image_url}
     end
 ```

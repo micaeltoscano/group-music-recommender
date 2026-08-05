@@ -3,61 +3,62 @@
 ![Criação de sala e entrada de convidados](02-criacao-sala-entrada-convidados.png)
 
 ```mermaid
+%%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
     actor Host
-    actor Convidado
+    actor Membro as Membro da Sala
     participant API as API (rooms.py)
     participant RoomSvc as room_service
     participant DB as Banco (MusicSession, MusicSessionMember)
 
-    Host->>API: POST /rooms
-    API->>RoomSvc: create_room(db, host_id)
+    Host->>API: 1: POST /rooms
+    API->>RoomSvc: 1.1: create_room(db, host_id)
     loop até obter código único (máx. 10 tentativas)
-        RoomSvc->>RoomSvc: _generate_room_code()
-        RoomSvc->>DB: INSERT MusicSession + MusicSessionMember(role="host")
+        RoomSvc->>RoomSvc: 1.1.1: _generate_room_code()
+        RoomSvc->>DB: 1.1.2: INSERT MusicSession + MusicSessionMember(role="host")
         alt colisão de código (IntegrityError)
             DB-->>RoomSvc: violação de unicidade
-            RoomSvc->>RoomSvc: rollback e tenta novo código
+            RoomSvc->>RoomSvc: 1.1.3: rollback e tenta novo código
         end
     end
     RoomSvc-->>API: MusicSession criada (code, expires_at = +24h)
     API-->>Host: 201 RoomResponse{code, members:[host]}
 
-    Note over Host,Convidado: Host compartilha o código curto da sala
+    Note over Host,Membro: Host compartilha o código curto da sala
 
-    Convidado->>API: POST /rooms/{code}/join
-    API->>RoomSvc: join_room(db, code, user_id)
-    RoomSvc->>DB: SELECT MusicSession WHERE code FOR UPDATE
+    Membro->>API: 2: POST /rooms/{code}/join
+    API->>RoomSvc: 2.1: join_room(db, code, user_id)
+    RoomSvc->>DB: 2.1.1: SELECT MusicSession WHERE code FOR UPDATE
 
     alt sala não encontrada
         RoomSvc-->>API: RoomNotFoundError
-        API-->>Convidado: 404
+        API-->>Membro: 404
     else sala expirada (expires_at <= agora)
         RoomSvc-->>API: RoomExpiredError
-        API-->>Convidado: 410
+        API-->>Membro: 410
     else usuário já é membro
-        RoomSvc->>DB: SELECT MusicSessionMember(session_id, user_id)
+        RoomSvc->>DB: 2.1.2: SELECT MusicSessionMember(session_id, user_id)
         RoomSvc-->>API: MusicSession (retorno idempotente)
-        API-->>Convidado: 200 RoomResponse
+        API-->>Membro: 200 RoomResponse
     else sala com 5 integrantes
-        RoomSvc->>DB: COUNT(MusicSessionMember) WHERE session_id
+        RoomSvc->>DB: 2.1.3: COUNT(MusicSessionMember) WHERE session_id
         RoomSvc-->>API: RoomFullError
-        API-->>Convidado: 409
+        API-->>Membro: 409
     else entrada válida
-        RoomSvc->>DB: INSERT MusicSessionMember(role="member")
+        RoomSvc->>DB: 2.1.4: INSERT MusicSessionMember(role="member")
         RoomSvc-->>API: MusicSession atualizada
-        API-->>Convidado: 200 RoomResponse
+        API-->>Membro: 200 RoomResponse
     end
 
     loop polling a cada 4s (janela permitida: 3–5s)
-        Convidado->>API: GET /rooms/{code}
-        API->>RoomSvc: get_room_for_member(db, code, user_id)
+        Membro->>API: 3: GET /rooms/{code}
+        API->>RoomSvc: 3.1: get_room_for_member(db, code, user_id)
         alt usuário não é integrante
             RoomSvc-->>API: RoomAccessDeniedError
-            API-->>Convidado: 403 (sem dados da sala)
+            API-->>Membro: 403 (sem dados da sala)
         else usuário é integrante
-            API->>DB: lista membros + última PlaylistRun + vibe_summary
-            API-->>Convidado: 200 RoomResponse{members, generation, vibe_summary}
+            API->>DB: 3.2: lista membros + última PlaylistRun + vibe_summary
+            API-->>Membro: 200 RoomResponse{members, generation, vibe_summary}
         end
     end
 ```
