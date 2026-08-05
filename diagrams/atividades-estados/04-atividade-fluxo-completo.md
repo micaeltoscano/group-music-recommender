@@ -12,58 +12,58 @@ flowchart TD
 
     Start([Início]) --> Auth
 
-    subgraph Autenticação ["🔐 Autenticação (RF-01 / PB-02)"]
-        Auth[Membro clica\n'Entrar com Spotify'] ::: member
-        Auth --> OAuth[Spotify OAuth:\nlogin + consentimento] ::: external
-        OAuth --> CallbackOK{Autorizado?} ::: decision
-        CallbackOK -->|Não| AuthFail[Exibe erro\nde autorização] ::: system
+    subgraph Autenticação ["🔐 Autenticação RF-01 / PB-02"]
+        Auth["Membro clica<br/>Entrar com Spotify"]
+        Auth --> OAuth["Spotify OAuth:<br/>login + consentimento"]
+        OAuth --> CallbackOK{Autorizado?}
+        CallbackOK -->|Não| AuthFail["Exibe erro<br/>de autorização"]
         AuthFail --> Auth
-        CallbackOK -->|Sim| UpsertUser[Upsert User +\nSpotifyToken cifrado +\nAppSession] ::: system
-        UpsertUser --> Home[Tela Home\n/ Lobby Principal] ::: member
+        CallbackOK -->|Sim| UpsertUser["Upsert User +<br/>SpotifyToken cifrado +<br/>AppSession"]
+        UpsertUser --> Home["Tela Home<br/>Lobby Principal"]
     end
 
-    subgraph Sala ["🏠 Criação e Entrada na Sala (RF-02 / PB-04, PB-05)"]
-        Home --> CreateOrJoin{Criar ou\nEntrar?} ::: decision
-        CreateOrJoin -->|Criar| CreateRoom[Host cria sala\n(code 6 chars,\nstatus=open)] ::: host
-        CreateOrJoin -->|Entrar| JoinRoom[Membro digita\ncódigo da sala] ::: member
+    subgraph Sala ["🏠 Criação e Entrada na Sala RF-02 / PB-04, PB-05"]
+        Home --> CreateOrJoin{"Criar ou<br/>Entrar?"}
+        CreateOrJoin -->|Criar| CreateRoom["Host cria sala<br/>code 6 chars,<br/>status=open"]
+        CreateOrJoin -->|Entrar| JoinRoom["Membro digita<br/>código da sala"]
         CreateRoom --> RoomLobby
-        JoinRoom --> JoinCheck{Código válido?\nSala aberta?\n< 5 membros?} ::: decision
-        JoinCheck -->|Não| JoinError[Exibe erro] ::: system
+        JoinRoom --> JoinCheck{"Código válido?<br/>Sala aberta?<br/>Menos de 5 membros?"}
+        JoinCheck -->|Não| JoinError["Exibe erro"]
         JoinError --> Home
-        JoinCheck -->|Sim| AddMember[Insere\nMusicSessionMember\nrole=member] ::: system
-        AddMember --> RoomLobby[Lobby da Sala\n(lista membros em\ntempo real)] ::: member
+        JoinCheck -->|Sim| AddMember["Insere<br/>MusicSessionMember<br/>role=member"]
+        AddMember --> RoomLobby["Lobby da Sala<br/>lista membros em<br/>tempo real"]
     end
 
-    subgraph Contexto ["🎯 Contexto e Vibe Check (RF-03 / PB-06, PB-07)"]
-        RoomLobby --> SetContext[Host define ocasião,\ndescrição e modo\nde consenso] ::: host
-        SetContext --> VibeCheck{Membros\nrespondem\nVibe Check?} ::: decision
-        VibeCheck -->|Responder| SubmitVibe[Submete energy,\nvalence, popularity\nstatus=answered] ::: member
-        VibeCheck -->|Pular| SkipVibe[Pula Vibe Check\nstatus=skipped] ::: member
+    subgraph Contexto ["🎯 Contexto e Vibe Check RF-03 / PB-06, PB-07"]
+        RoomLobby --> SetContext["Host define ocasião,<br/>descrição e modo<br/>de consenso"]
+        SetContext --> VibeCheck{"Membros<br/>respondem<br/>Vibe Check?"}
+        VibeCheck -->|Responder| SubmitVibe["Submete energy,<br/>valence, popularity<br/>status=answered"]
+        VibeCheck -->|Pular| SkipVibe["Pula Vibe Check<br/>status=skipped"]
         SubmitVibe --> ReadyCheck
         SkipVibe --> ReadyCheck
-        ReadyCheck{Todos prontos\nou host decide\ngerar?} ::: decision
+        ReadyCheck{"Todos prontos<br/>ou host decide<br/>gerar?"}
         ReadyCheck -->|Não| VibeCheck
     end
 
-    subgraph Geração ["⚙️ Geração de Playlist (RF-04..RF-08 / PB-09..PB-19)"]
-        ReadyCheck -->|Sim| StartGen[Host dispara geração\nMusicSession.status\n= generating] ::: host
-        StartGen --> LLM[Interpreta contexto\nvia LLM / fallback\n8%] ::: external
-        LLM --> Tastes[Constrói perfis\nde gosto do grupo\n20%] ::: system
-        Tastes --> Enrich[Enriquece candidatas\nLast.fm + Spotify\n40%] ::: external
-        Enrich --> Score[Scoring +\nfairness + bridges\n55%] ::: system
-        Score --> Match[Matching no\ncatálogo Spotify\n70%] ::: external
-        Match --> CreatePL[Cria playlist\nno perfil do host\n90%] ::: external
-        CreatePL --> Finalize[Calcula métricas\ne persiste resultado\n100%] ::: system
-        Finalize --> GenResult{Sucesso?} ::: decision
-        GenResult -->|Não| GenFail[Registra erro\nstatus=failed\nsala volta a open] ::: system
+    subgraph Geração ["⚙️ Geração de Playlist RF-04 a RF-08 / PB-09 a PB-19"]
+        ReadyCheck -->|Sim| StartGen["Host dispara geração<br/>MusicSession.status<br/>= generating"]
+        StartGen --> LLM["Interpreta contexto<br/>via LLM / fallback<br/>8%"]
+        LLM --> Tastes["Constrói perfis<br/>de gosto do grupo<br/>20%"]
+        Tastes --> Enrich["Enriquece candidatas<br/>Last.fm + Spotify<br/>40%"]
+        Enrich --> Score["Scoring +<br/>fairness + bridges<br/>55%"]
+        Score --> Match["Matching no<br/>catálogo Spotify<br/>70%"]
+        Match --> CreatePL["Cria playlist<br/>no perfil do host<br/>90%"]
+        CreatePL --> Finalize["Calcula métricas<br/>e persiste resultado<br/>100%"]
+        Finalize --> GenResult{Sucesso?}
+        GenResult -->|Não| GenFail["Registra erro<br/>status=failed<br/>sala volta a open"]
         GenFail --> RoomLobby
     end
 
-    subgraph Resultado ["📊 Resultado e Feedback (RF-09 / PB-15, PB-16, PB-20)"]
-        GenResult -->|Sim| ResultPage[Tela de Resultado:\nplaylist + player +\ncompatibilidade +\nfairness + explicação] ::: member
-        ResultPage --> FeedbackDecision{Membro deseja\ndar feedback?} ::: decision
-        FeedbackDecision -->|Sim, por faixa| TrackFeedback[Avalia faixas:\nliked/disliked/\nmore_like_this/\nnever_again] ::: member
-        FeedbackDecision -->|Sim, geral| PlaylistFeedback[Avalia playlist:\nrepresentação 0-5\nsatisfação 0-5\ncomentários] ::: member
+    subgraph Resultado ["📊 Resultado e Feedback RF-09 / PB-15, PB-16, PB-20"]
+        GenResult -->|Sim| ResultPage["Tela de Resultado:<br/>playlist + player +<br/>compatibilidade +<br/>fairness + explicação"]
+        ResultPage --> FeedbackDecision{"Membro deseja<br/>dar feedback?"}
+        FeedbackDecision -->|Por faixa| TrackFeedback["Avalia faixas:<br/>liked / disliked /<br/>more_like_this /<br/>never_again"]
+        FeedbackDecision -->|Geral| PlaylistFeedback["Avalia playlist:<br/>representação 0-5<br/>satisfação 0-5<br/>comentários"]
         FeedbackDecision -->|Não| End
         TrackFeedback --> PlaylistFeedback
         PlaylistFeedback --> End
@@ -72,12 +72,18 @@ flowchart TD
     End([Fim do Fluxo])
 
     subgraph Legenda ["Legenda de Cores"]
-        L1[Verde: Ação do Host] ::: host
-        L2[Azul: Ação do Membro] ::: member
-        L3[Laranja: Processamento interno] ::: system
-        L4[Cinza: Sistema externo] ::: external
-        L5[Rosa: Decisão / Bifurcação] ::: decision
+        L1["Verde: Ação do Host"]
+        L2["Azul: Ação do Membro"]
+        L3["Laranja: Processamento interno"]
+        L4["Cinza: Sistema externo"]
+        L5["Rosa: Decisão / Bifurcação"]
     end
+
+    class Auth,Home,JoinRoom,SubmitVibe,SkipVibe,RoomLobby,ResultPage,TrackFeedback,PlaylistFeedback,L2 member
+    class CreateRoom,SetContext,StartGen,L1 host
+    class AuthFail,UpsertUser,JoinError,AddMember,Tastes,Score,Finalize,GenFail,L3 system
+    class OAuth,LLM,Enrich,Match,CreatePL,L4 external
+    class CallbackOK,CreateOrJoin,JoinCheck,VibeCheck,ReadyCheck,GenResult,FeedbackDecision,L5 decision
 ```
 
 Este diagrama de atividade modela o fluxo completo de interação de um grupo de usuários com o Vibe

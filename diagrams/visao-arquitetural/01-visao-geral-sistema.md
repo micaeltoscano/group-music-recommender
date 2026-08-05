@@ -4,54 +4,57 @@
 
 ```mermaid
 graph TD
-    %% Estilos de nós e subgrafos
-    classDef client fill:#e0f7fa,stroke:#006064,stroke-width:2px,color:#000
-    classDef app fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
-    classDef engine fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000,stroke-dasharray: 5 5
-    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    classDef external fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#000
-    
-    subgraph ClientLayer [💻 Camada Cliente]
-        Browser[Navegador Web]
-        SPA[React SPA Vite<br/>Modo Escuro / Glassmorphism<br/>Porta 5173] ::: client
+    subgraph ClientLayer ["💻 Camada Cliente"]
+        Browser["Navegador Web"]
+        SPA["React SPA Vite<br/>Modo Escuro / Glassmorphism<br/>Porta 5173"]
         Browser -->|Interage| SPA
     end
 
-    subgraph Infra [🐳 Infraestrutura Docker Compose]
-        subgraph AppLayer [⚙️ Camada de Aplicação FastAPI - Porta 8000]
-            Router[API Router Layer<br/>app/api/*<br/>auth, rooms, vibe_check, etc.] ::: app
-            Services[Services Layer<br/>app/services/*<br/>music_service, generation_service, etc.] ::: app
-            Clients[Clients Layer<br/>app/clients/*<br/>spotify_client, lastfm_client, llm_client] ::: app
-            
-            subgraph EngineLayer [🧠 Engine / PNE Layer]
-                Engine[Pura, determinística, sem I/O<br/>app/engine/*<br/>taste, candidates, scoring, fairness, etc.] ::: engine
+    subgraph Infra ["🐳 Infraestrutura Docker Compose"]
+        subgraph AppLayer ["⚙️ Camada de Aplicação FastAPI - Porta 8000"]
+            Router["API Router Layer<br/>app/api/*<br/>auth, rooms, vibe_check, etc."]
+            Services["Services Layer<br/>app/services/*<br/>music_service, generation_service, etc."]
+            Clients["Clients Layer<br/>app/clients/*<br/>spotify_client, lastfm_client, llm_client"]
+
+            subgraph EngineLayer ["🧠 Engine / PNE Layer"]
+                Engine["Pura, determinística, sem I/O<br/>app/engine/*<br/>taste, candidates, scoring, fairness, etc."]
             end
-            
+
             Router -->|HTTPS/REST| Services
             Services -->|Importa e executa| Engine
             Services -->|Requisições| Clients
         end
-        
-        subgraph DataLayer [🗄️ Camada de Dados]
-            Postgres[(PostgreSQL 16 Alpine<br/>16 Tabelas ORM<br/>Volume: vibe_pgdata)] ::: data
+
+        subgraph DataLayer ["🗄️ Camada de Dados"]
+            Postgres[("PostgreSQL 16 Alpine<br/>16 Tabelas ORM<br/>Volume: vibe_pgdata")]
         end
     end
 
-    subgraph ExternalSystems [🌐 Sistemas Externos]
-        Spotify[Spotify Web API<br/>OAuth 2.0, Catálogo, Playlists] ::: external
-        LastFM[Last.fm API<br/>Enriquecimento de Tags] ::: external
-        Ollama[Ollama LLM Local<br/>Interpretação de Contexto] ::: external
+    subgraph ExternalSystems ["🌐 Sistemas Externos"]
+        Spotify["Spotify Web API<br/>OAuth 2.0, Catálogo, Playlists"]
+        LastFM["Last.fm API<br/>Enriquecimento de Tags"]
+        Ollama["Ollama LLM Local<br/>Interpretação de Contexto"]
     end
 
-    %% Protocolos e Comunicação
-    SPA <-->|HTTPS/REST<br/>HTTP-only cookies| Router
-    Services <-->|SQLAlchemy ORM<br/>psycopg2| Postgres
+    SPA <-->|"HTTPS/REST<br/>HTTP-only cookies"| Router
+    Services <-->|"SQLAlchemy ORM<br/>psycopg2"| Postgres
     Clients <-->|HTTPS/REST OAuth 2.0| Spotify
     Clients <-->|HTTPS/REST API Key| LastFM
     Clients <-->|HTTP/REST Local| Ollama
-    
-    %% Configurações e Segurança
-    Crypto((🔐 crypto.py<br/>Fernet)) -.-> Clients
+
+    Crypto(("🔐 crypto.py<br/>Fernet")) -.-> Clients
+
+    classDef client fill:#e0f7fa,stroke:#006064,stroke-width:2px,color:#000
+    classDef app fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef engine fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000,stroke-dasharray:5 5
+    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef external fill:#eceff1,stroke:#455a64,stroke-width:2px,color:#000
+
+    class Browser,SPA client
+    class Router,Services,Clients app
+    class Engine engine
+    class Postgres data
+    class Spotify,LastFM,Ollama external
 ```
 
 Este diagrama de contêiner (nível 2 do modelo C4) representa a arquitetura técnica de alto nível do Vibe Check. O sistema utiliza **Docker Compose** para orquestrar os contêineres do backend, frontend e banco de dados, simplificando a infraestrutura e garantindo ambientes reproduzíveis.
