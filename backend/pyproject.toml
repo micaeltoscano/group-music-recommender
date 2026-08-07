@@ -1,0 +1,18 @@
+[project]
+name = "vibe-check-backend"
+version = "0.1.0"
+description = "Group Music Recommender (Vibe Check) — backend FastAPI"
+requires-python = ">=3.11"
+readme = "../README.md"
+
+# As dependências instaláveis vivem em requirements.txt (pip install -r).
+# Este arquivo centraliza metadados e a configuração das ferramentas.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

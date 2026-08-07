@@ -1,0 +1,80 @@
+@startuml casos-de-uso
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FEFEFE
+  BorderColor #333333
+}
+
+actor "Membro da Sala" as Membro
+actor "Host" as Host
+actor "Spotify" as SpotifySys
+actor "Last.fm" as LastFm
+actor "IA (LLM local)" as LLM
+
+Host --|> Membro
+
+rectangle "Vibe Check" {
+
+  ' --- Casos de uso primarios (nivel RF-01..RF-11) ---
+  usecase "Autenticar com Spotify" as UC1
+  usecase "Encerrar sessão e remover dados" as UC2
+  usecase "Criar sala" as UC3
+  usecase "Entrar em sala" as UC4
+  usecase "Definir contexto e modo de consenso" as UC5
+  usecase "Responder Vibe Check" as UC6
+  usecase "Gerar playlist" as UC7
+  usecase "Visualizar resultado e explicação" as UC8
+  usecase "Enviar feedback" as UC9
+
+  ' --- Subfluxos do PNE, incluidos por "Gerar playlist" ---
+  usecase "Interpretar contexto com IA" as UC7a
+  usecase "Calcular compatibilidade do grupo" as UC7b
+  usecase "Gerar conjunto de candidatas" as UC7c
+  usecase "Enriquecer contexto das candidatas" as UC7d
+  usecase "Pontuar candidatas e aplicar justiça" as UC7e
+  usecase "Corresponder faixas no Spotify" as UC7f
+  usecase "Sequenciar faixas selecionadas" as UC7g
+  usecase "Criar playlist no Spotify" as UC7h
+
+  ' --- Variacoes opcionais (extend) ---
+  usecase "Aplicar Modo Descoberta" as UC10
+  usecase "Identificar músicas-ponte entre subgrupos" as UC11a
+  usecase "Balancear entre subgrupos" as UC11b
+}
+
+' --- Associacoes: atores humanos ---
+Membro -- UC1
+Membro -- UC2
+Membro -- UC4
+Membro -- UC6
+Membro -- UC8
+Membro -- UC9
+
+Host -- UC3
+Host -- UC5
+Host -- UC7
+
+' --- Associacoes: atores externos (sistemas) ---
+SpotifySys -- UC1
+SpotifySys -- UC7f
+SpotifySys -- UC7h
+LastFm -- UC7d
+LLM -- UC7a
+
+' --- Inclusoes obrigatorias do pipeline do PNE ---
+UC7 ..> UC7a : <<include>>
+UC7 ..> UC7b : <<include>>
+UC7 ..> UC7c : <<include>>
+UC7 ..> UC7d : <<include>>
+UC7 ..> UC7e : <<include>>
+UC7 ..> UC7f : <<include>>
+UC7 ..> UC7g : <<include>>
+UC7 ..> UC7h : <<include>>
+
+' --- Extensoes condicionais ---
+UC10 ..> UC7c : <<extend>>
+UC11a ..> UC7b : <<extend>>
+UC11b ..> UC7e : <<extend>>
+
+@enduml

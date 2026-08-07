@@ -1,0 +1,86 @@
+"""Configuração central da aplicação carregada do ambiente local."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# backend/app/config.py -> parents[2] == raiz do repositório
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+class Settings(BaseSettings):
+    """Configurações carregadas do ambiente / arquivo `.env` da raiz."""
+
+    model_config = SettingsConfigDict(
+        env_file=str(ROOT_DIR / ".env"),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # --- Aplicação -----------------------------------------------------------
+    app_name: str = "Vibe Check API"
+    app_env: str = "development"
+    api_v1_prefix: str = ""
+
+    # --- Banco de dados ------------------------------------------------------
+    # Default aponta para o Postgres do docker-compose local. Não é um segredo:
+    # é uma credencial descartável de desenvolvimento definida no compose.
+    database_url: str = Field(
+        default="postgresql+psycopg2://vibe:vibe@localhost:5432/vibe",
+    )
+
+    # --- Snapshots e biblioteca musical -------------------------------------
+    music_snapshot_ttl_days: int = Field(default=7, ge=1)
+    spotify_top_items_limit: int = Field(default=50, ge=1, le=50)
+    music_library_ttl_days: int = Field(default=7, ge=1)
+    music_library_external_concurrency: int = Field(default=1, ge=1, le=5)
+
+    # --- Recursos opcionais de recomendação ---------------------------------
+    # Opt-in: o modo Descoberta não aparece nem pode ser selecionado sem flag.
+    discovery_mode_enabled: bool = False
+    # Opt-in: identifica e explica faixas aceitas por múltiplos subgrupos.
+    bridge_tracks_enabled: bool = False
+    # Reordena somente o prefixo final quando habilitado.
+    subgroup_balancing_enabled: bool = False
+    subgroup_max_share: float = Field(default=0.60, ge=0.5, le=1.0)
+
+    # --- CORS ----------------------------------------------------------------
+    # Origens permitidas para o frontend Vite (separadas por vírgula).
+    backend_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    frontend_url: str = "http://localhost:5173"
+
+    # --- Integrações externas ------------------------------------------------
+    spotify_client_id: str | None = None
+    spotify_client_secret: str | None = None
+    spotify_redirect_uri: str | None = None
+    lastfm_api_key: str | None = None
+    lastfm_timeout_seconds: float = Field(default=5.0, gt=0)
+    lastfm_cache_ttl_days: int = Field(default=30, ge=1)
+    contextual_pool_share: float = Field(default=0.50, ge=0.0, le=0.60)
+    contextual_pool_tag_count: int = Field(default=3, ge=1, le=5)
+    contextual_pool_seed_count: int = Field(default=5, ge=1, le=10)
+    contextual_pool_tracks_per_source: int = Field(default=4, ge=1, le=10)
+    contextual_pool_max_candidates: int = Field(default=32, ge=1, le=50)
+    fernet_key: str | None = None
+
+    # --- Interpretação local de contexto -------------------------------------
+    # Ollama rodando localmente; sem chave de API. Se indisponível, o pipeline
+    # usa o fallback determinístico automaticamente (ver `llm_client.py`).
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
+    ollama_timeout_seconds: float = Field(default=8.0, gt=0)
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.app_env.lower() not in {"development", "test"}
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.backend_cors_origins.split(",") if o.strip()]
+
+
+settings = Settings()

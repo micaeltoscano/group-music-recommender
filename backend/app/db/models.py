@@ -1,0 +1,683 @@
+"""Modelos ORM do Vibe Check."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    false,
+    func,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
+
+from app.db.base import Base
+
+
+class User(Base):
+    """Usuário identificado pela conta Spotify.
+
+    Os campos de autenticação/token pertencem a histórias futuras (PB-02) e não
+    fazem parte desta tabela na fundação técnica.
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    spotify_id: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    spotify_token: Mapped["SpotifyToken"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    sessions: Mapped[list["AppSession"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    hosted_music_sessions: Mapped[list["MusicSession"]] = relationship(
+        back_populates="host",
+        cascade="all, delete-orphan",
+    )
+    music_session_memberships: Mapped[list["MusicSessionMember"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    music_snapshots: Mapped[list["UserMusicSnapshot"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    playlist_inventory: Mapped[list["UserPlaylistInventory"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    music_library_snapshot: Mapped["UserMusicLibrarySnapshot | None"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    music_library_tracks: Mapped[list["UserMusicLibraryTrack"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return f"<User id={self.id} spotify_id={self.spotify_id!r}>"
+
+
+class SpotifyToken(Base):
+    """Armazena os tokens do Spotify do usuário (criptografados)."""
+    __tablename__ = "spotify_tokens"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    access_token: Mapped[str] = mapped_column(Text, nullable=False)  # Armazenado criptografado
+    refresh_token: Mapped[str] = mapped_column(Text, nullable=False) # Armazenado criptografado
+    token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    refresh_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    reauth_required_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    scopes: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="spotify_token")
+
+    def __repr__(self) -> str:
+        return f"<SpotifyToken user_id={self.user_id}>"
+
+
+class AppSession(Base):
+    """Sessões do aplicativo frontend via cookie."""
+    __tablename__ = "app_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    session_token_hash: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="sessions")
+
+    def __repr__(self) -> str:
+        return f"<AppSession id={self.id} user_id={self.user_id}>"
+
+
+class MusicSession(Base):
+    """Sala efêmera criada por um host autenticado."""
+
+    __tablename__ = "music_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    code: Mapped[str] = mapped_column(String(9), unique=True, nullable=False)
+    host_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    occasion: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mode: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="open")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    host: Mapped["User"] = relationship(back_populates="hosted_music_sessions")
+    members: Mapped[list["MusicSessionMember"]] = relationship(
+        back_populates="music_session",
+        cascade="all, delete-orphan",
+    )
+    playlist_runs: Mapped[list["PlaylistRun"]] = relationship(
+        back_populates="music_session",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return f"<MusicSession id={self.id} code={self.code!r}>"
+
+
+class MusicSessionMember(Base):
+    """Vínculo entre uma sala e um integrante."""
+
+    __tablename__ = "music_session_members"
+
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    music_session: Mapped["MusicSession"] = relationship(back_populates="members")
+    user: Mapped["User"] = relationship(back_populates="music_session_memberships")
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return (
+            f"<MusicSessionMember session_id={self.session_id} "
+            f"user_id={self.user_id} role={self.role!r}>"
+        )
+
+
+class UserMusicSnapshot(Base):
+    """Top tracks/artists temporários usados como entrada do motor."""
+
+    __tablename__ = "user_music_snapshots"
+    __table_args__ = (
+        UniqueConstraint("user_id", "time_range", name="uq_music_snapshot_user_range"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    time_range: Mapped[str] = mapped_column(String(32), nullable=False)
+    top_tracks_json: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
+    top_artists_json: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="music_snapshots")
+
+    def __repr__(self) -> str:  # pragma: no cover - conveniência de debug
+        return (
+            f"<UserMusicSnapshot id={self.id} user_id={self.user_id} "
+            f"time_range={self.time_range!r}>"
+        )
+
+
+class UserPlaylistInventory(Base):
+    """Metadados mínimos de uma playlist legível pelo usuário (PB-30)."""
+
+    __tablename__ = "user_playlist_inventory"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "spotify_playlist_id",
+            name="uq_playlist_inventory_user_playlist",
+        ),
+        CheckConstraint(
+            "access_type IN ('owned', 'collaborative')",
+            name="ck_playlist_inventory_access_type",
+        ),
+        CheckConstraint(
+            "tracks_total >= 0",
+            name="ck_playlist_inventory_tracks_total",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    spotify_playlist_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    access_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    tracks_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    snapshot_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="playlist_inventory")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<UserPlaylistInventory user_id={self.user_id} "
+            f"spotify_playlist_id={self.spotify_playlist_id!r}>"
+        )
+
+
+class UserMusicLibrarySnapshot(Base):
+    """Versão promovida da biblioteca pessoal limitada (PB-31)."""
+
+    __tablename__ = "user_music_library_snapshots"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_music_library_snapshot_user"),
+        CheckConstraint(
+            "track_count >= 0 AND track_count <= 500",
+            name="ck_music_library_snapshot_track_count",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    track_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    built_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_sync_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_sync_error_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_sync_retry_after: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="music_library_snapshot")
+    tracks: Mapped[list["UserMusicLibraryTrack"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        order_by="UserMusicLibraryTrack.position",
+    )
+    playlist_states: Mapped[list["UserMusicLibraryPlaylistState"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+    )
+
+
+class UserMusicLibraryPlaylistState(Base):
+    """Snapshot do inventário usado para decidir refetch incremental (PB-32)."""
+
+    __tablename__ = "user_music_library_playlist_states"
+    __table_args__ = (
+        UniqueConstraint(
+            "snapshot_id",
+            "spotify_playlist_id",
+            name="uq_music_library_snapshot_playlist",
+        ),
+        CheckConstraint(
+            "access_type IN ('owned', 'collaborative')",
+            name="ck_music_library_playlist_state_access",
+        ),
+        CheckConstraint(
+            "tracks_total >= 0",
+            name="ck_music_library_playlist_state_total",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    spotify_playlist_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    playlist_snapshot_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    access_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    tracks_total: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    snapshot: Mapped["UserMusicLibrarySnapshot"] = relationship(
+        back_populates="playlist_states"
+    )
+
+
+class UserMusicLibraryTrack(Base):
+    """Uma faixa única na biblioteca de um usuário."""
+
+    __tablename__ = "user_music_library_tracks"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "spotify_track_id",
+            name="uq_music_library_user_track",
+        ),
+        UniqueConstraint(
+            "snapshot_id",
+            "position",
+            name="uq_music_library_snapshot_position",
+        ),
+        CheckConstraint(
+            "position >= 1 AND position <= 500",
+            name="ck_music_library_track_position",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    spotify_track_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    spotify_uri: Mapped[str] = mapped_column(String(512), nullable=False)
+    track_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    artist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    artist_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    snapshot: Mapped["UserMusicLibrarySnapshot"] = relationship(back_populates="tracks")
+    user: Mapped["User"] = relationship(back_populates="music_library_tracks")
+    origins: Mapped[list["UserMusicLibrarySource"]] = relationship(
+        back_populates="library_track",
+        cascade="all, delete-orphan",
+        order_by="UserMusicLibrarySource.source_key",
+    )
+
+
+class UserMusicLibrarySource(Base):
+    """Proveniência/rank normalizado de uma faixa pessoal."""
+
+    __tablename__ = "user_music_library_sources"
+    __table_args__ = (
+        UniqueConstraint(
+            "library_track_id",
+            "source_key",
+            name="uq_music_library_track_source",
+        ),
+        CheckConstraint(
+            "source_type IN ('top', 'playlist')",
+            name="ck_music_library_source_type",
+        ),
+        CheckConstraint("source_rank >= 1", name="ck_music_library_source_rank"),
+        CheckConstraint(
+            "(source_type = 'top' AND access_type IS NULL) OR "
+            "(source_type = 'playlist' AND access_type IN ('owned', 'collaborative'))",
+            name="ck_music_library_source_access",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    library_track_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("user_music_library_tracks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    source_ref: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    source_rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    access_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    playlist_snapshot_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    library_track: Mapped["UserMusicLibraryTrack"] = relationship(back_populates="origins")
+
+
+class TrackContextCache(Base):
+    """Enriquecimento contextual reutilizável das candidatas (PB-18)."""
+
+    __tablename__ = "track_context_cache"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    spotify_track_id: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, nullable=False
+    )
+    track_name: Mapped[str] = mapped_column(Text, nullable=False)
+    artist_name: Mapped[str] = mapped_column(Text, nullable=False)
+    lastfm_track_tags_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    lastfm_artist_tags_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    spotify_artist_genres_json: Mapped[list[str]] = mapped_column(
+        JSON, nullable=False, default=list
+    )
+    context_scores_json: Mapped[dict[str, object]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<TrackContextCache spotify_track_id={self.spotify_track_id!r} "
+            f"source={self.source!r}>"
+        )
+
+
+class PlaylistRun(Base):
+    """Registro de uma execução de geração de playlist (PB-13)."""
+
+    __tablename__ = "playlist_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    progress_stage: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="starting", server_default="starting"
+    )
+    progress_percent: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    spotify_playlist_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    spotify_playlist_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    # Métricas agregadas da execução (PB-16). Calculadas na conclusão do run a
+    # partir das faixas correspondidas e persistidas para exibição no resultado.
+    compatibility_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fairness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    explanation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Contexto estruturado interpretado do host (PB-17): ocasião, humor, energia,
+    # tags +/- e itens a evitar. Cacheado por run para não reprocessar no LLM.
+    llm_context_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    subgroup_balancing_applied: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    music_session: Mapped["MusicSession"] = relationship(back_populates="playlist_runs")
+    tracks: Mapped[list["PlaylistRunTrack"]] = relationship(
+        back_populates="playlist_run",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<PlaylistRun id={self.id} session_id={self.session_id} status={self.status!r}>"
+
+
+class PlaylistRunTrack(Base):
+    """Faixa candidata resolvida e associada a uma execução de geração (PB-14)."""
+
+    __tablename__ = "playlist_run_tracks"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    candidate_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    spotify_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    spotify_uri: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    artist: Mapped[str] = mapped_column(Text, nullable=False)
+    match_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    discard_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="matched")
+    source: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON ou lista em string
+    # PB-23: marcação agregada, sem expor afinidades individuais dos clusters.
+    is_bridge: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
+    # Ordem explícita: nasce como ranking durante o matching e, para faixas
+    # selecionadas, recebe a posição final do sequenciador (PB-19).
+    selection_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    playlist_run: Mapped["PlaylistRun"] = relationship(back_populates="tracks")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<PlaylistRunTrack id={self.id} status={self.status!r}>"
+
+
+class MemberTrackFeedback(Base):
+    """Sinais futuros de um integrante sobre uma faixa da execução (PB-20)."""
+
+    __tablename__ = "member_track_feedback"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "playlist_run_id",
+            "spotify_track_id",
+            name="uq_member_track_feedback_user_run_track",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    playlist_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    spotify_track_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    liked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    disliked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    more_like_this: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    never_again: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class PlaylistFeedback(Base):
+    """Avaliação geral de um integrante sobre uma execução concluída (PB-20)."""
+
+    __tablename__ = "playlist_feedback"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "playlist_run_id", name="uq_playlist_feedback_user_run"
+        ),
+        CheckConstraint(
+            "representation_score BETWEEN 0 AND 5",
+            name="ck_playlist_feedback_representation_score",
+        ),
+        CheckConstraint(
+            "satisfaction_score BETWEEN 0 AND 5",
+            name="ck_playlist_feedback_satisfaction_score",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    playlist_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("playlist_runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    representation_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    satisfaction_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    comments: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class VibeCheckAnswer(Base):
+    """Armazena as preferências derivadas de um usuário em uma sessão, extraídas do Vibe Check."""
+    __tablename__ = "vibe_check_answers"
+    __table_args__ = (
+        UniqueConstraint("session_id", "user_id", name="uq_vibe_check_session_user"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("music_sessions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="answered", server_default="answered"
+    )
+    energy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    valence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    popularity: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    music_session: Mapped["MusicSession"] = relationship()
+    user: Mapped["User"] = relationship()
