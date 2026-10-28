@@ -231,3 +231,12 @@ Os testes usam SQLite e clientes externos simulados; credenciais reais do Spotif
 - a criação real da playlist exige credenciais e uma conta Spotify autorizada.
 
 Os diagramas técnicos e de interação estão disponíveis em [`diagrams/`](diagrams/).
+
+
+## Contribuidores
+- Julia Gabriele Mendes Barbosa
+- Matheus Bruno da Silva Oliveira
+- Micael Lima Oliveira Toscano
+- Pedro Miguel Cecato Valoes
+- Rafael Henrique Ribeiro Amancio
+- Sérgio Cauã dos Santos
